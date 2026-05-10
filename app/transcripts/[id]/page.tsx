@@ -4,6 +4,9 @@ import { TranscriptViewer } from "@/components/transcript/transcript-viewer"
 import type { Transcript } from "@/lib/types"
 import type { Metadata } from "next"
 
+// Evitar pre-render durante build
+export const dynamic = "force-dynamic"
+
 interface PageProps {
   params: Promise<{ id: string }>
 }

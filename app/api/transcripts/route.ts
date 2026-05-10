@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
 import type { CreateTranscriptPayload, Transcript } from "@/lib/types"
 
+// Evitar pre-render durante build
+export const dynamic = "force-dynamic"
+
 // POST - Criar novo transcript (chamado pelo bot Discord)
 export async function POST(request: NextRequest) {
   try {
