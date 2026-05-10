@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { Code2 } from "lucide-react"
+import { Ticket } from "lucide-react";
 
 export function Header() {
   return (
@@ -9,14 +9,14 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Code2 className="h-5 w-5 text-primary" />
+              <Ticket className="h-5 w-5 text-primary" />
             </div>
-            <span className="text-lg font-semibold text-foreground">
-              Mts Code
+            <span className="text-lg font-semibold text-foreground tracking-tight">
+              Mts
             </span>
           </div>
         </div>
       </div>
     </header>
-  )
+  );
 }
