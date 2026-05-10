@@ -39,6 +39,8 @@ export interface Transcript {
     username: string
     avatar?: string
   }
+  // Mensagem inicial / motivo de abertura do ticket
+  initialMessage?: string
   messageCount: number
   messages: TranscriptMessage[]
 }
@@ -63,6 +65,8 @@ export interface CreateTranscriptPayload {
     username: string
     avatar?: string
   }
+  // Mensagem inicial / motivo de abertura do ticket
+  initialMessage?: string
   messages: Array<{
     id: string
     authorId: string

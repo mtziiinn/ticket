@@ -22,6 +22,7 @@ const sampleTranscript: Transcript = {
     username: "MOD Coruja",
     avatar: undefined,
   },
+  initialMessage: "Ola, estou com um problema no meu pedido. O codigo de rastreamento nao esta funcionando e ja fazem 5 dias desde a compra. Podem me ajudar?",
   messages: [
     {
       id: "380GACM-0",

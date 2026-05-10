@@ -39,6 +39,7 @@ export async function POST(request: NextRequest) {
       closedAt: payload.closedAt,
       openedBy: payload.openedBy,
       closedBy: payload.closedBy,
+      initialMessage: payload.initialMessage,
       messageCount: payload.messages.length,
       messages: payload.messages.map((msg, index) => ({
         id: `${payload.id}-${index}`,
