@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return {
-    title: `Transcript #${transcript.id} - Mts Code`,
+    title: `Transcript #${transcript.id} - Code Studio`,
     description: `Transcript de ${transcript.openedBy.username} - ${transcript.messageCount} mensagens`,
   }
 }

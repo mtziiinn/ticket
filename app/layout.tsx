@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Mts Code - Transcripts',
+  title: 'Code Studio - Transcripts',
   description: 'Visualize support ticket transcripts',
   generator: 'v0.app',
   icons: {

@@ -12,7 +12,7 @@ export function Header() {
               <Code2 className="h-5 w-5 text-primary" />
             </div>
             <span className="text-lg font-semibold text-foreground">
-              Mts Code
+              Code Studio
             </span>
           </div>
         </div>

@@ -1,22 +1,15 @@
-# Folders
-/build
-/dist
-/discloud
-/deprecated
-/node_modules
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
 
-# Files
-/.env
-/.env.dev
-/.env.development
+# Environment variables
+.env*.local
 
-# Config files
-/firebase.json
-
-# Extensions
-*.zip
-*.sqlite
-*.sql
-*.exe
-*.db
-*.development.json
+# Common ignores
+node_modules
+.next/
+.DS_Store
