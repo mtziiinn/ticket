@@ -1,64 +1,124 @@
-import { TranscriptViewer } from "@/components/transcript/transcript-viewer"
-import type { Transcript } from "@/lib/types"
+"use client";
 
-// Dados de exemplo para preview
-const sampleTranscript: Transcript = {
-  id: "380GACM",
-  guildId: "123456789",
-  guildName: "Mts Code",
-  channelId: "987654321",
-  channelName: "ticket-mts-boss",
-  category: "Suporte",
-  createdAt: "2026-05-10T00:07:00.000Z",
-  closedAt: "2026-05-10T01:26:00.000Z",
-  messageCount: 3,
-  openedBy: {
-    id: "111111111",
-    username: "1939 | Mts Boss",
-    avatar: undefined,
-  },
-  closedBy: {
-    id: "222222222",
-    username: "MOD Coruja",
-    avatar: undefined,
-  },
-  messages: [
-    {
-      id: "380GACM-0",
-      messageId: "msg001",
-      authorId: "222222222",
-      authorUsername: "MOD Coruja",
-      authorAvatar: undefined,
-      authorBot: false,
-      isStaff: true,
-      content: "Ola, tudo bem? Meu nome e Coruja e vou te auxiliar no seu ticket. Poderia me explicar exatamente o que esta acontecendo?",
-      timestamp: "2026-05-10T01:17:00.000Z",
-    },
-    {
-      id: "380GACM-1",
-      messageId: "msg002",
-      authorId: "111111111",
-      authorUsername: "1939 | Mts Boss",
-      authorAvatar: undefined,
-      authorBot: false,
-      isStaff: false,
-      content: "ja resolvi vlw",
-      timestamp: "2026-05-10T01:21:00.000Z",
-    },
-    {
-      id: "380GACM-2",
-      messageId: "msg003",
-      authorId: "222222222",
-      authorUsername: "MOD Coruja",
-      authorAvatar: undefined,
-      authorBot: false,
-      isStaff: true,
-      content: "Caso ainda precise de ajuda, sinta-se a vontade para abrir um novo ticket. Estamos a disposicao!",
-      timestamp: "2026-05-10T01:22:00.000Z",
-    },
-  ],
-}
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Search, Ticket, ShieldCheck, Clock, ExternalLink } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function HomePage() {
-  return <TranscriptViewer transcript={sampleTranscript} />
+  const [searchId, setSearchId] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchId.trim()) return;
+
+    setLoading(true);
+    // Redireciona para a página do transcript
+    router.push(`/transcripts/${searchId.trim().toUpperCase()}`);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-2xl space-y-8 animate-in fade-in zoom-in duration-500">
+        {/* Header Visual */}
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="p-4 bg-primary/10 rounded-full ring-1 ring-primary/20">
+              <Ticket className="h-12 w-12 text-primary" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+              Ticket <span className="text-primary">Transcript</span>
+            </h1>
+            <p className="text-muted-foreground text-lg max-w-md mx-auto">
+              Acesse o histórico detalhado de atendimentos através do ID único
+              do ticket.
+            </p>
+          </div>
+        </div>
+
+        {/* Busca */}
+        <Card className="border-primary/20 bg-card/50 backdrop-blur-sm shadow-xl overflow-hidden">
+          <CardHeader className="bg-primary/5 border-b border-primary/10">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Search className="h-5 w-5 text-primary" />
+              Localizar Atendimento
+            </CardTitle>
+            <CardDescription>
+              Insira o ID de 7 caracteres do ticket (ex: 380GACM)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            <form onSubmit={handleSearch} className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  placeholder="Digite o ID do Ticket..."
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  className="pl-10 h-12 text-lg font-mono uppercase tracking-widest border-primary/20 focus-visible:ring-primary"
+                  maxLength={10}
+                />
+                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="h-12 px-8 font-semibold shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+                disabled={loading || !searchId.trim()}
+              >
+                {loading ? "Buscando..." : "Buscar"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Features / Cards Informativos */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl border border-border bg-card/30 flex flex-col items-center text-center space-y-2">
+            <ShieldCheck className="h-6 w-6 text-primary" />
+            <span className="font-semibold text-sm">Segurança</span>
+            <p className="text-xs text-muted-foreground">
+              Logs protegidos e armazenados em nuvem.
+            </p>
+          </div>
+          <div className="p-4 rounded-xl border border-border bg-card/30 flex flex-col items-center text-center space-y-2">
+            <Clock className="h-6 w-6 text-primary" />
+            <span className="font-semibold text-sm">Histórico</span>
+            <p className="text-xs text-muted-foreground">
+              Acesso vitalício aos dados do atendimento.
+            </p>
+          </div>
+          <div className="p-4 rounded-xl border border-border bg-card/30 flex flex-col items-center text-center space-y-2">
+            <ExternalLink className="h-6 w-6 text-primary" />
+            <span className="font-semibold text-sm">Integrado</span>
+            <p className="text-xs text-muted-foreground">
+              Sincronização instantânea com o Discord.
+            </p>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <footer className="text-center">
+          <Badge
+            variant="secondary"
+            className="px-4 py-1 text-xs font-mono opacity-60"
+          >
+            Powered by SNOW Style V2
+          </Badge>
+        </footer>
+      </div>
+    </div>
+  );
 }
