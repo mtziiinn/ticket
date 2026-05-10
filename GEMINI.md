@@ -32,7 +32,7 @@ O Painel Administrativo foi redesenhado para um estilo "Dashboard" com seções 
 - **Finalização**: Processo com preenchimento de **Considerações Finais** e salvamento de log.
 - **Transcript Web**: Sistema integrado com **Next.js** (`ticket-topaz.vercel.app`).
 - **Detalhes do Contato**: O site agora exibe o **Motivo da Abertura** escrito pelo usuário, além do resumo de mensagens.
-- **Visual Logs**: Logs na Staff e na DM do usuário utilizam design limpo com separadores, cores teal (#00FFD4) e ícones de alta qualidade.
+- **Visual Logs**: Logs na Staff e na DM do usuário utilizam design limpo com separadores, cores azul (#3b82f6) e ícones de alta qualidade.
 
 ## 🛠️ Detalhes Técnicos
 - **Banco de Dados**: MongoDB Atlas (Coleções: `guilds`, `tickets`, `transcripts`).

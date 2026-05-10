@@ -33,7 +33,7 @@
 
 ## 🎨 Design & Identidade Visual
 
-O projeto utiliza uma identidade visual **Teal (#00FFD4)** com foco em organização e clareza:
+O projeto utiliza uma identidade visual **Azul (#3b82f6)** com foco em organização e clareza:
 *   **Separadores Visuais**: Todas as interfaces utilizam divisores de seção para facilitar a leitura.
 *   **Ícones Customizados**: Mais de 50 emojis de alta qualidade integrados nativamente em todas as mensagens e botões.
 *   **Layout Limpo**: Menus efêmeros que não poluem o canal, garantindo privacidade para a staff.
