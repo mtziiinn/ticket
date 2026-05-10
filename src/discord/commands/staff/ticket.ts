@@ -44,6 +44,13 @@ createCommand({
           required: true,
         },
         {
+          name: "vault",
+          description:
+            "Canal cofre onde as imagens serão salvas permanentemente",
+          type: ApplicationCommandOptionType.Channel,
+          required: true,
+        },
+        {
           name: "cat_suporte",
           description: "Categoria para Suporte Geral",
           type: ApplicationCommandOptionType.Channel,
@@ -285,6 +292,7 @@ createCommand({
 
     if (subcommand === "configurar") {
       const logsChannel = options.getChannel("logs", true);
+      const vaultChannel = options.getChannel("vault", true);
       const catSuporte = options.getChannel("cat_suporte", true);
       const catDenuncia = options.getChannel("cat_denuncia", true);
       const catFinanceiro = options.getChannel("cat_financeiro", true);
@@ -297,6 +305,7 @@ createCommand({
         guildData.channels = {
           ...guildData.channels,
           tickets: logsChannel.id,
+          vault: vaultChannel.id,
           categories: {
             suporte: catSuporte.id,
             denuncia: catDenuncia.id,

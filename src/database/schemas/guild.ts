@@ -6,6 +6,7 @@ export const guildSchema = new Schema(
     id: t.string,
     channels: {
       logs: String,
+      vault: String,
       general: String,
       tickets: String,
       categories: {

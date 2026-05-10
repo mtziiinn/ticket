@@ -657,12 +657,76 @@ export async function generateTranscript(
     (a, b) => a.createdTimestamp - b.createdTimestamp,
   );
 
+  const guildData = await db.guilds.get(channel.guild.id);
+  const vaultChannelId = guildData.channels?.vault;
+  const vaultChannel = vaultChannelId
+    ? channel.guild.channels.cache.get(vaultChannelId)
+    : null;
+
   const ownerMember = await channel.guild.members
     .fetch(ticket.ownerId)
     .catch(() => null);
 
   const transcriptId =
     ticket.ticketId || Math.random().toString(36).substring(2, 9).toUpperCase();
+
+  const messagesData = [];
+
+  for (const msg of sortedMessages) {
+    const attachments = [];
+
+    if (msg.attachments.size > 0 && vaultChannel?.isTextBased()) {
+      for (const att of msg.attachments.values()) {
+        try {
+          const backup = await (vaultChannel as any).send({
+            content: `📦 **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author.tag}\``,
+            files: [att.url],
+          });
+          const permanentUrl = backup.attachments.first()?.url;
+          attachments.push({
+            url: permanentUrl || att.url,
+            filename: att.name,
+            contentType: att.contentType,
+          });
+        } catch (err) {
+          console.error(`[Vault] Erro ao fazer backup de ${att.name}:`, err);
+          attachments.push({
+            url: att.url,
+            filename: att.name,
+            contentType: att.contentType,
+          });
+        }
+      }
+    } else {
+      attachments.push(
+        ...msg.attachments.map((att) => ({
+          url: att.url,
+          filename: att.name,
+          contentType: att.contentType,
+        })),
+      );
+    }
+
+    messagesData.push({
+      id: `${transcriptId}-${messagesData.length}`,
+      messageId: msg.id,
+      authorId: msg.author.id,
+      authorUsername: msg.author.username,
+      authorAvatar: msg.author.displayAvatarURL(),
+      authorBot: msg.author.bot,
+      isStaff:
+        msg.member?.permissions.has(PermissionFlagsBits.ManageChannels) ||
+        false,
+      content: msg.content,
+      timestamp: msg.createdAt.toISOString(),
+      attachments,
+      embeds: msg.embeds.map((emb) => ({
+        title: emb.title || undefined,
+        description: emb.description || undefined,
+        color: emb.color || undefined,
+      })),
+    });
+  }
 
   const transcriptData = {
     id: transcriptId,
@@ -689,29 +753,7 @@ export async function generateTranscript(
       avatar: closer.displayAvatarURL(),
     },
     messageCount: sortedMessages.length,
-    messages: sortedMessages.map((msg, index) => ({
-      id: `${transcriptId}-${index}`,
-      messageId: msg.id,
-      authorId: msg.author.id,
-      authorUsername: msg.author.username,
-      authorAvatar: msg.author.displayAvatarURL(),
-      authorBot: msg.author.bot,
-      isStaff:
-        msg.member?.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        false,
-      content: msg.content,
-      timestamp: msg.createdAt.toISOString(),
-      attachments: msg.attachments.map((att) => ({
-        url: att.url,
-        filename: att.name,
-        contentType: att.contentType,
-      })),
-      embeds: msg.embeds.map((emb) => ({
-        title: emb.title || undefined,
-        description: emb.description || undefined,
-        color: emb.color || undefined,
-      })),
-    })),
+    messages: messagesData,
   };
 
   // Salvar no Banco de Dados (Sincronizado com o Web App)
