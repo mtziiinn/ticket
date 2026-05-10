@@ -14,6 +14,15 @@ export const guildSchema = new Schema(
         financeiro: String,
         bugs: String,
       },
+      ticketCategories: [
+        {
+          name: String,
+          value: String,
+          description: String,
+          emoji: String,
+          parentId: String,
+        },
+      ],
     },
   },
   {

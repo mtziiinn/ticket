@@ -238,6 +238,17 @@ createResponder({
       }
 
       case "transfer": {
+        const guildData = await db.guilds.get(guild.id);
+        const dynamicCategories = guildData.channels?.ticketCategories || [];
+
+        if (dynamicCategories.length === 0) {
+          await interaction.reply({
+            content: "❌ Nenhuma categoria configurada para transferência.",
+            flags: ["Ephemeral"],
+          });
+          return;
+        }
+
         const container = createContainer(
           constants.colors.primary,
           createSection({
@@ -249,24 +260,11 @@ createResponder({
             new StringSelectMenuBuilder({
               customId: "ticket/manage/transfer_select",
               placeholder: "Escolha uma categoria...",
-              options: [
-                {
-                  label: "Suporte",
-                  value: "suporte",
-                  emoji: "1502789958430232688",
-                },
-                {
-                  label: "Denúncia",
-                  value: "denuncia",
-                  emoji: "1502789938532450304",
-                },
-                {
-                  label: "Financeiro",
-                  value: "financeiro",
-                  emoji: "1502789953334280345",
-                },
-                { label: "Bugs", value: "bugs", emoji: "1502789951400444126" },
-              ],
+              options: dynamicCategories.map((cat) => ({
+                label: cat.name,
+                value: cat.value,
+                emoji: cat.emoji || undefined,
+              })),
             }),
           ),
         );
@@ -608,16 +606,16 @@ createResponder({
 
     const newCategory = values[0];
     const guildData = await db.guilds.get(guild.id);
-    const categories = guildData.channels?.categories;
+    const dynamicCategories = guildData.channels?.ticketCategories || [];
+    const selectedCategory = dynamicCategories.find(
+      (c) => c.value === newCategory,
+    );
 
-    let parentId = undefined;
-    if (categories) {
-      parentId = (categories as any)[newCategory];
-    }
+    const parentId = selectedCategory?.parentId;
 
     if (!parentId) {
       await interaction.editReply({
-        content: `A categoria "${newCategory.toUpperCase()}" não está configurada no bot. Use \`/ticket configurar\`.`,
+        content: `A categoria "${newCategory.toUpperCase()}" não está configurada corretamente.`,
       });
       return;
     }

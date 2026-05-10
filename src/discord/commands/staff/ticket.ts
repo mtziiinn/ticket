@@ -69,10 +69,159 @@ createCommand({
         },
       ],
     },
+    {
+      name: "categorias",
+      description: "Gerenciar categorias de atendimento",
+      type: ApplicationCommandOptionType.SubcommandGroup,
+      options: [
+        {
+          name: "adicionar",
+          description: "Adicionar uma nova categoria de atendimento",
+          type: ApplicationCommandOptionType.Subcommand,
+          options: [
+            {
+              name: "nome",
+              description: "Nome da categoria (ex: Suporte VIP)",
+              type: ApplicationCommandOptionType.String,
+              required: true,
+            },
+            {
+              name: "descrição",
+              description: "Descrição que aparecerá no menu",
+              type: ApplicationCommandOptionType.String,
+              required: true,
+            },
+            {
+              name: "categoria",
+              description:
+                "ID da categoria no Discord onde o ticket será criado",
+              type: ApplicationCommandOptionType.Channel,
+              required: true,
+            },
+            {
+              name: "emoji",
+              description: "Emoji da categoria (pode ser o ID ou emoji comum)",
+              type: ApplicationCommandOptionType.String,
+              required: false,
+            },
+          ],
+        },
+        {
+          name: "remover",
+          description: "Remover uma categoria de atendimento",
+          type: ApplicationCommandOptionType.Subcommand,
+          options: [
+            {
+              name: "valor",
+              description: "O valor (slug) da categoria a ser removida",
+              type: ApplicationCommandOptionType.String,
+              required: true,
+            },
+          ],
+        },
+        {
+          name: "listar",
+          description: "Listar todas as categorias configuradas",
+          type: ApplicationCommandOptionType.Subcommand,
+        },
+      ],
+    },
   ],
   async run(interaction) {
-    const { options, guildId } = interaction;
+    const { options, guildId, guild } = interaction;
     const subcommand = options.getSubcommand();
+    const group = options.getSubcommandGroup();
+
+    if (group === "categorias") {
+      await interaction.deferReply({ ephemeral: true });
+      const guildData = await db.guilds.get(guildId!);
+
+      if (subcommand === "adicionar") {
+        const name = options.getString("nome", true);
+        const description = options.getString("descrição", true);
+        const categoryChannel = options.getChannel("categoria", true);
+        const emoji = options.getString("emoji") || "🎫";
+        const value = name
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/\s+/g, "_");
+
+        if (!guildData.channels) guildData.channels = {} as any;
+        if (!guildData.channels.ticketCategories)
+          guildData.channels.ticketCategories = [];
+
+        const exists = guildData.channels.ticketCategories.find(
+          (c) => c.value === value,
+        );
+        if (exists) {
+          await interaction.editReply({
+            content: `❌ Já existe uma categoria com o valor \`${value}\`. Use outro nome.`,
+          });
+          return;
+        }
+
+        guildData.channels.ticketCategories.push({
+          name,
+          value,
+          description,
+          emoji,
+          parentId: categoryChannel.id,
+        });
+
+        await (guildData as any).save();
+        await interaction.editReply({
+          content: `✅ Categoria **${name}** (\`${value}\`) adicionada com sucesso!`,
+        });
+        return;
+      }
+
+      if (subcommand === "remover") {
+        const value = options.getString("valor", true);
+
+        if (!guildData.channels?.ticketCategories) {
+          await interaction.editReply({
+            content: "❌ Nenhuma categoria configurada.",
+          });
+          return;
+        }
+
+        const initialLength = guildData.channels.ticketCategories.length;
+        guildData.channels.ticketCategories =
+          guildData.channels.ticketCategories.filter((c) => c.value !== value);
+
+        if (guildData.channels.ticketCategories.length === initialLength) {
+          await interaction.editReply({
+            content: `❌ Nenhuma categoria encontrada com o valor \`${value}\`.`,
+          });
+          return;
+        }
+
+        await (guildData as any).save();
+        await interaction.editReply({
+          content: `✅ Categoria \`${value}\` removida com sucesso!`,
+        });
+        return;
+      }
+
+      if (subcommand === "listar") {
+        const cats = guildData.channels?.ticketCategories;
+        if (!cats || cats.length === 0) {
+          await interaction.editReply({
+            content: "Nenhuma categoria configurada no momento.",
+          });
+          return;
+        }
+
+        const list = cats
+          .map((c) => `• **${c.name}** (\`${c.value}\`) - <#${c.parentId}>`)
+          .join("\n");
+        await interaction.editReply({
+          content: `### 📂 Categorias Configuradas\n${list}`,
+        });
+        return;
+      }
+    }
 
     if (subcommand === "painel") {
       const channel = options.getChannel("canal", true);

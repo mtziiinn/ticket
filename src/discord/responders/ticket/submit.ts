@@ -33,6 +33,20 @@ async function processTicketSubmission(interaction: any) {
   const { guild, user, fields } = interaction;
 
   try {
+    // 0. Verificar se o usuário já possui um ticket aberto
+    const existingTicket = await db.tickets.findOne({
+      guildId: guild.id,
+      ownerId: user.id,
+      closed: false,
+    });
+
+    if (existingTicket) {
+      await interaction.editReply({
+        content: `<:action_x:1502789802918150206> Você já possui um ticket aberto em <#${existingTicket.channelId}>! Finalize-o antes de abrir um novo.`,
+      });
+      return;
+    }
+
     const data = modalFieldsToRecord(fields);
     const categoryRaw = data.category;
     const category =
@@ -45,13 +59,13 @@ async function processTicketSubmission(interaction: any) {
 
     // 1. Buscar as configurações de categorias no banco
     const guildData = await db.guilds.get(guild.id);
-    const categories = guildData.channels?.categories;
+    const dynamicCategories = guildData.channels?.ticketCategories || [];
+    const selectedCategory = dynamicCategories.find(
+      (c) => c.value === category,
+    );
 
     // Pega o ID da categoria baseado no assunto escolhido
-    let parentId = undefined;
-    if (categories) {
-      parentId = (categories as any)[category];
-    }
+    let parentId = selectedCategory?.parentId;
 
     console.log(
       `[Ticket] Roteando assunto "${category}" para categoria ID: ${parentId || "Padrão"}`,
@@ -157,6 +171,19 @@ createResponder({
   types: [ResponderType.Button],
   cache: "cached",
   async run(interaction) {
+    const { guild } = interaction;
+    const guildData = await db.guilds.get(guild.id);
+    const dynamicCategories = guildData.channels?.ticketCategories || [];
+
+    if (dynamicCategories.length === 0) {
+      await interaction.reply({
+        content:
+          "❌ Nenhuma categoria de atendimento foi configurada pela Staff ainda.",
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
+
     const modal = new ModalBuilder()
       .setCustomId("ticket/form/submit")
       .setTitle("Abertura de Ticket");
@@ -169,22 +196,12 @@ createResponder({
           .setCustomId("category")
           .setPlaceholder("Selecione uma categoria...")
           .setOptions(
-            {
-              label: "Suporte Geral",
-              value: "suporte",
-              emoji: "1502789958430232688",
-            },
-            {
-              label: "Denúncia",
-              value: "denuncia",
-              emoji: "1502789938532450304",
-            },
-            {
-              label: "Financeiro",
-              value: "financeiro",
-              emoji: "1502789953334280345",
-            },
-            { label: "Bugs", value: "bugs", emoji: "1502789951400444126" },
+            ...dynamicCategories.map((cat) => ({
+              label: cat.name,
+              value: cat.value,
+              description: cat.description,
+              emoji: cat.emoji || undefined,
+            })),
           ),
       );
 
