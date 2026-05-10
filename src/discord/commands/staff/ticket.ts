@@ -128,7 +128,7 @@ createCommand({
     },
   ],
   async run(interaction) {
-    const { options, guildId, guild } = interaction;
+    const { options, guildId } = interaction;
     const subcommand = options.getSubcommand();
     const group = options.getSubcommandGroup();
 
@@ -140,16 +140,22 @@ createCommand({
         const name = options.getString("nome", true);
         const description = options.getString("descrição", true);
         const categoryChannel = options.getChannel("categoria", true);
-        const emoji = options.getString("emoji") || "🎫";
+        const emoji = options.getString("emoji") || "1502789959378145300";
         const value = name
           .toLowerCase()
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "")
           .replace(/\s+/g, "_");
 
-        if (!guildData.channels) guildData.channels = {} as any;
+        if (!guildData.channels) {
+          guildData.channels = {
+            tickets: "",
+            categories: { suporte: "", denuncia: "", financeiro: "", bugs: "" },
+            ticketCategories: [] as any,
+          };
+        }
         if (!guildData.channels.ticketCategories)
-          guildData.channels.ticketCategories = [];
+          guildData.channels.ticketCategories = [] as any;
 
         const exists = guildData.channels.ticketCategories.find(
           (c) => c.value === value,
@@ -187,15 +193,18 @@ createCommand({
         }
 
         const initialLength = guildData.channels.ticketCategories.length;
-        guildData.channels.ticketCategories =
-          guildData.channels.ticketCategories.filter((c) => c.value !== value);
+        const filtered = guildData.channels.ticketCategories.filter(
+          (c) => c.value !== value,
+        );
 
-        if (guildData.channels.ticketCategories.length === initialLength) {
+        if (filtered.length === initialLength) {
           await interaction.editReply({
             content: `❌ Nenhuma categoria encontrada com o valor \`${value}\`.`,
           });
           return;
         }
+
+        guildData.channels.ticketCategories = filtered as any;
 
         await (guildData as any).save();
         await interaction.editReply({
@@ -214,7 +223,13 @@ createCommand({
         }
 
         const list = cats
-          .map((c) => `• **${c.name}** (\`${c.value}\`) - <#${c.parentId}>`)
+          .map((c) => {
+            const emojiDisplay =
+              c.emoji?.length && c.emoji.length > 5 && !c.emoji.includes(":")
+                ? `<:emoji:${c.emoji}>`
+                : c.emoji || "🎫";
+            return `• ${emojiDisplay} **${c.name}** (\`${c.value}\`) - <#${c.parentId}>`;
+          })
           .join("\n");
         await interaction.editReply({
           content: `### 📂 Categorias Configuradas\n${list}`,
@@ -288,7 +303,8 @@ createCommand({
             financeiro: catFinanceiro.id,
             bugs: catBugs.id,
           },
-        };
+          ticketCategories: guildData.channels?.ticketCategories || ([] as any),
+        } as any;
         await (guildData as any).save();
 
         await interaction.editReply({

@@ -261,8 +261,8 @@ createResponder({
               customId: "ticket/manage/transfer_select",
               placeholder: "Escolha uma categoria...",
               options: dynamicCategories.map((cat) => ({
-                label: cat.name,
-                value: cat.value,
+                label: cat.name as string,
+                value: cat.value as string,
                 emoji: cat.emoji || undefined,
               })),
             }),

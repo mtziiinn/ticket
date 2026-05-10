@@ -197,9 +197,9 @@ createResponder({
           .setPlaceholder("Selecione uma categoria...")
           .setOptions(
             ...dynamicCategories.map((cat) => ({
-              label: cat.name,
-              value: cat.value,
-              description: cat.description,
+              label: cat.name as string,
+              value: cat.value as string,
+              description: (cat.description as string) || undefined,
               emoji: cat.emoji || undefined,
             })),
           ),
