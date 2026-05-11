@@ -5,38 +5,38 @@
 </p>
 
 <p align="center">
-  <b>Um sistema de atendimento avançado para Discord, focado em alta performance, design premium e experiência do usuário.</b><br>
-  <i>Desenvolvido com as tecnologias mais modernas de Components V2 e Transcripts Online.</i>
+  <b>Um sistema de atendimento avançado para Discord, focado em alta performance, design premium e gestão visual completa.</b><br>
+  <i>Desenvolvido com as tecnologias mais modernas de Components V2, Dashboards Interativos e Transcripts Online.</i>
 </p>
 
 ---
 
-## 🚀 Funcionalidades Principais
+## 🚀 Funcionalidades Premium
 
-### 🏢 Central de Atendimento
-*   **Abertura Simplificada**: Interface moderna com diretrizes claras e botões interativos.
-*   **Roteamento Inteligente**: Distribuição automática de tickets para categorias específicas (Suporte, Denúncia, Financeiro, Bugs).
-*   **Modais V2**: Formulários de abertura limpos e intuitivos para coletar o motivo do contato.
+### ⚙️ Dashboard Interativo de Configuração
+*   **Gestão 100% Visual**: Configure canais de logs, cofre de mídia e cargo de equipe sem comandos de texto.
+*   **Categorias Dinâmicas**: Crie e remova setores de atendimento (Suporte, VIP, Financeiro) diretamente pelo painel.
+*   **Controle de Funcionamento**: Sistema de **"Abrir/Fechar Loja"** que bloqueia novas aberturas com um clique.
+*   **Personalização de Canais**: Escolha emojis exclusivos para cada categoria ou um emoji global para os canais de ticket.
 
-### 🛠️ Painel Administrativo (Estilo Dashboard)
-*   **Gestão de Membros**: Adicione ou remova usuários do ticket via menu interativo.
-*   **Transferência Dinâmica**: Mova o ticket entre categorias sem perder o histórico.
-*   **Sistema de Claim**: Sistema de "Assumir/Largar" com feedback visual em tempo real.
-*   **Ferramentas Avançadas**: Renomear canais, notificar usuários via DM e gerenciar logs.
+### 🛠️ Gestão Avançada de Tickets
+*   **Sistema de Claim**: Botão de "Assumir Ticket" com feedback visual e logs de quem está atendendo.
+*   **Gestão de Membros**: Adicione ou remova usuários do ticket apenas inserindo o ID no formulário.
+*   **Logs de Abertura e Fechamento**: Registro completo do ciclo de vida do atendimento em canais de logs dedicados.
+*   **Cargo Staff Customizável**: Permita que sua equipe gerencie os tickets sem precisar de permissão de Administrador.
 
 ### 📄 Transcript Web Integrado
-*   **Logs em Nuvem**: Histórico de mensagens salvo no MongoDB e visualizado em um site Next.js.
-*   **Detalhes do Contato**: Exibição clara do motivo da abertura e cronologia do atendimento.
-*   **Design Responsivo**: Transcripts otimizados para visualização em computadores e dispositivos móveis.
+*   **Logs em Nuvem**: Histórico de mensagens salvo no MongoDB e visualizado em [ticket-mts.vercel.app](https://ticket-mts.vercel.app).
+*   **Backup Permanente**: Sistema de **Cofre (Vault)** que salva imagens e anexos permanentemente para evitar links expirados.
+*   **Design Premium**: Transcripts com visual limpo, cronologia detalhada e motivo da abertura em destaque.
 
 ---
 
-## 🎨 Design & Identidade Visual
+## 🎨 Identidade Visual & UX
 
-O projeto utiliza uma identidade visual **Azul (#3b82f6)** com foco em organização e clareza:
-*   **Separadores Visuais**: Todas as interfaces utilizam divisores de seção para facilitar a leitura.
-*   **Ícones Customizados**: Mais de 50 emojis de alta qualidade integrados nativamente em todas as mensagens e botões.
-*   **Layout Limpo**: Menus efêmeros que não poluem o canal, garantindo privacidade para a staff.
+*   **Components V2 & Modais V2**: Utiliza o que há de mais moderno na API do Discord para uma experiência fluida.
+*   **Ícones Customizados**: Mais de 50 emojis de alta qualidade integrados nativamente em todas as interfaces.
+*   **Guia de Configuração**: Manual interativo embutido no Dashboard para facilitar o setup inicial.
 
 ---
 
@@ -45,50 +45,25 @@ O projeto utiliza uma identidade visual **Azul (#3b82f6)** com foco em organiza�
 ### Bot do Discord
 *   **Framework**: [Constatic](https://constatic-docs.vercel.app) + @magicyan/discord
 *   **Linguagem**: TypeScript
-*   **Interface**: Components V2 & Modais V2
+*   **Banco de Dados**: MongoDB Atlas (Mongoose)
 
 ### Web & API
 *   **Frontend**: Next.js 14+ (Tailwind CSS + Lucide Icons)
-*   **API**: Next.js API Routes (Edge Runtime)
-*   **Banco de Dados**: MongoDB Atlas (Mongoose)
+*   **Deploy**: Vercel (Otimizado com Sharp para pnpm)
 
 ---
 
-## ⚙️ Instalação e Configuração
+## ⚙️ Instalação Rápida
 
-1.  **Clonar o Repositório**:
-    ```bash
-    git clone https://github.com/mtziiinn/ticket.git
-    cd ticket
-    ```
-
-2.  **Instalar Dependências**:
-    ```bash
-    npm install
-    cd web && npm install
-    ```
-
-3.  **Configurar Variáveis de Ambiente**:
-    Crie um arquivo `.env` na raiz com:
+1.  **Instalar Dependências**: `npm install` e dentro de `/web` use `pnpm install`.
+2.  **Configurar `.env`**:
     ```env
     BOT_TOKEN=seu_token_aqui
     MONGO_URI=sua_uri_mongodb
-    WEB_URL=https://seu-site-aqui.vercel.app
+    WEB_URL=https://ticket-mts.vercel.app
     ```
-
-4.  **Iniciar o Sistema**:
-    ```bash
-    npm run dev
-    ```
-
----
-
-## 📂 Estrutura do Projeto
-
-*   `/src`: Código fonte do Bot do Discord.
-*   `/src/discord/responders`: Lógica interativa de botões e modais.
-*   `/web`: Aplicação Next.js para os Transcripts Online.
-*   `/web/components/transcript`: Componentes visuais do site de logs.
+3.  **Iniciar**: `npm run dev`
+4.  **Setup**: Use `/ticket configurar` no Discord e siga o **Guia Visual**.
 
 ---
 
