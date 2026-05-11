@@ -9,6 +9,7 @@ export const guildSchema = new Schema(
       vault: String,
       general: String,
       tickets: String,
+      ticketEmoji: String,
       categories: {
         suporte: String,
         denuncia: String,

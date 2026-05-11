@@ -78,8 +78,9 @@ async function processTicketSubmission(interaction: any) {
     const eFolder = "<:folder:1502789880214720533>";
 
     // 2. Criar o canal na categoria correta
+    const channelEmoji = guildData.channels?.ticketEmoji || "🎫";
     const channel = await guild.channels.create({
-      name: `🎫・${ticketId}`,
+      name: `${channelEmoji}・${ticketId}`,
       type: ChannelType.GuildText,
       parent: parentId || undefined,
       topic: `${eTicket}・${ticketId} | ${eUser} Aberto Por: ${user.tag} | ${eCalendar} Aberto em: ${openedAt} | ${eFolder} Categoria: ${category.toUpperCase()}`,

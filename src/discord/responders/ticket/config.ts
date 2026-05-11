@@ -27,6 +27,7 @@ export async function createConfigPanel(guildId: string) {
   const vaultDisplay = channels?.vault
     ? `<#${channels.vault}>`
     : "*Não configurado*";
+  const emojiDisplay = channels?.ticketEmoji || "🎫";
 
   const customCats = channels?.ticketCategories || [];
   const catDisplay =
@@ -53,6 +54,7 @@ export async function createConfigPanel(guildId: string) {
     "### <:database:1502789865023209512> Canais de Sistema",
     `> <:clock:1502789859960422502> **Logs de Atendimento:** ${logsDisplay}`,
     `> <:folder:1502789880214720533> **Cofre de Mídia (Vault):** ${vaultDisplay}`,
+    `> ${emojiDisplay} **Emoji dos Canais:** \`${emojiDisplay}\``,
     Separator.Default,
     "### <:folder_open:1502789875928400103> Categorias Ativas",
     catDisplay,
@@ -162,6 +164,15 @@ createResponder({
             .setStyle(TextInputStyle.Short)
             .setRequired(true),
         ),
+        createRow(
+          new TextInputBuilder()
+            .setCustomId("emoji")
+            .setLabel("Emoji dos Canais")
+            .setPlaceholder("Ex: 🎫 ou 🛠️")
+            .setValue(guildData.channels?.ticketEmoji || "🎫")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true),
+        ),
       );
 
       await interaction.showModal(modal);
@@ -266,8 +277,11 @@ createResponder({
       } as any;
     }
 
-    guildData.channels.tickets = data.logs as string;
-    guildData.channels.vault = data.vault as string;
+    if (guildData.channels) {
+      guildData.channels.tickets = data.logs as string;
+      guildData.channels.vault = data.vault as string;
+      guildData.channels.ticketEmoji = data.emoji as string;
+    }
 
     guildData.markModified("channels");
     await (guildData as any).save();
@@ -299,8 +313,9 @@ createResponder({
         ticketCategories: [],
       } as any;
     }
-    if (!guildData.channels.ticketCategories)
+    if (guildData.channels && !guildData.channels.ticketCategories) {
       guildData.channels.ticketCategories = [] as any;
+    }
 
     const name = data.name as string;
     const value = name
@@ -309,13 +324,15 @@ createResponder({
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/\s+/g, "_");
 
-    guildData.channels.ticketCategories.push({
-      name,
-      value,
-      description: data.description as string,
-      parentId: data.parentId as string,
-      emoji: (data.emoji as string) || "1502789959378145300",
-    });
+    if (guildData.channels) {
+      guildData.channels.ticketCategories.push({
+        name,
+        value,
+        description: data.description as string,
+        parentId: data.parentId as string,
+        emoji: (data.emoji as string) || "1502789959378145300",
+      });
+    }
 
     guildData.markModified("channels");
     await (guildData as any).save();
@@ -333,7 +350,7 @@ createResponder({
   types: [ResponderType.StringSelect],
   cache: "cached",
   async run(interaction) {
-    const { values, guildId, message } = interaction;
+    const { values, guildId } = interaction;
     const valueToRemove = values[0];
 
     const guildData = await db.guilds.get(guildId!);
@@ -350,10 +367,7 @@ createResponder({
     await interaction.deferUpdate();
     await interaction.deleteReply().catch(() => {});
 
-    // Atualiza o painel principal
-    const panel = await createConfigPanel(guildId!);
-    // Como o painel está em outra mensagem, precisamos achar o contexto original ou pedir refresh
-    // Mas podemos tentar dar um followUp ou informar o sucesso
+    // Informar o sucesso
     await interaction.followUp({
       content:
         "✅ Categoria removida com sucesso! Atualize o painel para ver as mudanças.",
