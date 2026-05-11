@@ -10,7 +10,6 @@ import {
 import {
   ButtonBuilder,
   ButtonStyle,
-  UserSelectMenuBuilder,
   TextInputBuilder,
   TextInputStyle,
   ModalBuilder,
@@ -394,14 +393,13 @@ createResponder({
           .setTitle("Gerenciar Membros");
 
         const label = new LabelBuilder()
-          .setLabel("Adicionar/Remover Membro")
-          .setDescription(
-            "Selecione o usuário que deseja adicionar ou remover.",
-          )
-          .setUserSelectMenuComponent(
-            new UserSelectMenuBuilder()
+          .setLabel("ID do Usuário")
+          .setTextInputComponent(
+            new TextInputBuilder()
               .setCustomId("member")
-              .setPlaceholder("Selecione um usuário..."),
+              .setPlaceholder("Insira o ID do usuário (ex: 1234567890)")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
           );
 
         modal.addComponents(label);
