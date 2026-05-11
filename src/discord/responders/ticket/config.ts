@@ -109,17 +109,18 @@ createResponder({
         constants.colors.primary,
         createSection({
           content:
-            "## <:action_info:1502789798983766016> Guia de Configuração\nAprenda a configurar seu sistema de tickets em poucos passos.",
+            "## <:action_info:1502789798983766016> Guia de Configuração\nSiga os passos abaixo para deixar seu sistema de tickets pronto para uso.",
           thumbnail: emojis.static.action_info,
         }),
         Separator.Default,
-        "### <:clock:1502789859960422502> 1. Canais de Sistema",
-        "**Logs:** Onde todas as aberturas e encerramentos serão registrados.\n**Vault:** Canal para backup permanente de imagens.",
+        "### <:database:1502789865023209512> 1. Canais do Sistema",
+        "Clique no botão **Canais** para definir onde o bot deve trabalhar:\n> <:clock:1502789859960422502> **Logs:** Canal para registro de todo o histórico.\n> <:folder:1502789880214720533> **Vault:** Canal privado para backup de anexos.",
         Separator.Default,
-        "### <:folder_add:1502789875009851432> 2. Gerenciando Categorias",
-        "**Adicionar:** Clique em 'Add Categoria' e preencha o formulário. O ID da Categoria Pai é onde os tickets serão criados.\n**Remover:** Clique em 'Remover Cat' e selecione a categoria que deseja excluir.",
+        "### <:folder_add:1502789875009851432> 2. Categorias de Atendimento",
+        "Você deve criar pelo menos uma categoria para os usuários selecionarem:\n> <:action_add:1502789796278304800> **Adicionar:** Defina nome, emoji e o ID da categoria pai no Discord.\n> <:action_remove:1502789800967536741> **Remover:** Exclua categorias que não são mais necessárias.",
         Separator.Default,
-        "**Dica:** Ative o 'Modo Desenvolvedor' para copiar IDs de categorias no Discord.",
+        "### <:other_ticket:1502789959378145300> 3. Painel de Abertura",
+        "Após configurar tudo, use o comando abaixo no canal desejado:\n` /ticket painel canal: #seu-canal `\n\n**Dica:** Ative o **Modo Desenvolvedor** no seu Discord para copiar IDs facilmente clicando com o botão direito nos canais.",
       );
 
       await interaction.reply({
