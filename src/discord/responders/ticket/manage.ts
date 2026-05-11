@@ -29,9 +29,9 @@ const statusMap: Record<
 > = {
   open: {
     emoji: "🔴",
-    label: "Ticket Aberto",
+    label: "Alinhando Detalhes",
     description:
-      "Estamos conversando sobre sua encomenda e alinhando os detalhes.",
+      "Estamos conversando sobre sua encomenda e alinhando todos os pontos do projeto.",
   },
   payment: {
     emoji: "🟡",
