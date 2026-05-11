@@ -864,6 +864,13 @@ createResponder({
     ticket.status = newStatus;
     await (ticket as any).save();
 
+    // Atualizar Nome do Canal com o novo Emoji
+    const ticketId = (ticket.ticketId as string) || "ticket";
+    const newName = `${statusData.emoji}・${ticketId.toLowerCase()}`;
+    await (channel as any).setName(newName).catch((err: any) => {
+      console.error("[Status] Erro ao renomear canal:", err);
+    });
+
     // Atualizar Painel Principal
     const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
     const container = createMainPanel(ticket, owner);
