@@ -12,6 +12,7 @@ import {
   ButtonStyle,
 } from "discord.js";
 import { db } from "#database";
+import { createConfigPanel } from "../../responders/ticket/config.js";
 
 createCommand({
   name: "ticket",
@@ -34,45 +35,20 @@ createCommand({
     },
     {
       name: "configurar",
-      description: "Configurar canais de logs e categorias de roteamento",
+      description: "Acessar o painel interativo de configuração do sistema",
       type: ApplicationCommandOptionType.Subcommand,
       options: [
         {
           name: "logs",
-          description: "Canal onde os logs de tickets serão enviados",
+          description: "Canal de logs (Opcional - pode configurar no painel)",
           type: ApplicationCommandOptionType.Channel,
-          required: true,
+          required: false,
         },
         {
           name: "vault",
-          description:
-            "Canal cofre onde as imagens serão salvas permanentemente",
+          description: "Canal cofre (Opcional - pode configurar no painel)",
           type: ApplicationCommandOptionType.Channel,
-          required: true,
-        },
-        {
-          name: "cat_suporte",
-          description: "Categoria para Suporte Geral",
-          type: ApplicationCommandOptionType.Channel,
-          required: true,
-        },
-        {
-          name: "cat_denuncia",
-          description: "Categoria para Denúncias",
-          type: ApplicationCommandOptionType.Channel,
-          required: true,
-        },
-        {
-          name: "cat_financeiro",
-          description: "Categoria para Financeiro",
-          type: ApplicationCommandOptionType.Channel,
-          required: true,
-        },
-        {
-          name: "cat_bugs",
-          description: "Categoria para Bugs",
-          type: ApplicationCommandOptionType.Channel,
-          required: true,
+          required: false,
         },
       ],
     },
@@ -291,39 +267,45 @@ createCommand({
     }
 
     if (subcommand === "configurar") {
-      const logsChannel = options.getChannel("logs", true);
-      const vaultChannel = options.getChannel("vault", true);
-      const catSuporte = options.getChannel("cat_suporte", true);
-      const catDenuncia = options.getChannel("cat_denuncia", true);
-      const catFinanceiro = options.getChannel("cat_financeiro", true);
-      const catBugs = options.getChannel("cat_bugs", true);
+      const logsChannel = options.getChannel("logs");
+      const vaultChannel = options.getChannel("vault");
 
       await interaction.deferReply({ flags: ["Ephemeral"] });
 
       try {
         const guildData = await db.guilds.get(guildId!);
-        guildData.channels = {
-          ...guildData.channels,
-          tickets: logsChannel.id,
-          vault: vaultChannel.id,
-          categories: {
-            suporte: catSuporte.id,
-            denuncia: catDenuncia.id,
-            financeiro: catFinanceiro.id,
-            bugs: catBugs.id,
-          },
-          ticketCategories: guildData.channels?.ticketCategories || ([] as any),
-        } as any;
-        await (guildData as any).save();
+
+        // Se forneceu opções no comando, já salva elas
+        if (logsChannel || vaultChannel) {
+          guildData.channels = {
+            ...guildData.channels,
+            tickets: logsChannel?.id || guildData.channels?.tickets || "",
+            vault: vaultChannel?.id || guildData.channels?.vault || "",
+            categories: guildData.channels?.categories || {
+              suporte: "",
+              denuncia: "",
+              financeiro: "",
+              bugs: "",
+            },
+            ticketCategories:
+              guildData.channels?.ticketCategories || ([] as any),
+          } as any;
+          await (guildData as any).save();
+        }
+
+        const panel = await createConfigPanel(guildId!);
 
         await interaction.editReply({
           content:
-            "✅ Sistema de tickets configurado! Logs e Categorias salvos com sucesso.",
+            logsChannel || vaultChannel
+              ? "✅ Configurações iniciais salvas!"
+              : "Acesse o painel abaixo para configurar o sistema:",
+          components: [panel],
         });
       } catch (error) {
         console.error("Erro na configuração:", error);
         await interaction.editReply({
-          content: "Ocorreu um erro ao salvar a configuração.",
+          content: "Ocorreu um erro ao abrir o painel de configuração.",
         });
       }
     }
