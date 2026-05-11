@@ -152,6 +152,49 @@ async function processTicketSubmission(interaction: any) {
       description,
     });
 
+    // 5. Enviar Log de Abertura
+    const logChannelId = guildData.channels?.tickets;
+    if (logChannelId) {
+      const logChannel = guild.channels.cache.get(logChannelId);
+      if (logChannel?.isTextBased()) {
+        const openedAtTimestamp = Math.floor(Date.now() / 1000);
+        const categoryName = selectedCategory?.name || category.toUpperCase();
+
+        const logContainer = createContainer(
+          constants.colors.primary,
+          createSection({
+            content: `## <:folder:1502789880214720533> Novo Atendimento ${ticketId}\nVenho registrar a log de abertura do atendimento \`${ticketId}\`, iniciado por ${user}. Abaixo você pode ver todas as informações do ticket.`,
+            thumbnail: user.displayAvatarURL() as any,
+          }),
+          Separator.Default,
+          `**Identificação**\n` +
+            [
+              `<:user:1502789979229913268> **Aberto por:** ${user} (\`${user.id}\`)`,
+              `<:folder_open:1502789875928400103> **Categoria:** \`${categoryName}\``,
+            ].join("\n"),
+          Separator.Default,
+          `**Cronologia**\n` +
+            [
+              `<:clock:1502789859960422502> **Aberto em:** <t:${openedAtTimestamp}:f> (<t:${openedAtTimestamp}:R>)`,
+            ].join("\n"),
+          Separator.Default,
+          `**<:action_info:1502789798983766016> Motivo da Abertura:**\n\`\`\`\n${description}\n\`\`\``,
+          createRow(
+            new ButtonBuilder({
+              label: "Ir para o Canal",
+              style: ButtonStyle.Link,
+              emoji: "1502789882916110407",
+              url: channel.url,
+            }),
+          ),
+        );
+
+        await (logChannel as any)
+          .send({ components: [logContainer], flags: ["IsComponentsV2"] })
+          .catch(() => {});
+      }
+    }
+
     await interaction.editReply({
       content: `Seu ticket foi aberto com sucesso em ${channel}!`,
     });
