@@ -412,7 +412,8 @@ createResponder({
           return;
         }
 
-        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixKey)}`;
+        // QR Code maior (500x500)
+        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixKey)}`;
 
         const container = createContainer(
           constants.colors.success,
@@ -421,14 +422,14 @@ createResponder({
             thumbnail: emojis.static.other_dollar,
           }),
           Separator.Default,
-          `### 📱 QR Code para Pagamento`,
+          `### <:device_mobile:1502789873034199060> QR Code para Pagamento`,
           `Escaneie a imagem abaixo com o app do seu banco para pagar instantaneamente.`,
           createSection({
             content: `**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``,
             thumbnail: qrCodeUrl,
           }),
           Separator.Default,
-          `⚠️ **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
+          `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
         );
 
         await channel
