@@ -5,4 +5,4 @@
 -----------------------------------
 Data da última atualização: 10/05/2026
 Sistema: SNOW Style V2
-Transcript: ticket-topaz.vercel.app
+Transcript: ticket-mts.vercel.app

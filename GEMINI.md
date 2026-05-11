@@ -30,7 +30,7 @@ O Painel Administrativo foi redesenhado para um estilo "Dashboard" com seções 
 
 ### 4. Ciclo de Vida e Transcript Online
 - **Finalização**: Processo com preenchimento de **Considerações Finais** e salvamento de log.
-- **Transcript Web**: Sistema integrado com **Next.js** (`ticket-topaz.vercel.app`).
+- **Transcript Web**: Sistema integrado com **Next.js** (`ticket-mts.vercel.app`).
 - **Detalhes do Contato**: O site agora exibe o **Motivo da Abertura** escrito pelo usuário, além do resumo de mensagens.
 - **Visual Logs**: Logs na Staff e na DM do usuário utilizam design limpo com separadores, cores azul (#3b82f6) e ícones de alta qualidade.
 
