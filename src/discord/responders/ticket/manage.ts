@@ -422,16 +422,17 @@ createResponder({
             thumbnail: emojis.static.other_dollar,
           }),
           Separator.Default,
-          `### <:device_mobile:1502789873034199060> QR Code para Pagamento`,
-          `Escaneie a imagem abaixo com o app do seu banco para pagar instantaneamente.`,
           createSection({
-            content: `**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``,
+            content: [
+              `### <:device_mobile:1502789873034199060> QR Code para Pagamento`,
+              `Escaneie a imagem ao lado com o app do seu banco para pagar instantaneamente.`,
+              `\n**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``,
+            ],
             thumbnail: qrCodeUrl,
           }),
           Separator.Default,
           `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
         );
-
         await channel
           .send({
             components: [container],
