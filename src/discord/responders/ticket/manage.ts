@@ -414,7 +414,7 @@ createResponder({
 
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixKey)}`;
 
-        // Container Premium para o texto
+        // 1. Enviar o texto premium
         const textContainer = createContainer(
           constants.colors.success,
           `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou a chave para realizar o pagamento.`,
@@ -424,20 +424,24 @@ createResponder({
           `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
         );
 
-        // Embed para o QR Code ficar GRANDE embaixo
+        await channel
+          .send({
+            components: [textContainer],
+            flags: ["IsComponentsV2"],
+          })
+          .catch(() => {});
+
+        // 2. Enviar o QR Code GRANDE em uma mensagem separada
         const qrEmbed = createEmbed({
           title: `<:device_mobile:1502789873034199060> QR Code para Pagamento`,
-          description:
-            "Escaneie a imagem abaixo com o app do seu banco para pagar instantaneamente.",
+          description: "Escaneie a imagem abaixo com o app do seu banco:",
           image: qrCodeUrl,
           color: constants.colors.success,
         });
 
         await channel
           .send({
-            components: [textContainer],
             embeds: [qrEmbed],
-            flags: ["IsComponentsV2"],
           })
           .catch(() => {});
 
