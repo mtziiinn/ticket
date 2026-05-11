@@ -10,6 +10,7 @@ export const ticketSchema = new Schema(
     ticketId: { type: String, unique: true },
     category: t.string,
     description: t.string,
+    status: { type: String, default: "open" },
     claimedBy: String,
     closed: { type: Boolean, default: false },
     closedBy: String,

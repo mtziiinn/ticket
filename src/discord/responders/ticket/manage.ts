@@ -22,9 +22,45 @@ import {
 import { db } from "#database";
 import { env } from "#env";
 
+// Mapeamento de Status de Encomenda
+const statusMap: Record<
+  string,
+  { emoji: string; label: string; description: string }
+> = {
+  open: {
+    emoji: "🔴",
+    label: "Ticket Aberto",
+    description:
+      "Estamos conversando sobre sua encomenda e alinhando os detalhes.",
+  },
+  payment: {
+    emoji: "🟡",
+    label: "Pagamento Iniciado",
+    description:
+      "A primeira parte do pagamento foi realizada e o prazo de entrega já está contando.",
+  },
+  production: {
+    emoji: "🟠",
+    label: "Em produção",
+    description:
+      "Sua encomenda começou a ser feita e o processo será compartilhado para aprovação.",
+  },
+  completed: {
+    emoji: "🟢",
+    label: "Concluída",
+    description: "Encomenda finalizada e entregue.",
+  },
+  queue: {
+    emoji: "🟣",
+    label: "Fila",
+    description: "Atualmente se encontra em fila de espera.",
+  },
+};
+
 // Função para gerar o painel principal (Assumir ou Painel Admin)
 function createMainPanel(ticket: any, owner: any) {
   const isClaimed = !!ticket.claimedBy;
+  const currentStatus = statusMap[ticket.status || "open"] || statusMap.open;
 
   return createContainer(
     constants.colors.azoxo,
@@ -37,6 +73,8 @@ function createMainPanel(ticket: any, owner: any) {
       thumbnail: (owner?.displayAvatarURL?.() ||
         "https://cdn.discordapp.com/embed/avatars/0.png") as any,
     }),
+    Separator.Default,
+    `### ${currentStatus.emoji} Status do Pedido: \`${currentStatus.label.toUpperCase()}\` \n> ${currentStatus.description}`,
     Separator.Default,
     `<:folder_open:1502789875928400103> **Categoria do atendimento:**\n\`\`\`\n${ticket.category.toUpperCase()}\n\`\`\``,
     `<:action_info:1502789798983766016> **Motivo do contato:**\n\`\`\`\n${ticket.description}\n\`\`\``,
@@ -202,6 +240,16 @@ createResponder({
           }),
           Separator.Default,
           createSection({
+            content: `● **Status do Pedido**\nNesta opção você pode atualizar o progresso da encomenda atual.`,
+            button: new ButtonBuilder({
+              customId: "ticket/manage/status_menu",
+              label: "Mudar Status",
+              style: ButtonStyle.Secondary,
+              emoji: "1502789856881938502",
+            }),
+          }),
+          Separator.Default,
+          createSection({
             content: `● **Largar Atendimento**\nNesta opção você pode deixar de ser o responsável pelo atendimento.`,
             button: isTheClaimer
               ? new ButtonBuilder({
@@ -304,6 +352,38 @@ createResponder({
         await interaction.reply({
           content: `<:action_check:1502789974276178121> Você largou o atendimento deste ticket.`,
           flags: ["Ephemeral"],
+        });
+        break;
+      }
+
+      case "status_menu": {
+        const options = Object.entries(statusMap).map(
+          ([value, { emoji, label }]) => ({
+            label,
+            value,
+            emoji,
+          }),
+        );
+
+        const container = createContainer(
+          constants.colors.primary,
+          createSection({
+            content:
+              "### <:clock_check:1502789856881938502> Atualizar Status do Pedido\nSelecione o novo status para esta encomenda abaixo. O usuário e o painel principal serão atualizados.",
+            thumbnail: user.displayAvatarURL() as any,
+          }),
+          createRow(
+            new StringSelectMenuBuilder({
+              customId: "ticket/manage/status_select",
+              placeholder: "Escolha o novo status...",
+              options,
+            }),
+          ),
+        );
+
+        await interaction.reply({
+          components: [container],
+          flags: ["Ephemeral", "IsComponentsV2"],
         });
         break;
       }
@@ -763,3 +843,48 @@ export async function generateTranscript(
 
   return `${env.WEB_URL}/transcripts/${transcriptId}`;
 }
+
+// Responder para seleção de status
+createResponder({
+  customId: "ticket/manage/status_select",
+  types: [ResponderType.StringSelect],
+  cache: "cached",
+  async run(interaction) {
+    const { values, channel, guild, user } = interaction;
+    if (!channel?.isTextBased()) return;
+
+    await interaction.deferUpdate();
+
+    const ticket = await db.tickets.getByChannel(channel.id);
+    if (!ticket) return;
+
+    const newStatus = values[0];
+    const statusData = statusMap[newStatus];
+
+    ticket.status = newStatus;
+    await (ticket as any).save();
+
+    // Atualizar Painel Principal
+    const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
+    const container = createMainPanel(ticket, owner);
+
+    if (ticket.messageId) {
+      const mainMessage = await channel.messages
+        .fetch(ticket.messageId)
+        .catch(() => null);
+      if (mainMessage) {
+        await mainMessage.edit({ components: [container] }).catch(() => {});
+      }
+    }
+
+    // Notificar no Canal
+    await channel.send({
+      content: `### ${statusData.emoji} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
+    });
+
+    await interaction.editReply({
+      content: `✅ Status alterado para **${statusData.label}** com sucesso!`,
+      components: [],
+    });
+  },
+});
