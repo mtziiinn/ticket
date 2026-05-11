@@ -46,15 +46,15 @@ export async function createConfigPanel(guildId: string) {
     constants.colors.azoxo,
     createSection({
       content:
-        "## ⚙️ Painel de Configuração\nGerencie os canais do sistema e as categorias de atendimento de forma visual.",
+        "## <:shield_add:1502789931808981012> Painel de Configuração\nGerencie os canais do sistema e as categorias de atendimento de forma visual.",
       thumbnail: emojis.static.other_ticket,
     }),
     Separator.Default,
-    "### 📡 Canais de Sistema",
+    "### <:database:1502789865023209512> Canais de Sistema",
     `> <:clock:1502789859960422502> **Logs de Atendimento:** ${logsDisplay}`,
     `> <:folder:1502789880214720533> **Cofre de Mídia (Vault):** ${vaultDisplay}`,
     Separator.Default,
-    "### 📂 Categorias Ativas",
+    "### <:folder_open:1502789875928400103> Categorias Ativas",
     catDisplay,
     Separator.Default,
     createRow(
@@ -109,7 +109,7 @@ createResponder({
         constants.colors.primary,
         createSection({
           content:
-            "## 📖 Guia de Configuração\nAprenda a configurar seu sistema de tickets em poucos passos.",
+            "## <:action_info:1502789798983766016> Guia de Configuração\nAprenda a configurar seu sistema de tickets em poucos passos.",
           thumbnail: emojis.static.action_info,
         }),
         Separator.Default,
