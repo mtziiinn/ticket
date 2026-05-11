@@ -301,6 +301,7 @@ createCommand({
               ? "✅ Configurações iniciais salvas!"
               : "Acesse o painel abaixo para configurar o sistema:",
           components: [panel],
+          flags: ["IsComponentsV2"] as any,
         });
       } catch (error) {
         console.error("Erro na configuração:", error);

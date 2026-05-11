@@ -124,7 +124,10 @@ createResponder({
 
     if (action === "refresh") {
       const panel = await createConfigPanel(guildId);
-      await interaction.update({ components: [panel] });
+      await interaction.update({
+        components: [panel],
+        flags: ["IsComponentsV2"] as any,
+      });
       return;
     }
 
@@ -231,6 +234,7 @@ createResponder({
     const panel = await createConfigPanel(guildId!);
     await interaction.editReply({
       components: [panel],
+      flags: ["IsComponentsV2"] as any,
     });
   },
 });
@@ -261,6 +265,7 @@ createResponder({
     const panel = await createConfigPanel(guildId!);
     await interaction.editReply({
       components: [panel],
+      flags: ["IsComponentsV2"] as any,
     });
   },
 });
