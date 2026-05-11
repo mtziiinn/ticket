@@ -26,7 +26,7 @@
 *   **Cargo Staff Customizável**: Permita que sua equipe gerencie os tickets sem precisar de permissão de Administrador.
 
 ### 📄 Transcript Web Integrado
-*   **Logs em Nuvem**: Histórico de mensagens salvo no MongoDB e visualizado em [ticket-mts.vercel.app](https://ticket-mts.vercel.app).
+*   **Logs em Nuvem**: Histórico de mensagens salvo no MongoDB e visualizado em um domínio customizado (ex: `https://seu-site.vercel.app`).
 *   **Backup Permanente**: Sistema de **Cofre (Vault)** que salva imagens e anexos permanentemente para evitar links expirados.
 *   **Design Premium**: Transcripts com visual limpo, cronologia detalhada e motivo da abertura em destaque.
 
@@ -60,7 +60,7 @@
     ```env
     BOT_TOKEN=seu_token_aqui
     MONGO_URI=sua_uri_mongodb
-    WEB_URL=https://ticket-mts.vercel.app
+    WEB_URL=https://seu-dominio.vercel.app
     ```
 3.  **Iniciar**: `npm run dev`
 4.  **Setup**: Use `/ticket configurar` no Discord e siga o **Guia Visual**.
