@@ -296,10 +296,6 @@ createCommand({
         const panel = await createConfigPanel(guildId!);
 
         await interaction.editReply({
-          content:
-            logsChannel || vaultChannel
-              ? "✅ Configurações iniciais salvas!"
-              : "Acesse o painel abaixo para configurar o sistema:",
           components: [panel],
           flags: ["IsComponentsV2"] as any,
         });
