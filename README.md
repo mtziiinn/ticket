@@ -16,19 +16,25 @@
 ### ⚙️ Dashboard Interativo de Configuração
 *   **Gestão 100% Visual**: Configure canais de logs, cofre de mídia e cargo de equipe sem comandos de texto.
 *   **Categorias Dinâmicas**: Crie e remova setores de atendimento (Suporte, VIP, Financeiro) diretamente pelo painel.
+*   **Chave PIX Centralizada**: Configure sua chave de pagamento uma única vez para uso em todos os atendimentos.
 *   **Controle de Funcionamento**: Sistema de **"Abrir/Fechar Loja"** que bloqueia novas aberturas com um clique.
-*   **Personalização de Canais**: Escolha emojis exclusivos para cada categoria ou um emoji global para os canais de ticket.
+*   **Personalização de Canais**: Emojis dinâmicos que mudam automaticamente de acordo com o status do pedido.
+
+### 💰 Sistema de Pagamentos Integrado
+*   **Faturamento Instantâneo**: Botão de "Enviar PIX" no Painel Admin que gera cobranças na hora.
+*   **QR Code Dinâmico**: O bot gera automaticamente uma imagem de QR Code para facilitar o pagamento do cliente.
+*   **Copia e Cola**: Chave PIX enviada em bloco de código formatado para cópia rápida no celular.
+*   **Status de Encomenda**: Acompanhe o progresso com status visuais (🔴 Alinhando, 🟡 Pagamento, 🟠 Produção, 🟢 Concluída).
 
 ### 🛠️ Gestão Avançada de Tickets
 *   **Sistema de Claim**: Botão de "Assumir Ticket" com feedback visual e logs de quem está atendendo.
 *   **Gestão de Membros**: Adicione ou remova usuários do ticket apenas inserindo o ID no formulário.
-*   **Logs de Abertura e Fechamento**: Registro completo do ciclo de vida do atendimento em canais de logs dedicados.
+*   **Logs Completos**: Ciclo de vida registrado desde a abertura até o fechamento com considerações finais.
 *   **Cargo Staff Customizável**: Permita que sua equipe gerencie os tickets sem precisar de permissão de Administrador.
 
 ### 📄 Transcript Web Integrado
 *   **Logs em Nuvem**: Histórico de mensagens salvo no MongoDB e visualizado em um domínio customizado (ex: `https://seu-site.vercel.app`).
 *   **Backup Permanente**: Sistema de **Cofre (Vault)** que salva imagens e anexos permanentemente para evitar links expirados.
-*   **Design Premium**: Transcripts com visual limpo, cronologia detalhada e motivo da abertura em destaque.
 
 ---
 
@@ -49,13 +55,13 @@
 
 ### Web & API
 *   **Frontend**: Next.js 14+ (Tailwind CSS + Lucide Icons)
-*   **Deploy**: Vercel (Otimizado com Sharp para pnpm)
+*   **Deploy**: Vercel (Otimizado com Sharp para pnpm/npm)
 
 ---
 
 ## ⚙️ Instalação Rápida
 
-1.  **Instalar Dependências**: `npm install` e dentro de `/web` use `pnpm install`.
+1.  **Instalar Dependências**: `npm install` e dentro de `/web` use `npm install`.
 2.  **Configurar `.env`**:
     ```env
     BOT_TOKEN=seu_token_aqui
