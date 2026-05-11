@@ -27,23 +27,25 @@ export async function createConfigPanel(guildId: string) {
     ? `<#${channels.vault}>`
     : "*Não configurado*";
 
-  const cats = channels?.categories;
-  const catDisplay = cats
-    ? [
-        `<:shield_check:1502789932727668788> **Suporte:** ${cats.suporte ? `<#${cats.suporte}>` : "❌"}`,
-        `<:action_x:1502789802918150206> **Denúncia:** ${cats.denuncia ? `<#${cats.denuncia}>` : "❌"}`,
-        `<:other_ticket:1502789959378145300> **Financeiro:** ${cats.financeiro ? `<#${cats.financeiro}>` : "❌"}`,
-        `<:action_info:1502789798983766016> **Bugs:** ${cats.bugs ? `<#${cats.bugs}>` : "❌"}`,
-      ].join("\n")
-    : "*Nenhuma categoria base configurada*";
-
-  const customCats = channels?.ticketCategories?.length || 0;
+  const customCats = channels?.ticketCategories || [];
+  const catDisplay =
+    customCats.length > 0
+      ? customCats
+          .map((c) => {
+            const emojiDisplay =
+              c.emoji?.length && c.emoji.length > 5 && !c.emoji.includes(":")
+                ? `<:emoji:${c.emoji}>`
+                : c.emoji || "🎫";
+            return `> ${emojiDisplay} **${c.name}** (\`${c.value}\`) -> <#${c.parentId}>`;
+          })
+          .join("\n")
+      : "*Nenhuma categoria configurada. Use `/ticket categorias adicionar`*";
 
   return createContainer(
     constants.colors.azoxo,
     createSection({
       content:
-        "## ⚙️ Painel de Configuração\nSeja bem-vindo ao centro de controle do seu sistema de tickets. Aqui você pode ajustar todos os canais e categorias de forma intuitiva.",
+        "## ⚙️ Painel de Configuração\nGerencie os canais do sistema e visualize as categorias de atendimento ativas.",
       thumbnail: emojis.static.other_ticket,
     }),
     Separator.Default,
@@ -51,27 +53,19 @@ export async function createConfigPanel(guildId: string) {
     `> <:clock:1502789859960422502> **Logs de Atendimento:** ${logsDisplay}`,
     `> <:folder:1502789880214720533> **Cofre de Mídia (Vault):** ${vaultDisplay}`,
     Separator.Default,
-    "### 📂 Categorias Base (Roteamento)",
+    "### 📂 Categorias Ativas",
     catDisplay,
-    Separator.Default,
-    `### 🎫 Categorias Customizadas\nVocê possui atualmente **${customCats}** categoria(s) customizada(s) configurada(s).`,
     Separator.Default,
     createRow(
       new ButtonBuilder({
         customId: "ticket/config/channels",
-        label: "Canais",
+        label: "Configurar Canais",
         style: ButtonStyle.Secondary,
         emoji: "1502789931808981012",
       }),
       new ButtonBuilder({
-        customId: "ticket/config/base_cats",
-        label: "Categorias Base",
-        style: ButtonStyle.Secondary,
-        emoji: "1502789875928400103",
-      }),
-      new ButtonBuilder({
         customId: "ticket/config/refresh",
-        label: "Atualizar",
+        label: "Atualizar Status",
         style: ButtonStyle.Primary,
         emoji: "1502789797821939752",
       }),
@@ -106,11 +100,8 @@ createResponder({
         "### 1. Canais de Sistema",
         "**Logs:** Onde todas as aberturas, claims e encerramentos serão registrados.\n**Vault:** Canal privado onde o bot salvará imagens de transcripts para garantir que nunca expirem.",
         Separator.Default,
-        "### 2. Categorias Base (Roteamento)",
-        "Insira o **ID da Categoria** (não o canal) onde os tickets de cada tipo devem ser criados. O bot moverá automaticamente o ticket para lá.",
-        Separator.Default,
-        "### 3. Categorias Customizadas",
-        "Use o comando `/ticket categorias adicionar` para criar menus de seleção personalizados com ícones e nomes próprios.",
+        "### 2. Categorias Dinâmicas",
+        "Agora você tem total liberdade! Use o comando `/ticket categorias adicionar` para criar quantas categorias desejar. Cada uma pode ter seu próprio nome, emoji e categoria de destino no Discord.",
         Separator.Default,
         "**Dica:** Ative o 'Modo Desenvolvedor' no seu Discord para copiar IDs facilmente (Botão direito no canal > Copiar ID).",
       );
@@ -161,53 +152,6 @@ createResponder({
       await interaction.showModal(modal);
       return;
     }
-
-    if (action === "base_cats") {
-      const guildData = await db.guilds.get(guildId);
-      const cats = guildData.channels?.categories;
-
-      const modal = new ModalBuilder()
-        .setCustomId("ticket/config/base_cats_submit")
-        .setTitle("Configurar Categorias de Roteamento");
-
-      modal.addComponents(
-        createRow(
-          new TextInputBuilder()
-            .setCustomId("suporte")
-            .setLabel("ID Categoria: Suporte")
-            .setValue(cats?.suporte || "")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-        ),
-        createRow(
-          new TextInputBuilder()
-            .setCustomId("denuncia")
-            .setLabel("ID Categoria: Denúncia")
-            .setValue(cats?.denuncia || "")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-        ),
-        createRow(
-          new TextInputBuilder()
-            .setCustomId("financeiro")
-            .setLabel("ID Categoria: Financeiro")
-            .setValue(cats?.financeiro || "")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-        ),
-        createRow(
-          new TextInputBuilder()
-            .setCustomId("bugs")
-            .setLabel("ID Categoria: Bugs")
-            .setValue(cats?.bugs || "")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(true),
-        ),
-      );
-
-      await interaction.showModal(modal);
-      return;
-    }
   },
 });
 
@@ -233,47 +177,10 @@ createResponder({
       } as any;
     }
 
-    guildData.channels.tickets = data.logs as string;
-    guildData.channels.vault = data.vault as string;
-
-    guildData.markModified("channels");
-    await (guildData as any).save();
-
-    const panel = await createConfigPanel(guildId!);
-    await interaction.editReply({
-      components: [panel],
-      flags: ["IsComponentsV2"] as any,
-    });
-  },
-});
-
-createResponder({
-  customId: "ticket/config/base_cats_submit",
-  types: [ResponderType.Modal, ResponderType.ModalComponent],
-  cache: "cached",
-  async run(interaction) {
-    const { fields, guildId } = interaction;
-    await interaction.deferUpdate();
-
-    const data = modalFieldsToRecord(fields);
-
-    const guildData = await db.guilds.get(guildId!);
-
-    if (!guildData.channels) {
-      guildData.channels = {
-        tickets: "",
-        vault: "",
-        categories: { suporte: "", denuncia: "", financeiro: "", bugs: "" },
-        ticketCategories: [] as any,
-      } as any;
+    if (guildData.channels) {
+      guildData.channels.tickets = data.logs as string;
+      guildData.channels.vault = data.vault as string;
     }
-
-    guildData.channels.categories = {
-      suporte: data.suporte as string,
-      denuncia: data.denuncia as string,
-      financeiro: data.financeiro as string,
-      bugs: data.bugs as string,
-    };
 
     guildData.markModified("channels");
     await (guildData as any).save();

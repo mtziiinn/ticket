@@ -291,9 +291,10 @@ createCommand({
             } as any;
           }
 
-          if (logsChannel) guildData.channels.tickets = logsChannel.id;
-          if (vaultChannel) guildData.channels.vault = vaultChannel.id;
-
+          if (guildData.channels) {
+            if (logsChannel) guildData.channels.tickets = logsChannel.id;
+            if (vaultChannel) guildData.channels.vault = vaultChannel.id;
+          }
           guildData.markModified("channels");
           await (guildData as any).save();
         }
