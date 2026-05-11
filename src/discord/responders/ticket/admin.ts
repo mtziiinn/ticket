@@ -13,7 +13,7 @@ import { generateTranscript } from "./manage.js";
 
 // Função compartilhada para renomear
 async function processRename(interaction: any) {
-  const { channel, fields } = interaction;
+  const { channel, fields, guildId } = interaction;
   if (!channel?.isTextBased()) return;
 
   try {
@@ -34,8 +34,13 @@ async function processRename(interaction: any) {
       return;
     }
 
-    const toolEmoji = "🔨";
-    const formattedName = `${toolEmoji}・${newName.replace(/\s+/g, "-").toLowerCase()}`;
+    // Buscar emoji configurado ou usar o atual
+    const guildData = await db.guilds.get(guildId);
+    const configuredEmoji = guildData.channels?.ticketEmoji;
+    const currentEmoji = channel.name.split("・")[0] || "🎫";
+
+    const emojiToUse = configuredEmoji || currentEmoji;
+    const formattedName = `${emojiToUse}・${newName.replace(/\s+/g, "-").toLowerCase()}`;
 
     await (channel as any).setName(formattedName).catch((err: any) => {
       console.error("Erro ao renomear canal:", err);
