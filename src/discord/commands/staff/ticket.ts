@@ -111,9 +111,25 @@ createCommand({
     },
   ],
   async run(interaction) {
-    const { options, guildId } = interaction;
+    const { options, guildId, member } = interaction;
     const subcommand = options.getSubcommand();
     const group = options.getSubcommandGroup();
+
+    // Verificar Permissões (ADM ou Cargo Staff)
+    const guildData = await db.guilds.get(guildId!);
+    const isAdm = (member as any).permissions.has("Administrator");
+    const isStaff =
+      guildData.channels?.staffRole &&
+      (member as any).roles.cache.has(guildData.channels.staffRole);
+
+    if (!isAdm && !isStaff) {
+      await interaction.reply({
+        content:
+          "❌ Você não possui permissão para usar os comandos de Staff do sistema de tickets.",
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
 
     if (group === "categorias") {
       await interaction.deferReply({ ephemeral: true });

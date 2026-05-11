@@ -28,6 +28,13 @@ export async function createConfigPanel(guildId: string) {
     ? `<#${channels.vault}>`
     : "*Não configurado*";
   const emojiDisplay = channels?.ticketEmoji || "🎫";
+  const staffRoleDisplay = channels?.staffRole
+    ? `<@&${channels.staffRole}>`
+    : "*Não configurado*";
+  const isClosed = channels?.closed ?? false;
+  const statusDisplay = isClosed
+    ? `<:action_x:1502789802918150206> **Loja Fechada** (Abertura bloqueada)`
+    : `<:action_check:1502789797821939752> **Loja Aberta** (Abertura liberada)`;
 
   const customCats = channels?.ticketCategories || [];
   const catDisplay =
@@ -46,15 +53,18 @@ export async function createConfigPanel(guildId: string) {
   return createContainer(
     constants.colors.azoxo,
     createSection({
-      content:
-        "## <:shield_add:1502789931808981012> Painel de Configuração\nGerencie os canais do sistema e as categorias de atendimento de forma visual.",
+      content: `## <:shield_add:1502789931808981012> Painel de Configuração\nGerencie os canais, cargo de equipe e o status de funcionamento do sistema.`,
       thumbnail: emojis.static.other_ticket,
     }),
     Separator.Default,
-    "### <:database:1502789865023209512> Canais de Sistema",
+    "### <:database:1502789865023209512> Canais e Acesso",
     `> <:clock:1502789859960422502> **Logs de Atendimento:** ${logsDisplay}`,
     `> <:folder:1502789880214720533> **Cofre de Mídia (Vault):** ${vaultDisplay}`,
     `> ${emojiDisplay} **Emoji dos Canais:** \`${emojiDisplay}\``,
+    `> <:user_users:1502789976327327801> **Cargo Staff:** ${staffRoleDisplay}`,
+    Separator.Default,
+    "### <:clock_check:1502789856881938502> Status de Funcionamento",
+    `> ${statusDisplay}`,
     Separator.Default,
     "### <:folder_open:1502789875928400103> Categorias Ativas",
     catDisplay,
@@ -62,7 +72,7 @@ export async function createConfigPanel(guildId: string) {
     createRow(
       new ButtonBuilder({
         customId: "ticket/config/channels",
-        label: "Canais",
+        label: "Sistema",
         style: ButtonStyle.Secondary,
         emoji: "1502789931808981012",
       }),
@@ -81,6 +91,14 @@ export async function createConfigPanel(guildId: string) {
       }),
     ),
     createRow(
+      new ButtonBuilder({
+        customId: isClosed
+          ? "ticket/config/open_store"
+          : "ticket/config/close_store",
+        label: isClosed ? "Abrir Loja" : "Fechar Loja",
+        style: isClosed ? ButtonStyle.Success : ButtonStyle.Danger,
+        emoji: isClosed ? "1502789797821939752" : "1502789802918150206",
+      }),
       new ButtonBuilder({
         customId: "ticket/config/refresh",
         label: "Atualizar",
@@ -115,19 +133,49 @@ createResponder({
           thumbnail: emojis.static.action_info,
         }),
         Separator.Default,
-        "### <:database:1502789865023209512> 1. Canais do Sistema",
-        "Clique no botão **Canais** para definir onde o bot deve trabalhar:\n> <:clock:1502789859960422502> **Logs:** Canal para registro de todo o histórico.\n> <:folder:1502789880214720533> **Vault:** Canal privado para backup de anexos.",
+        "### <:database:1502789865023209512> 1. Canais e Acesso",
+        "**Logs/Vault:** Defina os canais de registro e backup.\n**Emoji:** O ícone que aparece no nome do canal do ticket.\n**Cargo Staff:** O cargo que terá acesso administrativo aos tickets (não precisa ser ADM).",
         Separator.Default,
-        "### <:folder_add:1502789875009851432> 2. Categorias de Atendimento",
-        "Você deve criar pelo menos uma categoria para os usuários selecionarem:\n> <:action_add:1502789796278304800> **Adicionar:** Defina nome, emoji e o ID da categoria pai no Discord.\n> <:action_remove:1502789800967536741> **Remover:** Exclua categorias que não são mais necessárias.",
+        "### <:clock_check:1502789856881938502> 2. Abrir/Fechar Loja",
+        "Use os botões coloridos para bloquear ou liberar a abertura de novos tickets pelos usuários instantaneamente.",
         Separator.Default,
-        "### <:other_ticket:1502789959378145300> 3. Painel de Abertura",
-        "Após configurar tudo, use o comando abaixo no canal desejado:\n` /ticket painel canal: #seu-canal `\n\n**Dica:** Ative o **Modo Desenvolvedor** no seu Discord para copiar IDs facilmente clicando com o botão direito nos canais.",
+        "### <:folder_add:1502789875009851432> 3. Categorias Dinâmicas",
+        "Crie setores de atendimento personalizados com IDs de categorias do Discord específicos.",
+        Separator.Default,
+        "### <:other_ticket:1502789959378145300> 4. Painel de Abertura",
+        "Após configurar tudo, use o comando abaixo no canal desejado:\n` /ticket painel canal: #seu-canal `",
       );
 
       await interaction.reply({
         components: [guideContainer],
         flags: ["Ephemeral", "IsComponentsV2"],
+      });
+      return;
+    }
+
+    if (action === "open_store" || action === "close_store") {
+      const guildData = await db.guilds.get(guildId);
+      if (!guildData.channels) {
+        guildData.channels = {
+          tickets: "",
+          vault: "",
+          categories: {},
+          ticketCategories: [],
+          closed: false,
+          staffRole: "",
+          ticketEmoji: "🎫",
+        } as any;
+      }
+      if (guildData.channels) {
+        guildData.channels.closed = action === "close_store";
+      }
+      guildData.markModified("channels");
+      await (guildData as any).save();
+
+      const panel = await createConfigPanel(guildId);
+      await interaction.update({
+        components: [panel],
+        flags: ["IsComponentsV2"] as any,
       });
       return;
     }
@@ -145,7 +193,7 @@ createResponder({
       const guildData = await db.guilds.get(guildId);
       const modal = new ModalBuilder()
         .setCustomId("ticket/config/channels_submit")
-        .setTitle("Configurar Canais do Sistema");
+        .setTitle("Configurar Canais e Acesso");
 
       modal.addComponents(
         createRow(
@@ -170,6 +218,15 @@ createResponder({
             .setLabel("Emoji dos Canais")
             .setPlaceholder("Ex: 🎫 ou 🛠️")
             .setValue(guildData.channels?.ticketEmoji || "🎫")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true),
+        ),
+        createRow(
+          new TextInputBuilder()
+            .setCustomId("staffRole")
+            .setLabel("ID do Cargo Staff")
+            .setPlaceholder("ID do cargo que gerenciará os tickets")
+            .setValue(guildData.channels?.staffRole || "")
             .setStyle(TextInputStyle.Short)
             .setRequired(true),
         ),
@@ -274,6 +331,9 @@ createResponder({
         vault: "",
         categories: {},
         ticketCategories: [],
+        closed: false,
+        staffRole: "",
+        ticketEmoji: "🎫",
       } as any;
     }
 
@@ -281,6 +341,7 @@ createResponder({
       guildData.channels.tickets = data.logs as string;
       guildData.channels.vault = data.vault as string;
       guildData.channels.ticketEmoji = data.emoji as string;
+      guildData.channels.staffRole = data.staffRole as string;
     }
 
     guildData.markModified("channels");
@@ -311,6 +372,9 @@ createResponder({
         vault: "",
         categories: {},
         ticketCategories: [],
+        closed: false,
+        staffRole: "",
+        ticketEmoji: "🎫",
       } as any;
     }
     if (guildData.channels && !guildData.channels.ticketCategories) {

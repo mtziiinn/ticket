@@ -10,6 +10,8 @@ export const guildSchema = new Schema(
       general: String,
       tickets: String,
       ticketEmoji: String,
+      staffRole: String,
+      closed: Boolean,
       categories: {
         suporte: String,
         denuncia: String,

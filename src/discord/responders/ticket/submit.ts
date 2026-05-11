@@ -28,9 +28,21 @@ console.log(
 async function processTicketSubmission(interaction: any) {
   console.log(">>> [Ticket] PROCESSANDO CRIAÇÃO DO TICKET...");
 
-  await interaction.deferReply({ flags: ["Ephemeral"] }).catch(() => {});
-
   const { guild, user, fields } = interaction;
+
+  // 1. Verificar se o sistema está fechado (Loja Fechada)
+  const guildData = await db.guilds.get(guild.id);
+  if (guildData.channels?.closed) {
+    await interaction
+      .reply({
+        content: `<:action_x:1502789802918150206> Desculpe, o setor de atendimentos está temporariamente **fechado**. Tente novamente mais tarde!`,
+        flags: ["Ephemeral"],
+      })
+      .catch(() => {});
+    return;
+  }
+
+  await interaction.deferReply({ flags: ["Ephemeral"] }).catch(() => {});
 
   try {
     // 0. Verificar se o usuário já possui um ticket aberto
