@@ -223,12 +223,20 @@ createResponder({
     const data = modalFieldsToRecord(fields);
 
     const guildData = await db.guilds.get(guildId!);
-    guildData.channels = {
-      ...guildData.channels,
-      tickets: data.logs as string,
-      vault: data.vault as string,
-    } as any;
 
+    if (!guildData.channels) {
+      guildData.channels = {
+        tickets: "",
+        vault: "",
+        categories: { suporte: "", denuncia: "", financeiro: "", bugs: "" },
+        ticketCategories: [] as any,
+      } as any;
+    }
+
+    guildData.channels.tickets = data.logs as string;
+    guildData.channels.vault = data.vault as string;
+
+    guildData.markModified("channels");
     await (guildData as any).save();
 
     const panel = await createConfigPanel(guildId!);
@@ -250,16 +258,24 @@ createResponder({
     const data = modalFieldsToRecord(fields);
 
     const guildData = await db.guilds.get(guildId!);
-    guildData.channels = {
-      ...guildData.channels,
-      categories: {
-        suporte: data.suporte as string,
-        denuncia: data.denuncia as string,
-        financeiro: data.financeiro as string,
-        bugs: data.bugs as string,
-      },
-    } as any;
 
+    if (!guildData.channels) {
+      guildData.channels = {
+        tickets: "",
+        vault: "",
+        categories: { suporte: "", denuncia: "", financeiro: "", bugs: "" },
+        ticketCategories: [] as any,
+      } as any;
+    }
+
+    guildData.channels.categories = {
+      suporte: data.suporte as string,
+      denuncia: data.denuncia as string,
+      financeiro: data.financeiro as string,
+      bugs: data.bugs as string,
+    };
+
+    guildData.markModified("channels");
     await (guildData as any).save();
 
     const panel = await createConfigPanel(guildId!);

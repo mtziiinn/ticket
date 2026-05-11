@@ -277,19 +277,24 @@ createCommand({
 
         // Se forneceu opções no comando, já salva elas
         if (logsChannel || vaultChannel) {
-          guildData.channels = {
-            ...guildData.channels,
-            tickets: logsChannel?.id || guildData.channels?.tickets || "",
-            vault: vaultChannel?.id || guildData.channels?.vault || "",
-            categories: guildData.channels?.categories || {
-              suporte: "",
-              denuncia: "",
-              financeiro: "",
-              bugs: "",
-            },
-            ticketCategories:
-              guildData.channels?.ticketCategories || ([] as any),
-          } as any;
+          if (!guildData.channels) {
+            guildData.channels = {
+              tickets: "",
+              vault: "",
+              categories: {
+                suporte: "",
+                denuncia: "",
+                financeiro: "",
+                bugs: "",
+              },
+              ticketCategories: [] as any,
+            } as any;
+          }
+
+          if (logsChannel) guildData.channels.tickets = logsChannel.id;
+          if (vaultChannel) guildData.channels.vault = vaultChannel.id;
+
+          guildData.markModified("channels");
           await (guildData as any).save();
         }
 
