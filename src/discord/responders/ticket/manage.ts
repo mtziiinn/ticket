@@ -882,9 +882,6 @@ createResponder({
       content: `### ${statusData.emoji} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
     });
 
-    await interaction.editReply({
-      content: `✅ Status alterado para **${statusData.label}** com sucesso!`,
-      components: [],
-    });
+    await interaction.deleteReply().catch(() => {});
   },
 });
