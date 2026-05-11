@@ -412,30 +412,31 @@ createResponder({
           return;
         }
 
-        // QR Code maior (500x500)
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixKey)}`;
 
-        const container = createContainer(
+        // Container Premium para o texto
+        const textContainer = createContainer(
           constants.colors.success,
-          createSection({
-            content: `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou a chave para realizar o pagamento.`,
-            thumbnail: emojis.static.other_dollar,
-          }),
+          `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou a chave para realizar o pagamento.`,
           Separator.Default,
-          createSection({
-            content: [
-              `### <:device_mobile:1502789873034199060> QR Code para Pagamento`,
-              `Escaneie a imagem ao lado com o app do seu banco para pagar instantaneamente.`,
-              `\n**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``,
-            ],
-            thumbnail: qrCodeUrl,
-          }),
+          `**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``,
           Separator.Default,
           `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
         );
+
+        // Embed para o QR Code ficar GRANDE embaixo
+        const qrEmbed = createEmbed({
+          title: `<:device_mobile:1502789873034199060> QR Code para Pagamento`,
+          description:
+            "Escaneie a imagem abaixo com o app do seu banco para pagar instantaneamente.",
+          image: qrCodeUrl,
+          color: constants.colors.success,
+        });
+
         await channel
           .send({
-            components: [container],
+            components: [textContainer],
+            embeds: [qrEmbed],
             flags: ["IsComponentsV2"],
           })
           .catch(() => {});
