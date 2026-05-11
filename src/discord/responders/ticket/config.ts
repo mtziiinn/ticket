@@ -61,6 +61,7 @@ export async function createConfigPanel(guildId: string) {
     `> <:clock:1502789859960422502> **Logs de Atendimento:** ${logsDisplay}`,
     `> <:folder:1502789880214720533> **Cofre de Mídia (Vault):** ${vaultDisplay}`,
     `> ${emojiDisplay} **Emoji dos Canais:** \`${emojiDisplay}\``,
+    `> <:other_dollar:1502789953334280345> **Chave PIX:** \`${channels?.pixKey || "Não configurada"}\``,
     `> <:user_users:1502789976327327801> **Cargo Staff:** ${staffRoleDisplay}`,
     Separator.Default,
     "### <:clock_check:1502789856881938502> Status de Funcionamento",
@@ -230,6 +231,15 @@ createResponder({
             .setStyle(TextInputStyle.Short)
             .setRequired(true),
         ),
+        createRow(
+          new TextInputBuilder()
+            .setCustomId("pixKey")
+            .setLabel("Chave PIX")
+            .setPlaceholder("Insira sua chave (CPF, E-mail, etc.)")
+            .setValue(guildData.channels?.pixKey || "")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false),
+        ),
       );
 
       await interaction.showModal(modal);
@@ -342,6 +352,7 @@ createResponder({
       guildData.channels.vault = data.vault as string;
       guildData.channels.ticketEmoji = data.emoji as string;
       guildData.channels.staffRole = data.staffRole as string;
+      guildData.channels.pixKey = data.pixKey as string;
     }
 
     guildData.markModified("channels");

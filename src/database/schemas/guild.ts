@@ -11,6 +11,7 @@ export const guildSchema = new Schema(
       tickets: String,
       ticketEmoji: String,
       staffRole: String,
+      pixKey: String,
       closed: Boolean,
       categories: {
         suporte: String,

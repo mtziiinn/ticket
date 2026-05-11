@@ -250,6 +250,16 @@ createResponder({
           }),
           Separator.Default,
           createSection({
+            content: `● **Enviar Pagamento (PIX)**\nNesta opção o bot enviará as informações de pagamento para o cliente.`,
+            button: new ButtonBuilder({
+              customId: "ticket/manage/send_pix",
+              label: "Enviar PIX",
+              style: ButtonStyle.Secondary,
+              emoji: "1502789953334280345",
+            }),
+          }),
+          Separator.Default,
+          createSection({
             content: `● **Largar Atendimento**\nNesta opção você pode deixar de ser o responsável pelo atendimento.`,
             button: isTheClaimer
               ? new ButtonBuilder({
@@ -384,6 +394,52 @@ createResponder({
         await interaction.reply({
           components: [container],
           flags: ["Ephemeral", "IsComponentsV2"],
+        });
+        break;
+      }
+
+      case "send_pix": {
+        await interaction.deferReply({ flags: ["Ephemeral"] });
+
+        const guildData = await db.guilds.get(guild.id);
+        const pixKey = guildData.channels?.pixKey;
+
+        if (!pixKey) {
+          await interaction.editReply({
+            content:
+              "❌ Nenhuma chave PIX configurada no Dashboard (`/ticket configurar`).",
+          });
+          return;
+        }
+
+        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(pixKey)}`;
+
+        const container = createContainer(
+          constants.colors.success,
+          createSection({
+            content: `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou a chave para realizar o pagamento.`,
+            thumbnail: emojis.static.other_dollar,
+          }),
+          Separator.Default,
+          `### 📱 QR Code para Pagamento`,
+          `Escaneie a imagem abaixo com o app do seu banco para pagar instantaneamente.`,
+          createSection({
+            content: `**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``,
+            thumbnail: qrCodeUrl,
+          }),
+          Separator.Default,
+          `⚠️ **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
+        );
+
+        await channel
+          .send({
+            components: [container],
+            flags: ["IsComponentsV2"],
+          })
+          .catch(() => {});
+
+        await interaction.editReply({
+          content: "✅ Informações de pagamento enviadas com sucesso!",
         });
         break;
       }
