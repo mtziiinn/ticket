@@ -90,7 +90,22 @@ async function processTicketSubmission(interaction: any) {
     const eFolder = "<:folder:1502789880214720533>";
 
     // 2. Criar o canal na categoria correta
-    const channelEmoji = guildData.channels?.ticketEmoji || "🎫";
+    const categoryEmoji = selectedCategory?.emoji;
+    const globalEmoji = guildData.channels?.ticketEmoji;
+
+    // Prioridade: Emoji da Categoria -> Emoji Global -> Padrão 🎫
+    let channelEmoji = "🎫";
+    if (categoryEmoji) {
+      // Se for ID de emoji customizado, não usamos no nome do canal (Discord não suporta no nome)
+      // A menos que seja um emoji unicode comum
+      channelEmoji =
+        categoryEmoji.length > 5 && !categoryEmoji.includes(":")
+          ? "🎫"
+          : categoryEmoji;
+    } else if (globalEmoji) {
+      channelEmoji = globalEmoji;
+    }
+
     const channel = await guild.channels.create({
       name: `${channelEmoji}・${ticketId}`,
       type: ChannelType.GuildText,
