@@ -20,3 +20,7 @@
 *.exe
 *.db
 *.development.json
+
+# Docs
+/GEMINI.md
+/RELEMBRE.txt

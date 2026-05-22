@@ -9,6 +9,14 @@
   <i>Desenvolvido com as tecnologias mais modernas de Components V2, Dashboards Interativos e Transcripts Online.</i>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Node.js-24.15-339933?logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Next.js-16.2-000000?logo=next.js&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/discord.js-14.26-5865F2?logo=discord&logoColor=white" alt="discord.js">
+  <img src="https://img.shields.io/badge/License-MIT-yellow" alt="License">
+</p>
+
 ---
 
 ## 🚀 Funcionalidades Premium
@@ -51,25 +59,126 @@
 ### Bot do Discord
 *   **Framework**: [Constatic](https://constatic-docs.vercel.app) + @magicyan/discord
 *   **Linguagem**: TypeScript
+*   **Runtime**: Node.js 24+
 *   **Banco de Dados**: MongoDB Atlas (Mongoose)
 
 ### Web & API
-*   **Frontend**: Next.js 14+ (Tailwind CSS + Lucide Icons)
+*   **Frontend**: Next.js 16+ (Tailwind CSS + Lucide Icons)
 *   **Deploy**: Vercel (Otimizado com Sharp para pnpm/npm)
 
 ---
 
-## ⚙️ Instalação Rápida
+## 📁 Estrutura do Projeto
 
-1.  **Instalar Dependências**: `npm install` e dentro de `/web` use `npm install`.
-2.  **Configurar `.env`**:
-    ```env
-    BOT_TOKEN=seu_token_aqui
-    MONGO_URI=sua_uri_mongodb
-    WEB_URL=https://seu-dominio.vercel.app
-    ```
-3.  **Iniciar**: `npm run dev`
-4.  **Setup**: Use `/ticket configurar` no Discord e siga o **Guia Visual**.
+```
+/
+├── src/              # Código fonte do bot Discord
+│   ├── database/     # Models e conexão MongoDB
+│   ├── discord/      # Comandos, eventos e responders
+│   ├── functions/    # Funções utilitárias
+│   ├── index.ts      # Entry point do bot
+│   └── constants.ts  # Constantes do projeto
+├── web/              # Dashboard Next.js
+│   ├── app/          # Páginas e rotas
+│   ├── components/   # Componentes React/UI
+│   ├── hooks/        # Custom hooks
+│   ├── lib/          # Utilitários e configurações
+│   └── public/       # Assets estáticos
+├── build/            # Compilação TypeScript (gerado)
+└── package.json      # Dependências e scripts
+```
+
+---
+
+## ⚙️ Instalação
+
+### Pré-requisitos
+- **Node.js** 24+
+- **npm** ou **pnpm**
+- **MongoDB Atlas** (ou instância local)
+- **Conta na Vercel** (para o dashboard)
+
+### Passo a Passo
+
+1. **Clone o repositório**
+   ```bash
+   git clone https://github.com/seu-usuario/ticket.git
+   cd ticket
+   ```
+
+2. **Instale as dependências**
+   ```bash
+   npm install
+   cd web && npm install && cd ..
+   ```
+
+3. **Configure as variáveis de ambiente**
+   ```bash
+   cp .env.example .env
+   ```
+   ```env
+   BOT_TOKEN=seu_token_aqui
+   MONGO_URI=sua_uri_mongodb
+   DATABASE_NAME=nome_do_banco
+   WEB_URL=https://seu-dominio.vercel.app
+   ```
+
+4. **Inicie o bot em desenvolvimento**
+   ```bash
+   npm run dev
+   ```
+
+5. **Inicie o dashboard**
+   ```bash
+   cd web
+   npm run dev
+   ```
+
+6. **Configure no Discord**
+   Use `/ticket configurar` e siga o **Guia Visual**.
+
+---
+
+## 📜 Scripts Disponíveis
+
+### Raiz (`/`)
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Inicia o bot com hot-reload |
+| `npm run build` | Compila TypeScript para JS |
+| `npm run start` | Inicia o bot compilado |
+| `npm run check` | Verifica tipos sem compilar |
+| `npm run watch` | Inicia com watch mode |
+| `npm run dev:dev` | Inicia com `.env.dev` |
+
+### Web (`/web`)
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Inicia o servidor Next.js (dev) |
+| `npm run build` | Compila o dashboard para produção |
+| `npm run start` | Inicia o servidor Next.js (produção) |
+| `npm run lint` | Verifica código com ESLint |
+
+---
+
+## 🚢 Deploy
+
+### Bot (Discloud ou VPS)
+```bash
+npm run build
+npm run start
+```
+
+### Dashboard (Vercel)
+Conecte o repositório na Vercel e configure as variáveis de ambiente:
+- `MONGO_URI`
+- `NEXT_PUBLIC_API_URL`
+
+---
+
+## 📄 Licença
+
+Distribuído sob a licença MIT. Veja `LICENSE` para mais informações.
 
 ---
 
