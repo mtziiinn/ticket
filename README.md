@@ -36,7 +36,8 @@
 
 ### 📤 Entrega de Mídia via Upload Direto
 *   **Upload pelo Site**: Staff gera um link único e faz upload do arquivo final diretamente pelo navegador, sem perda de qualidade.
-*   **Finalização Automática**: Ao concluir o upload, a entrega é finalizada automaticamente — o bot envia a confirmação no canal e uma DM para o cliente com container personalizado.
+*   **Suporte a Múltiplos Arquivos**: Selecione vários arquivos de uma vez — o sistema compacta tudo em um único arquivo ZIP automaticamente.
+*   **Finalização Automática**: Ao concluir o upload, a entrega é finalizada automaticamente — o bot envia a confirmação no canal e uma DM para o cliente com container personalizado (via `discord.js`, com thumbnail do staff).
 *   **Armazenamento no MongoDB**: Arquivos salvos diretamente no banco (collection `delivery_files`), sem depender de filesystem.
 *   **Página de Recuperação**: Cliente acessa `https://seu-site.vercel.app/entregas/[ID]` para baixar os arquivos entregues.
 *   **Expiração**: Links de download expiram em **7 dias**; arquivos são automaticamente deletados do banco após **30 dias**.
@@ -44,6 +45,7 @@
 ### 🛠️ Gestão Avançada de Tickets
 *   **Sistema de Claim**: Botão de "Assumir Ticket" com feedback visual e logs de quem está atendendo.
 *   **Gestão de Membros**: Adicione ou remova usuários do ticket apenas inserindo o ID no formulário.
+*   **Status com Prioridade**: Ao mudar o status do pedido (🔴 Alinhando, 🟡 Pagamento, 🟠 Produção, 🟢 Concluída, 🟣 Fila), o canal é automaticamente reposicionado na categoria por ordem de prioridade.
 *   **Logs Completos**: Ciclo de vida registrado desde a abertura até o fechamento com considerações finais.
 *   **Cargo Staff Customizável**: Permita que sua equipe gerencie os tickets sem precisar de permissão de Administrador.
 
@@ -160,7 +162,7 @@
 | Comando | Descrição |
 |---|---|
 | `npm run dev` | Inicia o bot com hot-reload |
-| `npm run build` | Compila TypeScript para JS |
+| `npm run build` | Compila TypeScript para JS (usa `src/tsconfig.json`) |
 | `npm run start` | Inicia o bot compilado |
 | `npm run check` | Verifica tipos sem compilar |
 | `npm run watch` | Inicia com watch mode |
