@@ -34,6 +34,13 @@
 *   **Copia e Cola**: Chave PIX enviada em bloco de código formatado para cópia rápida no celular.
 *   **Status de Encomenda**: Acompanhe o progresso com status visuais (🔴 Alinhando, 🟡 Pagamento, 🟠 Produção, 🟢 Concluída).
 
+### 📤 Entrega de Mídia via Upload Direto
+*   **Upload pelo Site**: Staff gera um link único e faz upload do arquivo final diretamente pelo navegador, sem perda de qualidade.
+*   **Finalização Automática**: Ao concluir o upload, a entrega é finalizada automaticamente — o bot envia a confirmação no canal e uma DM para o cliente com container personalizado.
+*   **Armazenamento no MongoDB**: Arquivos salvos diretamente no banco (collection `delivery_files`), sem depender de filesystem.
+*   **Página de Recuperação**: Cliente acessa `https://seu-site.vercel.app/entregas/[ID]` para baixar os arquivos entregues.
+*   **Expiração**: Links de download expiram em **7 dias**; arquivos são automaticamente deletados do banco após **30 dias**.
+
 ### 🛠️ Gestão Avançada de Tickets
 *   **Sistema de Claim**: Botão de "Assumir Ticket" com feedback visual e logs de quem está atendendo.
 *   **Gestão de Membros**: Adicione ou remova usuários do ticket apenas inserindo o ID no formulário.
@@ -80,6 +87,11 @@
 │   └── constants.ts  # Constantes do projeto
 ├── web/              # Dashboard Next.js
 │   ├── app/          # Páginas e rotas
+│   │   ├── api/
+│   │   │   ├── upload/[token]/  # API de upload de mídia
+│   │   │   └── file/[token]/    # API de download (com expiração)
+│   │   ├── upload/[token]/      # Página de upload
+│   │   └── entregas/[id]/       # Página de recuperação de entregas
 │   ├── components/   # Componentes React/UI
 │   ├── hooks/        # Custom hooks
 │   ├── lib/          # Utilitários e configurações
@@ -168,6 +180,7 @@
 | `/ticket painel` | Envia o painel de abertura de tickets em um canal |
 | `/ticket configurar` | Abre o painel interativo de configuração |
 | `/ticket stats` | Exibe estatísticas de tickets por período e categoria |
+| `/help` | Lista todos os comandos públicos disponíveis |
 
 ---
 
@@ -181,8 +194,10 @@ npm run start
 
 ### Dashboard (Vercel)
 Conecte o repositório na Vercel e configure as variáveis de ambiente:
-- `MONGO_URI`
-- `NEXT_PUBLIC_API_URL`
+- `MONGO_URI` — string de conexão MongoDB
+- `DATABASE_NAME` — nome do banco (default: `database`)
+- `BOT_TOKEN` — token do bot Discord (para finalização automática via REST API)
+- `WEB_URL` — URL base do site (ex: `https://ticket-mts.vercel.app`)
 
 ---
 
