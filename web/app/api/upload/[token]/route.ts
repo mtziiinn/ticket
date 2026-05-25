@@ -160,7 +160,7 @@ export async function POST(
     await db.collection("pending_deliveries").deleteOne({ _id: pending._id });
 
     const staffMention = pending.staffId ? `<@${pending.staffId}>` : "Staff";
-    const channelMsg = `<:action_check:1502789797821939752> ${staffMention} entregou a mídia!\n<:file_add:1502789905112105071> **Arquivo:** \`${filename}\`\n<:clipboard:1502789887907205293> **Descrição:** ${pending.description || "Mídia entregue"}\n<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}\n<:action_warning:1502789801949265990> ⏰ O link expira em **7 dias**.`;
+    const channelMsg = `<:action_check:1502789797821939752> ${staffMention} entregou a mídia!\n<:file_add:1502789905112105071> **Arquivo:** \`${filename}\`\n<:clipboard:1502789887907205293> **Descrição:** ${pending.description || "Mídia entregue"}\n<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}\n<:action_warning:1502789801949265990> O link expira em **7 dias**.`;
     await sendDiscordMessage(pending.channelId, channelMsg);
 
     if (ticket?.ownerId) {
@@ -176,7 +176,7 @@ export async function POST(
         getTextDisplay(`<:clipboard:1502789887907205293> **Descrição:** ${pending.description || "Mídia entregue"}`),
         getTextDisplay(`<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}`),
         getSeparator(),
-        getTextDisplay(`<:action_warning:1502789801949265990> ⏰ Este link expira em **7 dias**.`),
+        getTextDisplay(`<:action_warning:1502789801949265990> Este link expira em **7 dias**.`),
       );
 
       const dm = await createDM(ticket.ownerId);
