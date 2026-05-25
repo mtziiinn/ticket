@@ -137,6 +137,9 @@
 6. **Configure no Discord**
    Use `/ticket configurar` e siga o **Guia Visual**.
 
+7. **Veja as estatísticas**
+   Use `/ticket stats` para conferir tickets abertos por período e categoria.
+
 ---
 
 ## 📜 Scripts Disponíveis
@@ -158,6 +161,13 @@
 | `npm run build` | Compila o dashboard para produção |
 | `npm run start` | Inicia o servidor Next.js (produção) |
 | `npm run lint` | Verifica código com ESLint |
+
+### Comandos do Bot Discord
+| Comando | Descrição |
+|---|---|
+| `/ticket painel` | Envia o painel de abertura de tickets em um canal |
+| `/ticket configurar` | Abre o painel interativo de configuração |
+| `/ticket stats` | Exibe estatísticas de tickets por período e categoria |
 
 ---
 
