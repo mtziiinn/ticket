@@ -63,6 +63,8 @@ export default function UploadPage({ params }: PageProps) {
   };
 
   if (result?.success) {
+    const isImage = result.filename?.match(/\.(jpe?g|png|gif|webp|bmp|svg)$/i);
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-border bg-card text-center">
@@ -78,15 +80,23 @@ export default function UploadPage({ params }: PageProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Volte ao Discord e clique em{" "}
-              <strong>"Entregar Mídia"</strong> no painel admin para finalizar a
-              entrega.
+              A entrega foi enviada automaticamente para o Discord!
             </p>
-            <Button asChild variant="outline" className="w-full">
+            {isImage ? (
               <a href={result.url} target="_blank" rel="noopener noreferrer">
-                Ver arquivo enviado
+                <img
+                  src={result.url}
+                  alt={result.filename}
+                  className="w-full rounded-lg border border-border object-contain max-h-80"
+                />
               </a>
-            </Button>
+            ) : (
+              <Button asChild variant="outline" className="w-full">
+                <a href={result.url} target="_blank" rel="noopener noreferrer">
+                  Ver arquivo enviado
+                </a>
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
