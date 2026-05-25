@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ArrowLeft,
   Loader2,
+  Files,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +27,7 @@ interface PageProps {
 export default function UploadPage({ params }: PageProps) {
   const { token } = use(params);
   const router = useRouter();
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
@@ -35,13 +36,17 @@ export default function UploadPage({ params }: PageProps) {
     error?: string;
   } | null>(null);
 
+  const fileArray = files ? Array.from(files) : [];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file) return;
+    if (!files || files.length === 0) return;
 
     setUploading(true);
     const formData = new FormData();
-    formData.set("file", file);
+    for (const file of fileArray) {
+      formData.append("file", file);
+    }
 
     try {
       const res = await fetch(`/api/upload/${token}`, {
@@ -63,8 +68,6 @@ export default function UploadPage({ params }: PageProps) {
   };
 
   if (result?.success) {
-    const isImage = result.filename?.match(/\.(jpe?g|png|gif|webp|bmp|svg)$/i);
-
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md border-border bg-card text-center">
@@ -74,29 +77,20 @@ export default function UploadPage({ params }: PageProps) {
             </div>
             <CardTitle className="text-2xl">Upload realizado!</CardTitle>
             <CardDescription>
-              O arquivo <strong>{result.filename}</strong> foi enviado com
-              sucesso e a qualidade original foi preservada.
+              {fileArray.length > 1
+                ? `${fileArray.length} arquivos foram compactados e enviados com sucesso.`
+                : `O arquivo foi enviado com sucesso e a qualidade original foi preservada.`}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
               A entrega foi enviada automaticamente para o Discord!
             </p>
-            {isImage ? (
+            <Button asChild variant="outline" className="w-full">
               <a href={result.url} target="_blank" rel="noopener noreferrer">
-                <img
-                  src={result.url}
-                  alt={result.filename}
-                  className="w-full rounded-lg border border-border object-contain max-h-80"
-                />
+                Baixar {result.filename}
               </a>
-            ) : (
-              <Button asChild variant="outline" className="w-full">
-                <a href={result.url} target="_blank" rel="noopener noreferrer">
-                  Ver arquivo enviado
-                </a>
-              </Button>
-            )}
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -116,8 +110,7 @@ export default function UploadPage({ params }: PageProps) {
             Upload de Mídia
           </h1>
           <p className="text-sm text-muted-foreground">
-            Envie o arquivo final com qualidade original para entrega ao
-            cliente.
+            Envie os arquivos finais com qualidade original para entrega ao cliente.
           </p>
         </div>
 
@@ -137,39 +130,59 @@ export default function UploadPage({ params }: PageProps) {
                 <input
                   type="file"
                   id="file"
+                  multiple
                   className="hidden"
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  onChange={(e) => setFiles(e.target.files)}
                 />
                 <label
                   htmlFor="file"
                   className="cursor-pointer flex flex-col items-center gap-2"
                 >
-                  <FileUp className="h-8 w-8 text-muted-foreground" />
+                  <Files className="h-8 w-8 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
-                    {file ? file.name : "Clique para selecionar o arquivo"}
+                    {fileArray.length > 0
+                      ? `${fileArray.length} arquivo(s) selecionado(s)`
+                      : "Clique para selecionar os arquivos"}
                   </span>
-                  {file && (
-                    <span className="text-xs text-muted-foreground">
-                      {(file.size / 1048576).toFixed(1)} MB
-                    </span>
-                  )}
                 </label>
+                {fileArray.length > 0 && (
+                  <ul className="mt-4 text-left text-sm text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
+                    {fileArray.map((f, i) => (
+                      <li key={i} className="truncate">
+                        {f.name} ({(f.size / 1048576).toFixed(1)} MB)
+                      </li>
+                    ))}
+                    {fileArray.length > 1 && (
+                      <li className="text-xs text-primary pt-1 border-t border-border mt-1">
+                        Total:{" "}
+                        {(
+                          fileArray.reduce((s, f) => s + f.size, 0) / 1048576
+                        ).toFixed(1)}{" "}
+                        MB — serão compactados em ZIP
+                      </li>
+                    )}
+                  </ul>
+                )}
               </div>
 
               <Button
                 type="submit"
                 className="w-full gap-2"
-                disabled={!file || uploading}
+                disabled={!files || files.length === 0 || uploading}
               >
                 {uploading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando...
+                    {fileArray.length > 1
+                      ? "Compactando e enviando..."
+                      : "Enviando..."}
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    {file ? "Enviar arquivo" : "Selecione um arquivo"}
+                    {fileArray.length > 0
+                      ? `Enviar ${fileArray.length} arquivo(s)`
+                      : "Selecione os arquivos"}
                   </>
                 )}
               </Button>

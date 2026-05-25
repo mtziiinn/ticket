@@ -1,22 +1,3 @@
 {
-	"extends": "@constatic/base/tsconfig",
-	"compilerOptions": {
-		"types": ["node"],
-		// Output Options
-		"outDir": "./build",
-		"rootDir": "./src",
-
-		// Path mapping Options
-		"paths": {
-			"#env": ["./src/env.ts"],
-			"#base": ["./src/discord/index.ts"],
-			"#functions": ["./src/functions/index.ts"],
-			"#database": ["./src/database/index.ts"],
-			"#emojis": ["./emojis.json"],
-		}
-	},
-	
-	// Include and Exclude Options
-	"include": ["src"],
-	"exclude": ["node_modules"]
+  "files": []
 }

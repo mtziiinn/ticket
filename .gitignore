@@ -4,6 +4,9 @@
 /discloud
 /deprecated
 /node_modules
+/web/.next
+.next
+/.vscode
 
 # Files
 /.env

@@ -1,0 +1,17 @@
+{
+  "extends": "@constatic/base/tsconfig",
+  "compilerOptions": {
+    "types": ["node"],
+    "outDir": "../build",
+    "rootDir": ".",
+    "paths": {
+      "#env": ["./env.ts"],
+      "#base": ["./discord/index.ts"],
+      "#functions": ["./functions/index.ts"],
+      "#database": ["./database/index.ts"],
+      "#emojis": ["../emojis.json"],
+    }
+  },
+  "include": ["."],
+  "exclude": ["node_modules"]
+}

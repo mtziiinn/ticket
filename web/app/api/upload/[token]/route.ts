@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const { ZipArchive } = require("archiver") as any;
 
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -22,65 +25,11 @@ async function discordFetch(endpoint: string, options: RequestInit = {}) {
   return res.json();
 }
 
-async function sendDiscordMessage(
-  channelId: string,
-  content: string,
-  components?: unknown[],
-) {
-  const body: Record<string, unknown> = { content };
-  if (components) body.components = components;
+async function sendDiscordMessage(channelId: string, content: string) {
   return discordFetch(`/channels/${channelId}/messages`, {
     method: "POST",
-    body: JSON.stringify(body),
+    body: JSON.stringify({ content }),
   });
-}
-
-async function createDM(userId: string) {
-  return discordFetch("/users/@me/channels", {
-    method: "POST",
-    body: JSON.stringify({ recipient_id: userId }),
-  });
-}
-
-async function getUserAvatar(userId: string): Promise<string | null> {
-  const user = await discordFetch(`/users/${userId}`);
-  if (!user?.avatar || !user?.discriminator) return null;
-  const ext = user.avatar.startsWith("a_") ? "gif" : "png";
-  return `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.${ext}`;
-}
-
-function hexToInt(hex: string): number {
-  return parseInt(hex.replace("#", ""), 16);
-}
-
-function getContainer(
-  color: string,
-  ...components: unknown[]
-) {
-  return {
-    type: 17,
-    accent_color: hexToInt(color),
-    components,
-  };
-}
-
-function getSection(content: string, thumbnailUrl?: string) {
-  const section: Record<string, unknown> = {
-    type: 18,
-    components: [{ type: 20, content }],
-  };
-  if (thumbnailUrl) {
-    section.accessory = { type: 21, media: { url: thumbnailUrl } };
-  }
-  return section;
-}
-
-function getSeparator() {
-  return { type: 19 };
-}
-
-function getTextDisplay(content: string) {
-  return { type: 20, content };
 }
 
 export async function POST(
@@ -102,32 +51,63 @@ export async function POST(
     }
 
     const formData = await request.formData();
-    const file = formData.get("file") as File | null;
+    const fileEntries = formData.getAll("file") as File[];
 
-    if (!file) {
+    if (!fileEntries || fileEntries.length === 0) {
       return NextResponse.json({ error: "Nenhum arquivo enviado" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const filename = file.name;
-    const contentType = file.type || "application/octet-stream";
-
     const baseUrl = process.env.WEB_URL || request.nextUrl.origin;
-    const downloadUrl = `${baseUrl}/api/file/${token}`;
-
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    let zipFilename: string;
+    let zipBuffer: Buffer;
+
+    if (fileEntries.length === 1) {
+      const file = fileEntries[0];
+      const bytes = await file.arrayBuffer();
+      zipBuffer = Buffer.from(bytes);
+      zipFilename = file.name;
+    } else {
+      zipFilename = `entregaveis_${token}.zip`;
+
+      const fileData = await Promise.all(
+        fileEntries.map(async (f) => ({
+          name: f.name,
+          buffer: Buffer.from(await f.arrayBuffer()),
+        })),
+      );
+
+      const buffers: Buffer[] = [];
+      const archive = new ZipArchive({ zlib: { level: 5 } });
+
+      archive.on("data", (chunk: Buffer) => buffers.push(chunk));
+
+      await new Promise<void>((resolve, reject) => {
+        archive.on("end", resolve);
+        archive.on("error", reject);
+
+        for (const f of fileData) {
+          archive.append(f.buffer, { name: f.name });
+        }
+
+        archive.finalize();
+      });
+
+      zipBuffer = Buffer.concat(buffers);
+    }
+
+    const downloadUrl = `${baseUrl}/api/file/${token}`;
 
     await db.collection("delivery_files").updateOne(
       { token },
       {
         $set: {
           token,
-          filename,
-          contentType,
-          fileData: buffer,
+          filename: zipFilename,
+          contentType: "application/zip",
+          fileData: zipBuffer,
           createdAt: now,
           expiresAt,
         },
@@ -146,7 +126,7 @@ export async function POST(
       if (!ticket.deliveries) ticket.deliveries = [];
       ticket.deliveries.push({
         url: downloadUrl,
-        filename,
+        filename: zipFilename,
         description: pending.description || "Mídia entregue",
         deliveredBy: pending.staffId,
         deliveredAt: new Date(),
@@ -159,33 +139,37 @@ export async function POST(
 
     await db.collection("pending_deliveries").deleteOne({ _id: pending._id });
 
+    const isMulti = fileEntries.length > 1;
+    const fileList = fileEntries.map((f) => f.name).join(", ");
+    const sizeInfo = isMulti
+      ? ` (${fileEntries.length} arquivos compactados em ZIP)`
+      : "";
     const staffMention = pending.staffId ? `<@${pending.staffId}>` : "Staff";
-    const channelMsg = `<:action_check:1502789797821939752> ${staffMention} entregou a mídia!\n<:file_add:1502789905112105071> **Arquivo:** \`${filename}\`\n<:clipboard:1502789887907205293> **Descrição:** ${pending.description || "Mídia entregue"}\n<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}\n<:action_warning:1502789801949265990> O link expira em **7 dias**.`;
+    const channelMsg = [
+      `<:action_check:1502789797821939752> ${staffMention} entregou a mídia!${sizeInfo}`,
+      `<:file_add:1502789905112105071> **Arquivo:** \`${zipFilename}\``,
+      `<:file_add:1502789905112105071> **Arquivos:** ${fileList}`,
+      `<:clipboard:1502789887907205293> **Descrição:** ${pending.description || "Mídia entregue"}`,
+      `<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}`,
+      `<:action_warning:1502789801949265990> O link expira em **7 dias**.`,
+    ].join("\n");
     await sendDiscordMessage(pending.channelId, channelMsg);
 
     if (ticket?.ownerId) {
-      const staffAvatar = await getUserAvatar(pending.staffId);
-      const dmContainer = getContainer(
-        "#3b82f6",
-        getSection(
-          `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá <@${ticket.ownerId}>, o arquivo final do seu pedido foi entregue!`,
-          staffAvatar || undefined,
-        ),
-        getSeparator(),
-        getTextDisplay(`<:file_add:1502789905112105071> **Arquivo:** \`${filename}\``),
-        getTextDisplay(`<:clipboard:1502789887907205293> **Descrição:** ${pending.description || "Mídia entregue"}`),
-        getTextDisplay(`<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}`),
-        getSeparator(),
-        getTextDisplay(`<:action_warning:1502789801949265990> Este link expira em **7 dias**.`),
-      );
-
-      const dm = await createDM(ticket.ownerId);
-      if (dm?.id) {
-        await sendDiscordMessage(dm.id, "", [dmContainer]);
-      }
+      await db.collection("dm_queue").insertOne({
+        ownerId: ticket.ownerId,
+        staffId: pending.staffId,
+        filename: zipFilename,
+        description: pending.description || "Mídia entregue",
+        downloadUrl,
+        channelId: pending.channelId,
+        fileCount: fileEntries.length,
+        fileList,
+        createdAt: new Date(),
+      });
     }
 
-    return NextResponse.json({ success: true, url: downloadUrl, filename });
+    return NextResponse.json({ success: true, url: downloadUrl, filename: zipFilename });
   } catch (error) {
     console.error("[Upload API] Erro:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });

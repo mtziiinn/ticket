@@ -3,8 +3,8 @@
   "type": "module",
   "main": "build/index.js",
   "scripts": {
-    "check": "tsc --noEmit && echo ✔ Ok",
-    "build": "tsc",
+    "check": "tsc -p src/tsconfig.json --noEmit && echo ✔ Ok",
+    "build": "tsc -p src/tsconfig.json",
     "dev": "tsx --env-file=.env ./src/index.ts",
     "dev:dev": "tsx --env-file=.env.dev ./src/index.ts",
     "watch": "tsx --watch --env-file=.env ./src/index.ts",

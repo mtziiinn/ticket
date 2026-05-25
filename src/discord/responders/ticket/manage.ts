@@ -996,6 +996,46 @@ export async function generateTranscript(
   return `${env.WEB_URL}/transcripts/${transcriptId}`;
 }
 
+// Ordem de prioridade dos status (menor = mais acima na lista)
+const priorityOrder: Record<string, number> = {
+  payment: 0,
+  production: 1,
+  open: 2,
+  queue: 3,
+  completed: 4,
+};
+
+async function repositionTicketByStatus(
+  channel: any,
+  newStatus: string,
+) {
+  try {
+    const category = channel.parent;
+    if (!category) return;
+
+    const allChannelIds = [...category.children.cache.keys()];
+    const tickets = await db.tickets
+      .find({ channelId: { $in: allChannelIds } })
+      .lean()
+      .catch(() => []);
+
+    const currentPriority = priorityOrder[newStatus] ?? 99;
+
+    let higherCount = 0;
+    for (const t of tickets) {
+      if (t.channelId === channel.id) continue;
+      const p = priorityOrder[t.status] ?? 99;
+      if (p < currentPriority) higherCount++;
+    }
+
+    await channel.setPosition(higherCount).catch((err: any) => {
+      console.error("[Status] Erro ao reposicionar canal:", err);
+    });
+  } catch (error) {
+    console.error("[Status] Erro ao reposicionar:", error);
+  }
+}
+
 // Responder para seleção de status
 createResponder({
   customId: "ticket/manage/status_select",
@@ -1023,6 +1063,9 @@ createResponder({
     await (channel as any).setName(newName).catch((err: any) => {
       console.error("[Status] Erro ao renomear canal:", err);
     });
+
+    // Reposicionar o canal na categoria conforme prioridade
+    await repositionTicketByStatus(channel, newStatus);
 
     // Atualizar Painel Principal
     const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
