@@ -79,7 +79,6 @@ createResponder({
   types: [ResponderType.Modal, ResponderType.ModalComponent],
   cache: "cached",
   async run(interaction) {
-    console.log(">>> [Admin] Membros capturado pelo título!");
     await processMembers(interaction);
   },
 });

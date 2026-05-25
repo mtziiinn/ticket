@@ -12,12 +12,6 @@
 			"#base": ["./src/discord/index.ts"],
 			"#functions": ["./src/functions/index.ts"],
 			"#database": ["./src/database/index.ts"],
-			"#server": ["./src/server/index.ts"],
-			"#menus": ["./src/menus/index.ts"],
-			"#tools": ["./src/tools/index.ts"],
-			"#lib/*": ["./src/lib/*"],
-			"#shared/*": ["./src/shared/*"],
-			"#types/*": ["./src/@types/*"],
 			"#emojis": ["./emojis.json"],
 		}
 	},

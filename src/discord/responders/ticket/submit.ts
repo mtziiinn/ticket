@@ -20,13 +20,8 @@ import {
 } from "discord.js";
 import { db } from "#database";
 
-console.log(
-  "[Ticket] Sistema de Tickets (V15 - Multi-Category Routing) carregado!",
-);
-
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(interaction: any) {
-  console.log(">>> [Ticket] PROCESSANDO CRIAÇÃO DO TICKET...");
 
   const { guild, user, fields } = interaction;
 
@@ -38,11 +33,11 @@ async function processTicketSubmission(interaction: any) {
         content: `<:action_x:1502789802918150206> Desculpe, o setor de atendimentos está temporariamente **fechado**. Tente novamente mais tarde!`,
         flags: ["Ephemeral"],
       })
-      .catch(() => {});
+      .catch((err: any) => console.error("[Submit]", err));
     return;
   }
 
-  await interaction.deferReply({ flags: ["Ephemeral"] }).catch(() => {});
+  await interaction.deferReply({ flags: ["Ephemeral"] }).catch((err: any) => console.error("[Submit]", err));
 
   try {
     // 0. Verificar se o usuário já possui um ticket aberto
@@ -79,10 +74,6 @@ async function processTicketSubmission(interaction: any) {
     // Pega o ID da categoria baseado no assunto escolhido
     let parentId = selectedCategory?.parentId;
 
-    console.log(
-      `[Ticket] Roteando assunto "${category}" para categoria ID: ${parentId || "Padrão"}`,
-    );
-
     // Emojis customizados para o tópico
     const eTicket = "<:other_ticket:1502789959378145300>";
     const eUser = "<:user:1502789979229913268>";
@@ -91,9 +82,8 @@ async function processTicketSubmission(interaction: any) {
 
     // 2. Criar o canal na categoria correta
     const categoryEmoji = selectedCategory?.emoji;
-    const globalEmoji = guildData.channels?.ticketEmoji;
 
-    // Prioridade: Emoji da Categoria -> Emoji Global -> Padrão 🎫
+    // Prioridade: Emoji da Categoria -> Padrão 🎫
     let channelEmoji = "🎫";
     if (categoryEmoji) {
       // Se for ID de emoji customizado, não usamos no nome do canal (Discord não suporta no nome)
@@ -102,12 +92,10 @@ async function processTicketSubmission(interaction: any) {
         categoryEmoji.length > 5 && !categoryEmoji.includes(":")
           ? "🎫"
           : categoryEmoji;
-    } else if (globalEmoji) {
-      channelEmoji = globalEmoji;
     }
 
     const channel = await guild.channels.create({
-      name: `${channelEmoji}・${ticketId}`,
+      name: `${channelEmoji}・${category}-${ticketId}`,
       type: ChannelType.GuildText,
       parent: parentId || undefined,
       topic: `${eTicket}・${ticketId} | ${eUser} Aberto Por: ${user.tag} | ${eCalendar} Aberto em: ${openedAt} | ${eFolder} Categoria: ${category.toUpperCase()}`,
@@ -219,7 +207,7 @@ async function processTicketSubmission(interaction: any) {
 
         await (logChannel as any)
           .send({ components: [logContainer], flags: ["IsComponentsV2"] })
-          .catch(() => {});
+          .catch((err: any) => console.error("[Submit]", err));
       }
     }
 
@@ -232,7 +220,7 @@ async function processTicketSubmission(interaction: any) {
       .editReply({
         content: `❌ Erro ao criar ticket: \`${error.message}\``,
       })
-      .catch(() => {});
+      .catch((err: any) => console.error("[Submit]", err));
   }
 }
 
@@ -245,6 +233,14 @@ createResponder({
     const { guild } = interaction;
     const guildData = await db.guilds.get(guild.id);
     const dynamicCategories = guildData.channels?.ticketCategories || [];
+
+    if (guildData.channels?.closed) {
+      await interaction.reply({
+        content: `<:action_x:1502789802918150206> Desculpe, o setor de atendimentos está temporariamente **fechado**. Tente novamente mais tarde!`,
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
 
     if (dynamicCategories.length === 0) {
       await interaction.reply({

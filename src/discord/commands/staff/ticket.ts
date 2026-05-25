@@ -14,6 +14,65 @@ import {
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
 
+function startOfDay() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function startOfWeek() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function startOfMonth() {
+  const d = new Date();
+  d.setDate(1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+async function getCategoryStats(guildId: string) {
+  const allTickets = await db.tickets.find({ guildId });
+
+  const todayStart = startOfDay();
+  const weekStart = startOfWeek();
+  const monthStart = startOfMonth();
+
+  const stats: Record<string, { today: number; week: number; month: number; total: number }> = {};
+  let totalToday = 0, totalWeek = 0, totalMonth = 0, totalAll = 0;
+
+  for (const ticket of allTickets) {
+    const cat = ticket.category || "desconhecido";
+    const opened = ticket.openedAt ? new Date(ticket.openedAt) : null;
+
+    if (!stats[cat]) stats[cat] = { today: 0, week: 0, month: 0, total: 0 };
+    stats[cat].total++;
+    totalAll++;
+
+    if (opened) {
+      if (opened >= todayStart) {
+        stats[cat].today++;
+        totalToday++;
+      }
+      if (opened >= weekStart) {
+        stats[cat].week++;
+        totalWeek++;
+      }
+      if (opened >= monthStart) {
+        stats[cat].month++;
+        totalMonth++;
+      }
+    }
+  }
+
+  return { stats, totalToday, totalWeek, totalMonth, totalAll };
+}
+
 createCommand({
   name: "ticket",
   description: "Comandos do sistema de tickets",
@@ -51,6 +110,11 @@ createCommand({
           required: false,
         },
       ],
+    },
+    {
+      name: "stats",
+      description: "Exibir estatísticas de tickets",
+      type: ApplicationCommandOptionType.Subcommand,
     },
   ],
   async run(interaction) {
@@ -163,6 +227,43 @@ createCommand({
           content: "Ocorreu um erro ao abrir o painel de configuração.",
         });
       }
+    }
+
+    if (subcommand === "stats") {
+      await interaction.deferReply({ flags: ["Ephemeral"] });
+
+      const { stats, totalToday, totalWeek, totalMonth, totalAll } = await getCategoryStats(guildId!);
+
+      const categoryLines = Object.entries(stats)
+        .sort(([, a], [, b]) => b.total - a.total)
+        .map(([cat, s]) => {
+          return `> <:folder_open:1502789875928400103> **${cat.toUpperCase()}**\n> <:clock_add:1502789855548276836> Hoje: \`${s.today}\` | <:calendar_check:1502789850649071740> Semana: \`${s.week}\` | <:calendar:1502789854486986752> Mês: \`${s.month}\` | <:database:1502789865023209512> Total: \`${s.total}\``;
+        })
+        .join("\n\n");
+
+      const container = createContainer(
+        constants.colors.azoxo,
+        createSection({
+          content: `## <:other_ticket:1502789959378145300> Estatísticas de Tickets\nConfira abaixo o resumo completo dos atendimentos do servidor.`,
+          thumbnail: emojis.static.other_ticket,
+        }),
+        Separator.Default,
+        "### <:clock:1502789859960422502> Períodos",
+        [
+          `<:clock_add:1502789855548276836> **Hoje:** \`${totalToday}\` tickets`,
+          `<:calendar_check:1502789850649071740> **Semana:** \`${totalWeek}\` tickets`,
+          `<:calendar:1502789854486986752> **Mês:** \`${totalMonth}\` tickets`,
+          `<:database:1502789865023209512> **Total:** \`${totalAll}\` tickets`,
+        ].join("\n"),
+        Separator.Default,
+        "### <:folder_open:1502789875928400103> Por Categoria",
+        categoryLines || "*Nenhum ticket encontrado.*",
+      );
+
+      await interaction.editReply({
+        components: [container],
+        flags: ["IsComponentsV2"] as any,
+      });
     }
   },
 });

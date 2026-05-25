@@ -38,21 +38,6 @@
     ],
     "#database": [
       "./build/database/index.js"
-    ],
-    "#server": [
-      "./build/server/index.js"
-    ],
-    "#menus": [
-      "./build/menus/index.js"
-    ],
-    "#tools": [
-      "./build/tools/index.js"
-    ],
-    "#lib/*": [
-      "./build/lib/*"
-    ],
-    "#shared/*": [
-      "./build/shared/*"
     ]
   },
   "baseVersion": "1.5.7"

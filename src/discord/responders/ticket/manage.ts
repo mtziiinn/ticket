@@ -184,7 +184,7 @@ createResponder({
               components: [dmContainer],
               flags: ["IsComponentsV2"],
             })
-            .catch(() => {});
+            .catch((err: any) => console.error("[Manage]", err));
         }
         break;
       }
@@ -355,7 +355,7 @@ createResponder({
             .fetch(ticket.messageId)
             .catch(() => null);
           if (mainMessage) {
-            await mainMessage.edit({ components: [container] }).catch(() => {});
+            await mainMessage.edit({ components: [container] }).catch((err: any) => console.error("[Manage]", err));
           }
         }
 
@@ -429,7 +429,7 @@ createResponder({
             components: [textContainer],
             flags: ["IsComponentsV2"],
           })
-          .catch(() => {});
+          .catch((err: any) => console.error("[Manage]", err));
 
         // 2. Enviar o QR Code GRANDE em uma mensagem separada
         const qrEmbed = createEmbed({
@@ -443,10 +443,10 @@ createResponder({
           .send({
             embeds: [qrEmbed],
           })
-          .catch(() => {});
+          .catch((err: any) => console.error("[Manage]", err));
 
         await interaction.editReply({
-          content: "✅ Informações de pagamento enviadas com sucesso!",
+          content: "<:action_check:1502789797821939752> Informações de pagamento enviadas com sucesso!",
         });
         break;
       }
@@ -661,7 +661,7 @@ createResponder({
           }
         }
 
-        setTimeout(() => channel.delete().catch(() => {}), 5000);
+        setTimeout(() => channel.delete().catch((err) => console.error("[Manage]", err)), 5000);
         break;
       }
 
@@ -927,9 +927,10 @@ createResponder({
     ticket.status = newStatus;
     await (ticket as any).save();
 
-    // Atualizar Nome do Canal com o novo Emoji
-    const ticketId = (ticket.ticketId as string) || "ticket";
-    const newName = `${statusData.emoji}・${ticketId.toLowerCase()}`;
+    // Atualizar Nome do Canal com o novo Emoji (mantendo o slug)
+    const nameParts = channel.name.split("・");
+    const slug = nameParts[1] || "";
+    const newName = `${statusData.emoji}・${slug}`;
     await (channel as any).setName(newName).catch((err: any) => {
       console.error("[Status] Erro ao renomear canal:", err);
     });
@@ -943,7 +944,7 @@ createResponder({
         .fetch(ticket.messageId)
         .catch(() => null);
       if (mainMessage) {
-        await mainMessage.edit({ components: [container] }).catch(() => {});
+        await mainMessage.edit({ components: [container] }).catch((err: any) => console.error("[Manage]", err));
       }
     }
 
@@ -952,6 +953,6 @@ createResponder({
       content: `### ${statusData.emoji} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
     });
 
-    await interaction.deleteReply().catch(() => {});
+    await interaction.deleteReply().catch((err: any) => console.error("[Manage]", err));
   },
 });

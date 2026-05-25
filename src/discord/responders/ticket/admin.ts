@@ -13,7 +13,7 @@ import { generateTranscript } from "./manage.js";
 
 // Função compartilhada para renomear
 async function processRename(interaction: any) {
-  const { channel, fields, guildId } = interaction;
+  const { channel, fields } = interaction;
   if (!channel?.isTextBased()) return;
 
   try {
@@ -22,35 +22,33 @@ async function processRename(interaction: any) {
       interaction.isFromMessage()
         ? interaction.deferUpdate()
         : interaction.deferReply({ ephemeral: true })
-    ).catch(() => {});
+    ).catch((err: any) => console.error("[Admin]", err));
 
     const data = modalFieldsToRecord(fields);
     const newName = data.new_name as string;
 
     if (!newName) {
       await interaction
-        .editReply({ content: "Nome inválido." })
-        .catch(() => {});
+        .followUp({ content: "Nome inválido.", flags: ["Ephemeral"] })
+        .catch((err: any) => console.error("[Admin]", err));
       return;
     }
 
-    // Buscar emoji configurado ou usar o atual
-    const guildData = await db.guilds.get(guildId);
-    const configuredEmoji = guildData.channels?.ticketEmoji;
+    // Buscar o emoji atual do nome do canal
     const currentEmoji = channel.name.split("・")[0] || "🎫";
 
-    const emojiToUse = configuredEmoji || currentEmoji;
-    const formattedName = `${emojiToUse}・${newName.replace(/\s+/g, "-").toLowerCase()}`;
+    const formattedName = `${currentEmoji}・${newName.replace(/\s+/g, "-").toLowerCase()}`;
 
     await (channel as any).setName(formattedName).catch((err: any) => {
       console.error("Erro ao renomear canal:", err);
     });
 
     await interaction
-      .editReply({
+      .followUp({
         content: `<:action_check:1502789797821939752> Canal renomeado para: \`${formattedName}\``,
+        flags: ["Ephemeral"],
       })
-      .catch(() => {});
+      .catch((err: any) => console.error("[Admin]", err));
   } catch (error) {
     console.error("[Renomear] Erro ao processar:", error);
   }
@@ -81,23 +79,20 @@ async function processCloseSubmission(interaction: any) {
   const { channel, user, fields, guild } = interaction;
   if (!channel?.isTextBased()) return;
 
-  console.log(`[Ticket] >>> FINALIZANDO CANAL: ${channel.name}`);
-
   // 1. Acknowledge IMEDIATO (Fecha o modal instantaneamente)
   try {
     if (interaction.isFromMessage()) {
-      await interaction.deferUpdate().catch(() => {});
+      await interaction.deferUpdate().catch((err: any) => console.error("[Admin]", err));
     } else {
-      await interaction.deferReply({ ephemeral: true }).catch(() => {});
+      await interaction.deferReply({ ephemeral: true }).catch((err: any) => console.error("[Admin]", err));
     }
-    console.log("[Ticket] 1. Discord Acknowledged (Modal Closed)");
 
     // Mensagem de feedback no canal
     await channel
       .send({
         content: `<:action_info:1502789798983766016> O atendimento foi finalizado por ${user}. Gerando transcript e deletando o canal em instantes...`,
       })
-      .catch(() => {});
+      .catch((err: any) => console.error("[Admin]", err));
   } catch (e) {
     console.error("[Ticket] Erro no Acknowledge:", e);
   }
@@ -119,15 +114,13 @@ async function processCloseSubmission(interaction: any) {
     ticket.closedBy = user.id;
     ticket.closedAt = new Date();
     await (ticket as any).save();
-    console.log("[Ticket] 2. Banco Atualizado");
 
     // 3. Transcript OBRIGATÓRIO (Independente da escolha do Staff)
-    console.log("[Ticket] 3. Gerando Transcript (Obrigatório para Staff)...");
     const transcriptUrl = await generateTranscript(
       channel as any,
       ticket,
       user,
-    ).catch((err) => {
+    ).catch((err: any) => {
       console.error("[Ticket] Erro ao gerar transcript:", err);
       return "";
     });
@@ -190,8 +183,7 @@ async function processCloseSubmission(interaction: any) {
 
         await (logChannel as any)
           .send({ components: [logContainer], flags: ["IsComponentsV2"] })
-          .catch(() => {});
-        console.log("[Ticket] 4. Log enviado para Staff");
+          .catch((err: any) => console.error("[Admin]", err));
       }
     }
 
@@ -231,14 +223,12 @@ async function processCloseSubmission(interaction: any) {
           components: [dmContainer],
           flags: ["IsComponentsV2"],
         })
-        .catch(() => {});
-      console.log("[Ticket] 5. DM de encerramento enviada");
+        .catch((err: any) => console.error("[Admin]", err));
     }
 
     // 6. Deletar canal
-    console.log("[Ticket] 6. Deletando canal em 3 segundos...");
     setTimeout(() => {
-      channel.delete().catch(() => {});
+      channel.delete().catch((err: any) => console.error("[Admin]", err));
     }, 3000);
   } catch (err) {
     console.error("[Ticket] Erro no encerramento:", err);
@@ -261,7 +251,6 @@ createResponder({
   types: [ResponderType.Modal, ResponderType.ModalComponent],
   cache: "cached",
   async run(interaction) {
-    console.log(">>> [Ticket] Finalização capturada pelo backup!");
     await processCloseSubmission(interaction);
   },
 });
