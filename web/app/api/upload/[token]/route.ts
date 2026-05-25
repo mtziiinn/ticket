@@ -117,6 +117,9 @@ export async function POST(
     const baseUrl = process.env.WEB_URL || request.nextUrl.origin;
     const downloadUrl = `${baseUrl}/api/file/${token}`;
 
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
     await db.collection("delivery_files").updateOne(
       { token },
       {
@@ -125,11 +128,17 @@ export async function POST(
           filename,
           contentType,
           fileData: buffer,
-          createdAt: new Date(),
+          createdAt: now,
+          expiresAt,
         },
       },
       { upsert: true },
     );
+
+    await db.collection("delivery_files").createIndex(
+      { createdAt: 1 },
+      { expireAfterSeconds: 30 * 24 * 60 * 60, background: true },
+    ).catch(() => null);
 
     const ticket = await db.collection("tickets").findOne({ ticketId: pending.ticketId });
 

@@ -11,11 +11,15 @@ export async function GET(
     const db = await getDatabase();
     const file = await db.collection("delivery_files").findOne(
       { token },
-      { projection: { fileData: 1, filename: 1, contentType: 1 } },
+      { projection: { fileData: 1, filename: 1, contentType: 1, expiresAt: 1 } },
     );
 
     if (!file?.fileData) {
       return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 });
+    }
+
+    if (file.expiresAt && new Date() > new Date(file.expiresAt)) {
+      return NextResponse.json({ error: "Link expirado" }, { status: 410 });
     }
 
     const buffer = file.fileData.buffer
