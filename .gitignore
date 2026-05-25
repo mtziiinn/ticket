@@ -24,3 +24,5 @@
 # Docs
 /GEMINI.md
 /RELEMBRE.txt
+.vercel
+.env*.local

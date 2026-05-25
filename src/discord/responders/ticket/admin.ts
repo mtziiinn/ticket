@@ -107,11 +107,11 @@ async function processDeliverMedia(interaction: any) {
     const uploadUrl = `${env.WEB_URL}/upload/${token}`;
 
     await channel.send({
-      content: `<:action_info:1502789798983766016> ${user} iniciou uma entrega de mídia!\n📤 **Link para upload:** ${uploadUrl}\n*O arquivo será enviado diretamente pelo site, sem perda de qualidade.*`,
+      content: `<:action_info:1502789798983766016> ${user} iniciou uma entrega de mídia!\n*O arquivo será enviado diretamente pelo site, sem perda de qualidade.*`,
     });
 
     await interaction.followUp({
-      content: `<:action_check:1502789797821939752> Link de upload gerado!\n📤 Acesse para enviar o arquivo: ${uploadUrl}\n\nApós o upload, clique novamente em **"Entregar Mídia"** no painel admin para finalizar.`,
+      content: `<:action_check:1502789797821939752> Link de upload gerado!\n<:file_add:1502789905112105071> Acesse para enviar o arquivo: ${uploadUrl}\n\nApós o upload, a entrega será finalizada automaticamente.`,
       flags: ["Ephemeral"],
     });
   } catch (error) {

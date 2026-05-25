@@ -631,7 +631,7 @@ createResponder({
           } else {
             // Ainda pendente, mostrar link
             await interaction.reply({
-              content: `<:action_info:1502789798983766016> Você já tem um upload pendente!\n📤 Faça o upload do arquivo final através do link abaixo:\n${env.WEB_URL}/upload/${existing.token}\n\nApós enviar o arquivo, clique em **"Entregar Mídia"** novamente para finalizar.`,
+              content: `<:action_info:1502789798983766016> Você já tem um upload pendente!\n<:file_add:1502789905112105071> Faça o upload do arquivo final através do link abaixo:\n${env.WEB_URL}/upload/${existing.token}\n\nApós enviar o arquivo, a entrega será finalizada automaticamente.`,
               flags: ["Ephemeral"],
             });
           }
