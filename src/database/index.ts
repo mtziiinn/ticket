@@ -3,6 +3,7 @@ import { guildSchema } from "./schemas/guild.js";
 import { memberSchema } from "./schemas/member.js";
 import { ticketSchema } from "./schemas/ticket.js";
 import { transcriptSchema } from "./schemas/transcript.js";
+import { pendingDeliverySchema } from "./schemas/pendingDelivery.js";
 import { env } from "#env";
 import chalk from "chalk";
 
@@ -22,6 +23,7 @@ export const db = {
   members: model("member", memberSchema, "members"),
   tickets: model("ticket", ticketSchema, "tickets"),
   transcripts: model("transcript", transcriptSchema, "transcripts"),
+  pendingDeliveries: model("pendingDelivery", pendingDeliverySchema, "pending_deliveries"),
 };
 
 export type GuildSchema = InferSchemaType<typeof guildSchema>;

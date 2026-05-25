@@ -44,6 +44,35 @@ export interface Transcript {
   messages: TranscriptMessage[];
 }
 
+export interface Delivery {
+  url: string;
+  filename: string;
+  description: string;
+  deliveredBy: string;
+  deliveredAt: string;
+}
+
+export interface PendingDelivery {
+  token: string;
+  channelId: string;
+  staffId: string;
+  description: string;
+  ticketId: string;
+  status: "pending" | "completed";
+  url: string | null;
+  filename: string | null;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+export interface TicketWithDeliveries {
+  ticketId: string;
+  category: string;
+  description: string;
+  createdAt: string;
+  deliveries: Delivery[];
+}
+
 // Tipo para criar um novo transcript via API
 export interface CreateTranscriptPayload {
   id: string;

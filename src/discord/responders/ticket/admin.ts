@@ -9,6 +9,7 @@ import {
 } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle } from "discord.js";
 import { db } from "#database";
+import { env } from "#env";
 import { generateTranscript } from "./manage.js";
 
 // Função compartilhada para renomear
@@ -71,6 +72,71 @@ createResponder({
   cache: "cached",
   async run(interaction) {
     await processRename(interaction);
+  },
+});
+
+// Função compartilhada para entrega de mídia (etapa 1: criar pending delivery)
+async function processDeliverMedia(interaction: any) {
+  const { channel, user, fields } = interaction;
+  if (!channel?.isTextBased()) return;
+
+  try {
+    await interaction.deferReply({ flags: ["Ephemeral"] }).catch((err: any) => console.error("[Admin]", err));
+
+    const data = modalFieldsToRecord(fields);
+    const description = (data.deliver_description as string) || "Mídia entregue";
+
+    const ticket = await db.tickets.getByChannel(channel.id);
+    if (!ticket) {
+      await interaction.followUp({ content: "Ticket não encontrado.", flags: ["Ephemeral"] }).catch(() => null);
+      return;
+    }
+
+    // Gerar token único
+    const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+    await db.pendingDeliveries.create({
+      token,
+      channelId: channel.id,
+      staffId: user.id,
+      description,
+      ticketId: ticket.ticketId,
+      status: "pending",
+    });
+
+    const uploadUrl = `${env.WEB_URL}/upload/${token}`;
+
+    await channel.send({
+      content: `<:action_info:1502789798983766016> ${user} iniciou uma entrega de mídia!\n📤 **Link para upload:** ${uploadUrl}\n*O arquivo será enviado diretamente pelo site, sem perda de qualidade.*`,
+    });
+
+    await interaction.followUp({
+      content: `<:action_check:1502789797821939752> Link de upload gerado!\n📤 Acesse para enviar o arquivo: ${uploadUrl}\n\nApós o upload, clique novamente em **"Entregar Mídia"** no painel admin para finalizar.`,
+      flags: ["Ephemeral"],
+    });
+  } catch (error) {
+    console.error("[Entregar Mídia] Erro ao processar:", error);
+    await interaction.followUp({ content: "Erro ao processar.", flags: ["Ephemeral"] }).catch(() => null);
+  }
+}
+
+// Responder Principal do Deliver
+createResponder({
+  customId: "ticket/manage/deliver_submit",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction) {
+    await processDeliverMedia(interaction);
+  },
+});
+
+// Backup para o ID de título
+createResponder({
+  customId: "Entregar Mídia",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction) {
+    await processDeliverMedia(interaction);
   },
 });
 

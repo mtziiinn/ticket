@@ -16,6 +16,13 @@ export const ticketSchema = new Schema(
     closedBy: String,
     openedAt: { type: Date, default: Date.now },
     closedAt: Date,
+    deliveries: [{
+      url: { type: String, required: true },
+      filename: { type: String, required: true },
+      description: { type: String, default: "" },
+      deliveredBy: { type: String, required: true },
+      deliveredAt: { type: Date, default: Date.now },
+    }],
   },
   {
     statics: {

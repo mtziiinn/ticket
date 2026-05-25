@@ -277,6 +277,16 @@ createResponder({
                 }),
           }),
           Separator.Default,
+          createSection({
+            content: `● **Entregar Mídia**\nNesta opção você pode enviar o arquivo final com qualidade original para o cliente.`,
+            button: new ButtonBuilder({
+              customId: "ticket/manage/deliver_modal",
+              label: "Entregar Mídia",
+              style: ButtonStyle.Secondary,
+              emoji: "1502789905112105071",
+            }),
+          }),
+          Separator.Default,
           createRow(
             new ButtonBuilder({
               customId: "ticket/manage/transcript",
@@ -567,6 +577,85 @@ createResponder({
 
         modal.addComponents(label);
         await interaction.showModal(modal).catch((e) => console.error(e));
+        break;
+      }
+
+      case "deliver_modal": {
+        // Verificar se já existe um pending delivery para este canal
+        const existing = await db.pendingDeliveries.findOne({
+          channelId: channel.id,
+        });
+
+        if (existing) {
+          if (existing.status === "completed") {
+            // Finalizar entrega
+            const ticket = await db.tickets.getByChannel(channel.id);
+            if (ticket) {
+              ticket.deliveries.push({
+                url: existing.url,
+                filename: existing.filename,
+                description: existing.description,
+                deliveredBy: user.id,
+                deliveredAt: new Date(),
+              });
+              await (ticket as any).save();
+            }
+
+            await channel.send({
+              content: `<:action_check:1502789797821939752> **Mídia Entregue!**\n<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\`\n<:clipboard:1502789887907205293> **Descrição:** ${existing.description}\n<:cloud_check:1502789867355115690> **Link:** ${existing.url}`,
+            });
+
+            const owner = ticket ? await guild.members.fetch(ticket.ownerId).catch(() => null) : null;
+            if (owner) {
+              const dmContainer = createContainer(
+                "#3b82f6",
+                createSection({
+                  content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${owner}, o arquivo final do seu pedido foi entregue!`,
+                  thumbnail: user.displayAvatarURL() as any,
+                }),
+                Separator.Default,
+                `<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\``,
+                `<:clipboard:1502789887907205293> **Descrição:** ${existing.description}`,
+                `<:cloud_check:1502789867355115690> **Link:** ${existing.url}`,
+              );
+              await owner.send({ components: [dmContainer], flags: ["IsComponentsV2"] })
+                .catch((err: any) => console.error("[Admin] Erro ao enviar DM:", err));
+            }
+
+            await db.pendingDeliveries.deleteOne({ _id: existing._id });
+
+            await interaction.reply({
+              content: `<:action_check:1502789797821939752> Entrega concluída! O link foi enviado no canal e na DM do cliente.`,
+              flags: ["Ephemeral"],
+            });
+          } else {
+            // Ainda pendente, mostrar link
+            await interaction.reply({
+              content: `<:action_info:1502789798983766016> Você já tem um upload pendente!\n📤 Faça o upload do arquivo final através do link abaixo:\n${env.WEB_URL}/upload/${existing.token}\n\nApós enviar o arquivo, clique em **"Entregar Mídia"** novamente para finalizar.`,
+              flags: ["Ephemeral"],
+            });
+          }
+          break;
+        }
+
+        // Sem pending delivery, abrir modal
+        const deliverModal = new ModalBuilder()
+          .setCustomId("ticket/manage/deliver_submit")
+          .setTitle("Entregar Mídia");
+
+        const descriptionLabel = new LabelBuilder()
+          .setLabel("Descrição da Entrega")
+          .setDescription("Descreva o que está sendo entregue")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId("deliver_description")
+              .setPlaceholder("Ex: Arte final do banner em PNG")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
+          );
+
+        deliverModal.addComponents(descriptionLabel);
+        await interaction.showModal(deliverModal).catch((e) => console.error(e));
         break;
       }
 
