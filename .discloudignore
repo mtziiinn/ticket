@@ -10,19 +10,27 @@
 
 # Folders
 /.vscode
+/.git
+/.next
+/.vercel
 /src
 /deprecated
 /discloud
 /node_modules
+/web
 
 # Files
 /.env.development
 /.env.dev
 /.env.example
+/.env.local
 /.eslintrc.json
 /.gitignore
 /tsconfig.json
 /README.md
+/GEMINI.md
+/RELEMBRE.txt
+/mongodb.md
 
 # Extensions
 *.md
