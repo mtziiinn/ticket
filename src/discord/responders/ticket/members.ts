@@ -5,10 +5,16 @@ import {
   createSection,
   Separator,
   createRow,
+  modalFieldsToRecord,
 } from "@magicyan/discord";
 import {
-  UserSelectMenuBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   StringSelectMenuBuilder,
+  TextInputStyle,
+  ModalBuilder,
+  LabelBuilder,
+  TextInputBuilder,
 } from "discord.js";
 import { db } from "#database";
 import { sendActionLog } from "./logger.js";
@@ -31,12 +37,14 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
 
   const componentsList = [];
 
-  // Dropdown 1: Adicionar Membro (Dropdown nativo do Discord para buscar usuários)
+  // Botão 1: Adicionar Membro (Abre o modal de texto para colar o ID)
   componentsList.push(
     createRow(
-      new UserSelectMenuBuilder({
-        customId: "ticket/manage/members/add_select",
-        placeholder: "🔍 Selecione o usuário para ADICIONAR...",
+      new ButtonBuilder({
+        customId: "ticket/manage/members/add_btn",
+        label: "Adicionar Membro",
+        style: ButtonStyle.Success,
+        emoji: "1502789796278304800",
       })
     )
   );
@@ -61,7 +69,7 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
   const container = createContainer(
     constants.colors.primary,
     createSection({
-      content: `## <:user_add:1502789796278304800> Gerenciar Acessos ao Atendimento\nUse os menus abaixo para adicionar novos usuários ao atendimento ou para remover membros que já possuem acesso ao canal.`,
+      content: `## <:user_add:1502789796278304800> Gerenciar Acessos ao Atendimento\nUse as opções abaixo para adicionar novos usuários ao atendimento ou para remover membros que já possuem acesso ao canal.`,
       thumbnail: interaction.user.displayAvatarURL() as any,
     }),
     Separator.Default,
@@ -83,13 +91,40 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
   }
 }
 
-// Responder para ADICIONAR membro via User Select
+// Responder para abrir o modal de adicionar membro
 createResponder({
-  customId: "ticket/manage/members/add_select",
-  types: [ResponderType.UserSelect],
+  customId: "ticket/manage/members/add_btn",
+  types: [ResponderType.Button],
   cache: "cached",
   async run(interaction) {
-    const { guild, channel, values, user } = interaction;
+    const modal = new ModalBuilder()
+      .setCustomId("ticket/manage/members/add_modal_submit")
+      .setTitle("Adicionar Membro");
+
+    const label = new LabelBuilder()
+      .setLabel("ID do Usuário")
+      .setTextInputComponent(
+        new TextInputBuilder()
+          .setCustomId("user_id")
+          .setPlaceholder("Cole aqui o ID do usuário (ex: 123456789012345678)...")
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true)
+      );
+
+    modal.addComponents(label);
+    await interaction.showModal(modal).catch((e: any) => {
+      console.error("[Ticket] Erro ao abrir modal de adicionar membro:", e);
+    });
+  },
+});
+
+// Responder para ADICIONAR membro via Modal
+createResponder({
+  customId: "ticket/manage/members/add_modal_submit",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction) {
+    const { guild, channel, fields, user } = interaction;
     if (!channel?.isTextBased()) return;
 
     await interaction.deferUpdate();
@@ -97,8 +132,21 @@ createResponder({
     const ticket = await db.tickets.getByChannel(channel.id);
     if (!ticket) return;
 
-    const targetId = values[0];
-    if (targetId === ticket.ownerId) {
+    const data = modalFieldsToRecord(fields);
+    const targetIdRaw = data.user_id;
+    const targetId = Array.isArray(targetIdRaw) ? targetIdRaw[0] : (targetIdRaw as string);
+
+    if (!targetId || !/^\d{17,19}$/.test(targetId.trim())) {
+      await interaction.followUp({
+        content: "❌ ID do usuário inválido. Certifique-se de que é um ID numérico válido do Discord.",
+        flags: ["Ephemeral"],
+      }).catch(() => null);
+      return;
+    }
+
+    const trimmedId = targetId.trim();
+
+    if (trimmedId === ticket.ownerId) {
       await interaction.followUp({
         content: "❌ Você não pode adicionar o dono do ticket como membro adicional.",
         flags: ["Ephemeral"],
@@ -106,7 +154,7 @@ createResponder({
       return;
     }
 
-    const targetMember = await guild.members.fetch(targetId).catch(() => null);
+    const targetMember = await guild.members.fetch(trimmedId).catch(() => null);
     if (!targetMember) {
       await interaction.followUp({
         content: "❌ Usuário não encontrado no servidor.",
@@ -116,7 +164,7 @@ createResponder({
     }
 
     // Adicionar permissões
-    await (channel as any).permissionOverwrites.edit(targetId, {
+    await (channel as any).permissionOverwrites.edit(trimmedId, {
       ViewChannel: true,
       SendMessages: true,
       AttachFiles: true,
@@ -128,7 +176,7 @@ createResponder({
     }).catch(() => null);
 
     // Enviar Log de Ação
-    await sendActionLog(guild, ticket, user, "Adicionar Membro", `Adicionou o membro ${targetMember} (\`${targetId}\`) ao canal do ticket.`);
+    await sendActionLog(guild, ticket, user, "Adicionar Membro", `Adicionou o membro ${targetMember} (\`${trimmedId}\`) ao canal do ticket.`);
 
     // Renderizar painel novamente com dados atualizados
     await renderMembersPanel(interaction, channel, ticket, guild);
