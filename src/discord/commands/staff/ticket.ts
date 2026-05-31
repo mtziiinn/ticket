@@ -212,7 +212,7 @@ createCommand({
         constants.colors.azoxo,
         createSection({
           content: `## Central de Atendimento\nSelecione a categoria para ser atendido`,
-          thumbnail: undefined as any,
+          thumbnail: emojis.static.other_ticket,
         }),
         createRow(
           new StringSelectMenuBuilder({

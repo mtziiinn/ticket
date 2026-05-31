@@ -180,7 +180,7 @@ createCommand({
             const attachment = new AttachmentBuilder("imagens/266e4704c2729e8b0d38506d3a9353e0.png", { name: "banner.png" });
             const container = createContainer(constants.colors.azoxo, createSection({
                 content: `## Central de Atendimento\nSelecione a categoria para ser atendido`,
-                thumbnail: undefined,
+                thumbnail: emojis.static.other_ticket,
             }), createRow(new StringSelectMenuBuilder({
                 customId: "ticket/form/select_open",
                 placeholder: "Selecione uma opcao...",
