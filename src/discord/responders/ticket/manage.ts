@@ -854,23 +854,13 @@ createResponder({
     }
 
     try {
-      const newChannelEmoji = selectedCategory?.channelEmoji || "🎫";
-      const newName = `${newChannelEmoji}・${newCategory}-${ticket.ticketId}`;
-
-      // 1. Atualizar categoria (parent) de forma independente para que o rate limit de nome não bloqueie a transferência
+      // 1. Atualizar categoria (parent) no Discord
       await (channel as any).edit({
         parent: parentId,
         lockPermissions: false,
       }).catch((err: any) => {
         console.error("[Transfer] Erro ao mover categoria:", err);
       });
-
-      // 2. Renomear o canal separadamente (apenas se for diferente) para não causar erros se houver rate limit de 2 renames por 10min
-      if (channel.name !== newName) {
-        await (channel as any).setName(newName).catch((err: any) => {
-          console.warn("[Transfer] Erro/Rate limit ao renomear canal:", err.message || err);
-        });
-      }
 
       // 2. Atualizar banco de dados
       ticket.category = newCategory;
