@@ -180,7 +180,7 @@ async function processTicketSubmission(interaction: any, routeCategory?: string)
     // 5. Enviar Log de Abertura
     const logChannelId = guildData.channels?.tickets;
     if (logChannelId) {
-      const logChannel = guild.channels.cache.get(logChannelId);
+      const logChannel = await guild.channels.fetch(logChannelId).catch(() => null);
       if (logChannel?.isTextBased()) {
         const openedAtTimestamp = Math.floor(Date.now() / 1000);
         const categoryName = selectedCategory?.name || category.toUpperCase();

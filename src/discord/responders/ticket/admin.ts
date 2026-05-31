@@ -192,7 +192,7 @@ async function processCloseSubmission(interaction: any) {
     const logChannelId = guildData.channels?.tickets;
 
     if (logChannelId) {
-      const logChannel = guild.channels.cache.get(logChannelId);
+      const logChannel = await guild.channels.fetch(logChannelId).catch(() => null);
       if (logChannel?.isTextBased()) {
         const owner = await guild.members
           .fetch(ticket.ownerId)

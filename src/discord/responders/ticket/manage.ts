@@ -696,7 +696,7 @@ createResponder({
         );
 
         if (logChannelId) {
-          const logChannel = guild.channels.cache.get(logChannelId);
+          const logChannel = await guild.channels.fetch(logChannelId).catch(() => null);
           if (logChannel?.isTextBased()) {
             const owner = await guild.members
               .fetch(ticket.ownerId)
@@ -915,7 +915,7 @@ export async function generateTranscript(
     const guildData = await db.guilds.get(channel.guild.id);
     const vaultChannelId = guildData.channels?.vault;
     const vaultChannel = vaultChannelId
-      ? channel.guild.channels.cache.get(vaultChannelId)
+      ? await channel.guild.channels.fetch(vaultChannelId).catch(() => null)
       : null;
 
     const ownerMember = await channel.guild.members
