@@ -17,6 +17,7 @@ import {
   ModalBuilder,
   LabelBuilder,
   TextInputBuilder,
+  MessageType,
 } from "discord.js";
 import { db } from "#database";
 import { formatEmoji } from "#functions";
@@ -165,6 +166,20 @@ async function processTicketSubmission(interaction: any, routeCategory?: string)
       components: [container],
       flags: ["IsComponentsV2"],
     });
+
+    // Fixar a mensagem principal no canal do ticket
+    await mainMessage.pin().catch((err: any) => console.error("[Submit] Erro ao fixar mensagem:", err));
+
+    // Apagar a mensagem automática do Discord informando que a mensagem foi fixada
+    try {
+      const messages = await channel.messages.fetch({ limit: 5 });
+      const pinSystemMessage = messages.find((m: any) => m.type === MessageType.ChannelPinnedMessage);
+      if (pinSystemMessage) {
+        await pinSystemMessage.delete().catch(() => null);
+      }
+    } catch (e) {
+      console.error("[Submit] Erro ao apagar aviso de pin do Discord:", e);
+    }
 
     // 4. Salvar no banco
     await db.tickets.create({

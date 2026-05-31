@@ -1,7 +1,7 @@
 import { createResponder } from "#base";
 import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, } from "@magicyan/discord";
-import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, } from "discord.js";
+import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { formatEmoji } from "#functions";
 // Função compartilhada para criar o ticket
@@ -114,6 +114,19 @@ async function processTicketSubmission(interaction, routeCategory) {
             components: [container],
             flags: ["IsComponentsV2"],
         });
+        // Fixar a mensagem principal no canal do ticket
+        await mainMessage.pin().catch((err) => console.error("[Submit] Erro ao fixar mensagem:", err));
+        // Apagar a mensagem automática do Discord informando que a mensagem foi fixada
+        try {
+            const messages = await channel.messages.fetch({ limit: 5 });
+            const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage);
+            if (pinSystemMessage) {
+                await pinSystemMessage.delete().catch(() => null);
+            }
+        }
+        catch (e) {
+            console.error("[Submit] Erro ao apagar aviso de pin do Discord:", e);
+        }
         // 4. Salvar no banco
         await db.tickets.create({
             guildId: guild.id,
