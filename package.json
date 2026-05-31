@@ -9,7 +9,7 @@
     "dev:dev": "tsx --env-file=.env.dev ./src/index.ts",
     "watch": "tsx --watch --env-file=.env ./src/index.ts",
     "watch:dev": "tsx --watch --env-file=.env.dev ./src/index.ts",
-    "start": "node .",
+    "start": "node --env-file=.env .",
     "start:dev": "node --env-file=.env.dev ."
   },
   "dependencies": {
