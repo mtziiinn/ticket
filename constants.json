@@ -2,13 +2,13 @@
   "colors": {
     "default": "#2B2D31",
 
-    "primary": "#ffffff",
+    "primary": "#1e40af",
     "secondary": "#4f545c",
     "success": "#22c55e",
     "danger": "#ED4245",
     "warning": "#fbbd23",
 
-    "azoxo": "#ffffff",
+    "azoxo": "#1e40af",
     "green": "#57F287",
     "yellow": "#FEE75C",
     "fuchsia": "#EB459E",

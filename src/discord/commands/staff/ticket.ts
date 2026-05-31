@@ -198,7 +198,7 @@ createCommand({
 
       const logo = new AttachmentBuilder("imagens/266e4704c2729e8b0d38506d3a9353e0.png", { name: "logo.png" });
 
-      const bannerUrl = "https://cdn.discordapp.com/attachments/1402161457415589898/1510782101723676742/ChatGPTImage31demai.de202617_15_58.png?ex=6a1e10fa&is=6a1cbf7a&hm=6ed5d17ef643e38da731da411b3a68e6cc4384fa36bee5a296d96e4f5f479f06&";
+      const bannerUrl = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 
       const container = createContainer(
         constants.colors.azoxo,
