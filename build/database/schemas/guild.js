@@ -22,6 +22,7 @@ export const guildSchema = new Schema({
                 value: String,
                 description: String,
                 emoji: String,
+                channelEmoji: String,
                 parentId: String,
             },
         ],

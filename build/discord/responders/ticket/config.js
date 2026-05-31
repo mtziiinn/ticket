@@ -23,10 +23,11 @@ export async function createConfigPanel(guildId) {
     const catDisplay = customCats.length > 0
         ? customCats
             .map((c) => {
-            const emojiDisplay = c.emoji?.length && c.emoji.length > 5 && !c.emoji.includes(":")
+            const modalEmoji = c.emoji?.length && c.emoji.length > 5 && !c.emoji.includes(":")
                 ? `<:emoji:${c.emoji}>`
                 : c.emoji || "🎫";
-            return `> ${emojiDisplay} **${c.name}** (\`${c.value}\`) -> <#${c.parentId}>`;
+            const chEmoji = c.channelEmoji || "🎫";
+            return `> ${modalEmoji} **${c.name}** (\`${c.value}\`) -> <#${c.parentId}>\n> Canal: ${chEmoji} | Modal: ${modalEmoji}`;
         })
             .join("\n")
         : "*Nenhuma categoria configurada.*";
@@ -182,11 +183,13 @@ createResponder({
                 .setPlaceholder("Ex: suporte-vip (usado no nome do canal)")
                 .setStyle(TextInputStyle.Short)
                 .setRequired(false)), createRow(new TextInputBuilder()
-                .setCustomId("emoji")
-                .setLabel("Emoji (ID ou Emoji)")
-                .setPlaceholder("Ex: 1502789959378145300 ou 🎫")
+                .setCustomId("channelEmoji")
+                .setLabel("Emoji do Canal (unicode)")
+                .setPlaceholder("Ex: 🎫 📩 🛒 (aparece no nome do canal)")
                 .setStyle(TextInputStyle.Short)
                 .setRequired(false)));
+            // Emoji do Modal é enviado separado pois modais suportam no máximo 5 campos
+            // Usaremos o emoji padrão 🎫 no modal, a menos que seja configurado via edição
             await interaction.showModal(modal);
             return;
         }
@@ -289,7 +292,8 @@ createResponder({
                 value,
                 description: data.description,
                 parentId: data.parentId,
-                emoji: data.emoji || "🎫",
+                emoji: "🎫",
+                channelEmoji: data.channelEmoji || "🎫",
             });
         }
         guildData.markModified("channels");
@@ -384,12 +388,6 @@ createResponder({
             .setValue(cat.name || "")
             .setStyle(TextInputStyle.Short)
             .setRequired(true)), createRow(new TextInputBuilder()
-            .setCustomId("description")
-            .setLabel("Descrição")
-            .setPlaceholder("Ex: Atendimento prioritário para VIPs")
-            .setValue(cat.description || "")
-            .setStyle(TextInputStyle.Short)
-            .setRequired(false)), createRow(new TextInputBuilder()
             .setCustomId("parentId")
             .setLabel("ID da Categoria Pai (Discord)")
             .setPlaceholder("ID da categoria onde os tickets serão criados")
@@ -402,9 +400,15 @@ createResponder({
             .setValue(cat.value || "")
             .setStyle(TextInputStyle.Short)
             .setRequired(true)), createRow(new TextInputBuilder()
+            .setCustomId("channelEmoji")
+            .setLabel("Emoji do Canal (unicode)")
+            .setPlaceholder("Ex: 🎫 📩 🛒 (aparece no nome do canal)")
+            .setValue(cat.channelEmoji || "")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(false)), createRow(new TextInputBuilder()
             .setCustomId("emoji")
-            .setLabel("Emoji (ID ou Emoji)")
-            .setPlaceholder("Ex: 1502789959378145300 ou 🎫")
+            .setLabel("Emoji do Modal (ID ou unicode)")
+            .setPlaceholder("Ex: 1502789959378145300 ou 🎫 (aparece no menu)")
             .setValue(cat.emoji || "")
             .setStyle(TextInputStyle.Short)
             .setRequired(false)));
@@ -436,9 +440,10 @@ createResponder({
                 guildData.channels.ticketCategories[index] = {
                     name: data.name,
                     value: newValue,
-                    description: data.description || "",
+                    description: guildData.channels.ticketCategories[index].description || "",
                     parentId: data.parentId,
-                    emoji: data.emoji || "",
+                    emoji: data.emoji || "🎫",
+                    channelEmoji: data.channelEmoji || "🎫",
                 };
                 guildData.markModified("channels");
                 await guildData.save();
