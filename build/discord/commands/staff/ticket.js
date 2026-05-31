@@ -1,5 +1,5 @@
 import { createCommand } from "#base";
-import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
+import { createContainer, createSection, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
 import { ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, AttachmentBuilder, } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
@@ -167,7 +167,8 @@ createCommand({
                 });
                 return;
             }
-            const attachment = new AttachmentBuilder("imagens/266e4704c2729e8b0d38506d3a9353e0.png", { name: "logo.png" });
+            const logo = new AttachmentBuilder("imagens/266e4704c2729e8b0d38506d3a9353e0.png", { name: "logo.png" });
+            const bannerUrl = "https://cdn.discordapp.com/attachments/1402161457415589898/1510782101723676742/ChatGPTImage31demai.de202617_15_58.png?ex=6a1e10fa&is=6a1cbf7a&hm=6ed5d17ef643e38da731da411b3a68e6cc4384fa36bee5a296d96e4f5f479f06&";
             const container = createContainer(constants.colors.azoxo, createSection({
                 content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
                 thumbnail: "attachment://logo.png",
@@ -175,14 +176,14 @@ createCommand({
                 `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
                 `● Não chame membros da equipe no privado.`,
                 `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
-            ].join("\n"), Separator.Default, "Clique no botão abaixo para iniciar o seu atendimento.", createRow(new ButtonBuilder({
+            ].join("\n"), Separator.Default, bannerUrl ? [createMediaGallery(bannerUrl), Separator.Default] : [], "Clique no botão abaixo para iniciar o seu atendimento.", createRow(new ButtonBuilder({
                 customId: "ticket/form/open",
                 label: "Abrir Ticket",
                 style: ButtonStyle.Primary,
                 emoji: "1502789959378145300",
             })));
             await channel.send({
-                files: [attachment],
+                files: [logo],
                 components: [container],
                 flags: ["IsComponentsV2"],
             });
