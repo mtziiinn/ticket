@@ -38,3 +38,6 @@ export const guildSchema = new Schema(
     },
   },
 );
+
+guildSchema.index({ id: 1 }, { unique: true });
+

@@ -84,10 +84,20 @@ async function processDmQueue() {
         console.error("[DM Queue] Erro no processamento:", error);
     }
 }
-await cleanupOldTranscripts();
-await cleanupOldDeliveries();
-await cleanupPendingDeliveries();
-setInterval(cleanupOldTranscripts, 6 * 60 * 60 * 1000);
-setInterval(cleanupOldDeliveries, 6 * 60 * 60 * 1000);
-setInterval(cleanupPendingDeliveries, 6 * 60 * 60 * 1000);
-setInterval(processDmQueue, 3000);
+async function runAllCleanups() {
+    try {
+        console.log("[Cleanup] Iniciando rotina de limpezas...");
+        await cleanupOldTranscripts();
+        await cleanupOldDeliveries();
+        await cleanupPendingDeliveries();
+        console.log("[Cleanup] Rotina de limpezas concluída.");
+    }
+    catch (error) {
+        console.error("[Cleanup] Erro na rotina de limpezas:", error);
+    }
+}
+// Executa limpezas iniciais de forma assíncrona
+runAllCleanups().catch(err => console.error("[Cleanup] Erro inicial:", err));
+// Configura intervalos
+setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
+setInterval(processDmQueue, 10000);

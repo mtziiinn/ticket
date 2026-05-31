@@ -3,6 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, } from "discord.js";
 import { db } from "#database";
+import { formatEmoji } from "#functions";
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(interaction) {
     const { guild, user, fields } = interaction;
@@ -52,27 +53,41 @@ async function processTicketSubmission(interaction) {
         // 2. Criar o canal na categoria correta
         // Usa o channelEmoji configurado (unicode) ou fallback 🎫
         const channelEmoji = selectedCategory?.channelEmoji || "🎫";
+        const permissionOverwrites = [
+            {
+                id: guild.roles.everyone.id,
+                deny: [PermissionFlagsBits.ViewChannel],
+            },
+            {
+                id: user.id,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.EmbedLinks,
+                    PermissionFlagsBits.ReadMessageHistory,
+                ],
+            },
+        ];
+        const staffRoleId = guildData.channels?.staffRole;
+        if (staffRoleId) {
+            permissionOverwrites.push({
+                id: staffRoleId,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.AttachFiles,
+                    PermissionFlagsBits.EmbedLinks,
+                    PermissionFlagsBits.ReadMessageHistory,
+                ],
+            });
+        }
         const channel = await guild.channels.create({
             name: `${channelEmoji}・${category}-${ticketId}`,
             type: ChannelType.GuildText,
             parent: parentId || undefined,
             topic: `${eTicket}・${ticketId} | ${eUser} Aberto Por: ${user.tag} | ${eCalendar} Aberto em: ${openedAt} | ${eFolder} Categoria: ${category.toUpperCase()}`,
-            permissionOverwrites: [
-                {
-                    id: guild.roles.everyone.id,
-                    deny: [PermissionFlagsBits.ViewChannel],
-                },
-                {
-                    id: user.id,
-                    allow: [
-                        PermissionFlagsBits.ViewChannel,
-                        PermissionFlagsBits.SendMessages,
-                        PermissionFlagsBits.AttachFiles,
-                        PermissionFlagsBits.EmbedLinks,
-                        PermissionFlagsBits.ReadMessageHistory,
-                    ],
-                },
-            ],
+            permissionOverwrites,
         });
         // 3. Preparar Interface
         const container = createContainer(constants.colors.azoxo, createSection({
@@ -182,22 +197,11 @@ createResponder({
             .setCustomId("category")
             .setPlaceholder("Selecione uma categoria...")
             .setOptions(...dynamicCategories.map((cat) => {
-            const emojiRaw = cat.emoji || undefined;
-            let emojiOption = undefined;
-            if (emojiRaw) {
-                // Se for um ID numérico (emoji customizado), formatar como objeto
-                if (/^\d+$/.test(emojiRaw)) {
-                    emojiOption = { id: emojiRaw };
-                }
-                else {
-                    emojiOption = emojiRaw;
-                }
-            }
             return {
                 label: cat.name,
                 value: cat.value,
                 description: cat.description || undefined,
-                emoji: emojiOption,
+                emoji: formatEmoji(cat.emoji),
             };
         })));
         const descriptionLabel = new LabelBuilder()

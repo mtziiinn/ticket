@@ -21,6 +21,8 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
+import { formatEmoji } from "#functions";
+
 
 // Mapeamento de Status de Encomenda
 const statusMap: Record<
@@ -330,7 +332,7 @@ createResponder({
               options: dynamicCategories.map((cat) => ({
                 label: cat.name as string,
                 value: cat.value as string,
-                emoji: cat.emoji || undefined,
+                emoji: formatEmoji(cat.emoji),
               })),
             }),
           ),
@@ -851,8 +853,14 @@ createResponder({
     }
 
     try {
-      // 1. Atualizar canal no Discord
+      // 1. Atualizar canal no Discord (parent e nome com novo emoji/categoria)
       await (channel as any).setParent(parentId, { lockPermissions: false });
+      
+      const newChannelEmoji = selectedCategory?.channelEmoji || "🎫";
+      const newName = `${newChannelEmoji}・${newCategory}-${ticket.ticketId}`;
+      await (channel as any).setName(newName).catch((err: any) => {
+        console.error("[Transfer] Erro ao renomear canal:", err);
+      });
 
       // 2. Atualizar banco de dados
       ticket.category = newCategory;
@@ -882,118 +890,139 @@ export async function generateTranscript(
   ticket: any,
   closer: any,
 ) {
-  const messages = await channel.messages.fetch({ limit: 100 });
-  const sortedMessages = [...messages.values()].sort(
-    (a, b) => a.createdTimestamp - b.createdTimestamp,
-  );
+  try {
+    const allMessages: any[] = [];
+    let lastId: string | undefined = undefined;
 
-  const guildData = await db.guilds.get(channel.guild.id);
-  const vaultChannelId = guildData.channels?.vault;
-  const vaultChannel = vaultChannelId
-    ? channel.guild.channels.cache.get(vaultChannelId)
-    : null;
+    while (true) {
+      const options: any = { limit: 100 };
+      if (lastId) options.before = lastId;
 
-  const ownerMember = await channel.guild.members
-    .fetch(ticket.ownerId)
-    .catch(() => null);
+      const fetched = await channel.messages.fetch(options) as any;
+      if (fetched.size === 0) break;
 
-  const transcriptId =
-    ticket.ticketId || Math.random().toString(36).substring(2, 9).toUpperCase();
+      allMessages.push(...fetched.values());
+      lastId = fetched.lastKey();
 
-  const messagesData = [];
+      // Limite de segurança de 2000 mensagens para evitar gargalo
+      if (allMessages.length >= 2000) break;
+    }
 
-  for (const msg of sortedMessages) {
-    const attachments = [];
+    const sortedMessages = allMessages.sort(
+      (a, b) => a.createdTimestamp - b.createdTimestamp,
+    );
 
-    if (msg.attachments.size > 0 && vaultChannel?.isTextBased()) {
-      for (const att of msg.attachments.values()) {
-        try {
-          const backup = await (vaultChannel as any).send({
-            content: `📦 **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author.tag}\``,
-            files: [att.url],
-          });
-          const permanentUrl = backup.attachments.first()?.url;
-          attachments.push({
-            url: permanentUrl || att.url,
-            filename: att.name,
-            contentType: att.contentType,
-          });
-        } catch (err) {
-          console.error(`[Vault] Erro ao fazer backup de ${att.name}:`, err);
-          attachments.push({
+    const guildData = await db.guilds.get(channel.guild.id);
+    const vaultChannelId = guildData.channels?.vault;
+    const vaultChannel = vaultChannelId
+      ? channel.guild.channels.cache.get(vaultChannelId)
+      : null;
+
+    const ownerMember = await channel.guild.members
+      .fetch(ticket.ownerId)
+      .catch(() => null);
+
+    const transcriptId =
+      ticket.ticketId || Math.random().toString(36).substring(2, 9).toUpperCase();
+
+    const messagesData = [];
+
+    for (const msg of sortedMessages) {
+      const attachments = [];
+
+      if (msg.attachments.size > 0 && vaultChannel?.isTextBased()) {
+        for (const att of msg.attachments.values()) {
+          try {
+            const backup = await (vaultChannel as any).send({
+              content: `📦 **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author.tag}\``,
+              files: [att.url],
+            });
+            const permanentUrl = backup.attachments.first()?.url;
+            attachments.push({
+              url: permanentUrl || att.url,
+              filename: att.name,
+              contentType: att.contentType,
+            });
+          } catch (err) {
+            console.error(`[Vault] Erro ao fazer backup de ${att.name}:`, err);
+            attachments.push({
+              url: att.url,
+              filename: att.name,
+              contentType: att.contentType,
+            });
+          }
+        }
+      } else {
+        attachments.push(
+          ...msg.attachments.map((att: any) => ({
             url: att.url,
             filename: att.name,
             contentType: att.contentType,
-          });
-        }
+          })),
+        );
       }
-    } else {
-      attachments.push(
-        ...msg.attachments.map((att) => ({
-          url: att.url,
-          filename: att.name,
-          contentType: att.contentType,
+
+      messagesData.push({
+        id: `${transcriptId}-${messagesData.length}`,
+        messageId: msg.id,
+        authorId: msg.author.id,
+        authorUsername: msg.author.username,
+        authorAvatar: msg.author.displayAvatarURL(),
+        authorBot: msg.author.bot,
+        isStaff:
+          msg.member?.permissions.has(PermissionFlagsBits.ManageChannels) ||
+          false,
+        content: msg.content,
+        timestamp: msg.createdAt.toISOString(),
+        attachments,
+        embeds: msg.embeds.map((emb: any) => ({
+          title: emb.title || undefined,
+          description: emb.description || undefined,
+          color: emb.color || undefined,
         })),
-      );
+      });
     }
 
-    messagesData.push({
-      id: `${transcriptId}-${messagesData.length}`,
-      messageId: msg.id,
-      authorId: msg.author.id,
-      authorUsername: msg.author.username,
-      authorAvatar: msg.author.displayAvatarURL(),
-      authorBot: msg.author.bot,
-      isStaff:
-        msg.member?.permissions.has(PermissionFlagsBits.ManageChannels) ||
-        false,
-      content: msg.content,
-      timestamp: msg.createdAt.toISOString(),
-      attachments,
-      embeds: msg.embeds.map((emb) => ({
-        title: emb.title || undefined,
-        description: emb.description || undefined,
-        color: emb.color || undefined,
-      })),
-    });
+    const transcriptData = {
+      id: transcriptId,
+      guildId: channel.guild.id,
+      guildName: channel.guild.name,
+      channelId: channel.id,
+      channelName: channel.name,
+      category: ticket.category || "Suporte",
+      description: ticket.description || "Não informado.",
+      createdAt: ticket.openedAt
+        ? new Date(ticket.openedAt).toISOString()
+        : new Date().toISOString(),
+      closedAt: new Date().toISOString(),
+      openedBy: {
+        id: ticket.ownerId,
+        username: ownerMember?.user.username || "Desconhecido",
+        avatar:
+          ownerMember?.displayAvatarURL() ||
+          "https://cdn.discordapp.com/embed/avatars/0.png",
+      },
+      closedBy: {
+        id: closer.id,
+        username: closer.username,
+        avatar: closer.displayAvatarURL(),
+      },
+      messageCount: sortedMessages.length,
+      messages: messagesData,
+    };
+
+    // Salvar no Banco de Dados (Sincronizado com o Web App)
+    await db.transcripts.updateOne(
+      { id: transcriptId },
+      { $set: transcriptData },
+      { upsert: true },
+    );
+
+    return `${env.WEB_URL}/transcripts/${transcriptId}`;
+  } catch (error) {
+    console.error("[Transcript] Erro ao gerar transcript:", error);
+    throw error;
   }
-
-  const transcriptData = {
-    id: transcriptId,
-    guildId: channel.guild.id,
-    guildName: channel.guild.name,
-    channelId: channel.id,
-    channelName: channel.name,
-    category: ticket.category || "Suporte",
-    description: ticket.description || "Não informado.",
-    createdAt: ticket.openedAt
-      ? new Date(ticket.openedAt).toISOString()
-      : new Date().toISOString(),
-    closedAt: new Date().toISOString(),
-    openedBy: {
-      id: ticket.ownerId,
-      username: ownerMember?.user.username || "Desconhecido",
-      avatar:
-        ownerMember?.displayAvatarURL() ||
-        "https://cdn.discordapp.com/embed/avatars/0.png",
-    },
-    closedBy: {
-      id: closer.id,
-      username: closer.username,
-      avatar: closer.displayAvatarURL(),
-    },
-    messageCount: sortedMessages.length,
-    messages: messagesData,
-  };
-
-  // Salvar no Banco de Dados (Sincronizado com o Web App)
-  await db.transcripts.updateOne(
-    { id: transcriptId },
-    { $set: transcriptData },
-    { upsert: true },
-  );
-
-  return `${env.WEB_URL}/transcripts/${transcriptId}`;
 }
 
 // Ordem de prioridade dos status (menor = mais acima na lista)
@@ -1016,6 +1045,7 @@ async function repositionTicketByStatus(
     const allChannelIds = [...category.children.cache.keys()];
     const tickets = await db.tickets
       .find({ channelId: { $in: allChannelIds } })
+      .select("channelId status")
       .lean()
       .catch(() => []);
 
@@ -1064,8 +1094,11 @@ createResponder({
       console.error("[Status] Erro ao renomear canal:", err);
     });
 
-    // Reposicionar o canal na categoria conforme prioridade
-    await repositionTicketByStatus(channel, newStatus);
+    // Reposicionar o canal na categoria conforme prioridade (não bloqueia a resposta)
+    repositionTicketByStatus(channel, newStatus).catch((err) => {
+      console.error("[Status] Erro assíncrono ao reposicionar:", err);
+    });
+
 
     // Atualizar Painel Principal
     const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);

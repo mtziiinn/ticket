@@ -32,3 +32,8 @@ export const ticketSchema = new Schema(
     },
   },
 );
+
+ticketSchema.index({ channelId: 1 });
+ticketSchema.index({ guildId: 1, ownerId: 1, closed: 1 });
+ticketSchema.index({ guildId: 1 });
+

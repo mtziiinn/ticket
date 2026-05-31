@@ -37,41 +37,88 @@ function startOfMonth() {
 }
 
 async function getCategoryStats(guildId: string) {
-  const allTickets = await db.tickets.find({ guildId });
-
   const todayStart = startOfDay();
   const weekStart = startOfWeek();
   const monthStart = startOfMonth();
 
+  const [result] = await db.tickets.aggregate([
+    { $match: { guildId } },
+    {
+      $facet: {
+        byCategory: [
+          {
+            $group: {
+              _id: { $ifNull: ["$category", "desconhecido"] },
+              total: { $sum: 1 },
+              today: {
+                $sum: {
+                  $cond: [{ $gte: ["$openedAt", todayStart] }, 1, 0]
+                }
+              },
+              week: {
+                $sum: {
+                  $cond: [{ $gte: ["$openedAt", weekStart] }, 1, 0]
+                }
+              },
+              month: {
+                $sum: {
+                  $cond: [{ $gte: ["$openedAt", monthStart] }, 1, 0]
+                }
+              }
+            }
+          }
+        ],
+        totals: [
+          {
+            $group: {
+              _id: null,
+              totalAll: { $sum: 1 },
+              totalToday: {
+                $sum: {
+                  $cond: [{ $gte: ["$openedAt", todayStart] }, 1, 0]
+                }
+              },
+              totalWeek: {
+                $sum: {
+                  $cond: [{ $gte: ["$openedAt", weekStart] }, 1, 0]
+                }
+              },
+              totalMonth: {
+                $sum: {
+                  $cond: [{ $gte: ["$openedAt", monthStart] }, 1, 0]
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]);
+
   const stats: Record<string, { today: number; week: number; month: number; total: number }> = {};
-  let totalToday = 0, totalWeek = 0, totalMonth = 0, totalAll = 0;
-
-  for (const ticket of allTickets) {
-    const cat = ticket.category || "desconhecido";
-    const opened = ticket.openedAt ? new Date(ticket.openedAt) : null;
-
-    if (!stats[cat]) stats[cat] = { today: 0, week: 0, month: 0, total: 0 };
-    stats[cat].total++;
-    totalAll++;
-
-    if (opened) {
-      if (opened >= todayStart) {
-        stats[cat].today++;
-        totalToday++;
-      }
-      if (opened >= weekStart) {
-        stats[cat].week++;
-        totalWeek++;
-      }
-      if (opened >= monthStart) {
-        stats[cat].month++;
-        totalMonth++;
-      }
+  
+  if (result && result.byCategory) {
+    for (const catData of result.byCategory) {
+      stats[catData._id] = {
+        today: catData.today,
+        week: catData.week,
+        month: catData.month,
+        total: catData.total,
+      };
     }
   }
 
-  return { stats, totalToday, totalWeek, totalMonth, totalAll };
+  const totals = result?.totals?.[0] || { totalToday: 0, totalWeek: 0, totalMonth: 0, totalAll: 0 };
+
+  return {
+    stats,
+    totalToday: totals.totalToday,
+    totalWeek: totals.totalWeek,
+    totalMonth: totals.totalMonth,
+    totalAll: totals.totalAll,
+  };
 }
+
 
 createCommand({
   name: "ticket",

@@ -28,6 +28,7 @@ const dmQueueSchema = new Schema({
     fileList: { type: String, default: "" },
     createdAt: { type: Date, default: Date.now },
 });
+dmQueueSchema.index({ createdAt: 1 });
 export const db = {
     guilds: model("guild", guildSchema, "guilds"),
     members: model("member", memberSchema, "members"),

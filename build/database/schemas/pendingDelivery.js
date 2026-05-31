@@ -11,3 +11,4 @@ export const pendingDeliverySchema = new Schema({
     createdAt: { type: Date, default: Date.now },
     completedAt: { type: Date, default: null },
 });
+pendingDeliverySchema.index({ channelId: 1 });
