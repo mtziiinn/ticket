@@ -18,6 +18,7 @@ import {
   PermissionFlagsBits,
   RadioGroupBuilder,
   StringSelectMenuBuilder,
+  MessageType,
 } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
@@ -444,12 +445,28 @@ createResponder({
           `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
         );
 
-        await channel
+        const pixMessage = await channel
           .send({
             components: [textContainer],
             flags: ["IsComponentsV2"],
           })
           .catch((err: any) => console.error("[Manage]", err));
+
+        if (pixMessage) {
+          // Fixar a mensagem do PIX
+          await pixMessage.pin().catch(() => null);
+
+          // Apagar a notificação de pin
+          try {
+            const messages = await channel.messages.fetch({ limit: 5 });
+            const pinSystemMessage = messages.find((m: any) => m.type === MessageType.ChannelPinnedMessage);
+            if (pinSystemMessage) {
+              await pinSystemMessage.delete().catch(() => null);
+            }
+          } catch (e) {
+            console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
+          }
+        }
 
         // 2. Enviar o QR Code GRANDE em uma mensagem separada
         const qrEmbed = createEmbed({
@@ -601,9 +618,25 @@ createResponder({
               await (ticket as any).save();
             }
 
-            await channel.send({
+            const deliveryMessage = await channel.send({
               content: `<:action_check:1502789797821939752> **Mídia Entregue!**\n<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\`\n<:clipboard:1502789887907205293> **Descrição:** ${existing.description}\n<:cloud_check:1502789867355115690> **Link:** ${existing.url}`,
             });
+
+            if (deliveryMessage) {
+              // Fixar a mensagem de entrega
+              await deliveryMessage.pin().catch(() => null);
+
+              // Apagar a notificação de pin
+              try {
+                const messages = await channel.messages.fetch({ limit: 5 });
+                const pinSystemMessage = messages.find((m: any) => m.type === MessageType.ChannelPinnedMessage);
+                if (pinSystemMessage) {
+                  await pinSystemMessage.delete().catch(() => null);
+                }
+              } catch (e) {
+                console.error("[Manage] Erro ao apagar aviso de pin da entrega:", e);
+              }
+            }
 
             const owner = ticket ? await guild.members.fetch(ticket.ownerId).catch(() => null) : null;
             if (owner) {

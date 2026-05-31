@@ -1,7 +1,7 @@
 import { createResponder } from "#base";
 import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, createEmbed, Separator, createRow, } from "@magicyan/discord";
-import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, LabelBuilder, PermissionFlagsBits, RadioGroupBuilder, StringSelectMenuBuilder, } from "discord.js";
+import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, LabelBuilder, PermissionFlagsBits, RadioGroupBuilder, StringSelectMenuBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
 import { formatEmoji } from "#functions";
@@ -312,12 +312,27 @@ createResponder({
                 const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixKey)}`;
                 // 1. Enviar o texto premium
                 const textContainer = createContainer(constants.colors.success, `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou a chave para realizar o pagamento.`, Separator.Default, `**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``, Separator.Default, `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`);
-                await channel
+                const pixMessage = await channel
                     .send({
                     components: [textContainer],
                     flags: ["IsComponentsV2"],
                 })
                     .catch((err) => console.error("[Manage]", err));
+                if (pixMessage) {
+                    // Fixar a mensagem do PIX
+                    await pixMessage.pin().catch(() => null);
+                    // Apagar a notificação de pin
+                    try {
+                        const messages = await channel.messages.fetch({ limit: 5 });
+                        const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage);
+                        if (pinSystemMessage) {
+                            await pinSystemMessage.delete().catch(() => null);
+                        }
+                    }
+                    catch (e) {
+                        console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
+                    }
+                }
                 // 2. Enviar o QR Code GRANDE em uma mensagem separada
                 const qrEmbed = createEmbed({
                     title: `<:device_mobile:1502789873034199060> QR Code para Pagamento`,
@@ -441,9 +456,24 @@ createResponder({
                             });
                             await ticket.save();
                         }
-                        await channel.send({
+                        const deliveryMessage = await channel.send({
                             content: `<:action_check:1502789797821939752> **Mídia Entregue!**\n<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\`\n<:clipboard:1502789887907205293> **Descrição:** ${existing.description}\n<:cloud_check:1502789867355115690> **Link:** ${existing.url}`,
                         });
+                        if (deliveryMessage) {
+                            // Fixar a mensagem de entrega
+                            await deliveryMessage.pin().catch(() => null);
+                            // Apagar a notificação de pin
+                            try {
+                                const messages = await channel.messages.fetch({ limit: 5 });
+                                const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage);
+                                if (pinSystemMessage) {
+                                    await pinSystemMessage.delete().catch(() => null);
+                                }
+                            }
+                            catch (e) {
+                                console.error("[Manage] Erro ao apagar aviso de pin da entrega:", e);
+                            }
+                        }
                         const owner = ticket ? await guild.members.fetch(ticket.ownerId).catch(() => null) : null;
                         if (owner) {
                             const dmContainer = createContainer(constants.colors.primary, createSection({
