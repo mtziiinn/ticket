@@ -190,12 +190,25 @@ createResponder({
             .setStringSelectMenuComponent(new StringSelectMenuBuilder()
             .setCustomId("category")
             .setPlaceholder("Selecione uma categoria...")
-            .setOptions(...dynamicCategories.map((cat) => ({
-            label: cat.name,
-            value: cat.value,
-            description: cat.description || undefined,
-            emoji: cat.emoji || undefined,
-        }))));
+            .setOptions(...dynamicCategories.map((cat) => {
+            const emojiRaw = cat.emoji || undefined;
+            let emojiOption = undefined;
+            if (emojiRaw) {
+                // Se for um ID numérico (emoji customizado), formatar como objeto
+                if (/^\d+$/.test(emojiRaw)) {
+                    emojiOption = { id: emojiRaw };
+                }
+                else {
+                    emojiOption = emojiRaw;
+                }
+            }
+            return {
+                label: cat.name,
+                value: cat.value,
+                description: cat.description || undefined,
+                emoji: emojiOption,
+            };
+        })));
         const descriptionLabel = new LabelBuilder()
             .setLabel("Descrição do Problema")
             .setTextInputComponent(new TextInputBuilder()
@@ -204,7 +217,9 @@ createResponder({
             .setStyle(TextInputStyle.Paragraph)
             .setRequired(true));
         modal.addComponents(categoryLabel, descriptionLabel);
-        await interaction.showModal(modal).catch((e) => console.error(e));
+        await interaction.showModal(modal).catch((e) => {
+            console.error("[Ticket] Erro ao abrir modal:", e);
+        });
     },
 });
 // 2. Responder que recebe a submissão

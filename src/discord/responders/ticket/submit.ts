@@ -263,12 +263,24 @@ createResponder({
           .setCustomId("category")
           .setPlaceholder("Selecione uma categoria...")
           .setOptions(
-            ...dynamicCategories.map((cat) => ({
-              label: cat.name as string,
-              value: cat.value as string,
-              description: (cat.description as string) || undefined,
-              emoji: cat.emoji || undefined,
-            })),
+            ...dynamicCategories.map((cat) => {
+              const emojiRaw = cat.emoji || undefined;
+              let emojiOption: any = undefined;
+              if (emojiRaw) {
+                // Se for um ID numérico (emoji customizado), formatar como objeto
+                if (/^\d+$/.test(emojiRaw)) {
+                  emojiOption = { id: emojiRaw };
+                } else {
+                  emojiOption = emojiRaw;
+                }
+              }
+              return {
+                label: cat.name as string,
+                value: cat.value as string,
+                description: (cat.description as string) || undefined,
+                emoji: emojiOption,
+              };
+            }),
           ),
       );
 
@@ -283,7 +295,9 @@ createResponder({
       );
 
     modal.addComponents(categoryLabel, descriptionLabel);
-    await interaction.showModal(modal).catch((e) => console.error(e));
+    await interaction.showModal(modal).catch((e: any) => {
+      console.error("[Ticket] Erro ao abrir modal:", e);
+    });
   },
 });
 
