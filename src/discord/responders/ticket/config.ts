@@ -520,7 +520,7 @@ createResponder({
     }
 
     const modal = new ModalBuilder()
-      .setCustomId("ticket/config/cat_edit_submit")
+      .setCustomId(`ticket/config/cat_edit_submit/${slug}`)
       .setTitle("Editar Categoria");
 
     modal.addComponents(
@@ -577,16 +577,15 @@ createResponder({
 
 // Editar Categoria - Submit
 createResponder({
-  customId: "ticket/config/cat_edit_submit",
+  customId: "ticket/config/cat_edit_submit/:oldSlug",
   types: [ResponderType.Modal, ResponderType.ModalComponent],
   cache: "cached",
-  async run(interaction) {
+  async run(interaction, { oldSlug }) {
     const { fields, guildId } = interaction;
     await interaction.deferUpdate();
 
     const data = modalFieldsToRecord(fields);
     const guildData = await db.guilds.get(guildId!);
-    const oldSlug = (data.slug as string) || "";
 
     if (guildData.channels?.ticketCategories) {
       const index = guildData.channels.ticketCategories.findIndex(
