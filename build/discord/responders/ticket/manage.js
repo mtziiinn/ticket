@@ -130,7 +130,7 @@ createResponder({
             }
             case "admin": {
                 const isTheClaimer = ticket.claimedBy === user.id;
-                const container = createContainer("#3b82f6", createSection({
+                const container = createContainer(constants.colors.primary, createSection({
                     content: `## <:shield:1502789938532450304> Painel Administrativo ${ticket.ticketId}\nSeja muito bem-vindo(a) ao Painel Administrativo! Este é o seu ambiente de controle, onde você pode gerenciar o atendimento atual. Caso tenha alguma dúvida sobre o funcionamento, entre em contato com a equipe responsável.`,
                     thumbnail: user.displayAvatarURL(),
                 }), Separator.Default, createSection({
@@ -447,7 +447,7 @@ createResponder({
                         });
                         const owner = ticket ? await guild.members.fetch(ticket.ownerId).catch(() => null) : null;
                         if (owner) {
-                            const dmContainer = createContainer("#3b82f6", createSection({
+                            const dmContainer = createContainer(constants.colors.primary, createSection({
                                 content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${owner}, o arquivo final do seu pedido foi entregue!`,
                                 thumbnail: user.displayAvatarURL(),
                             }), Separator.Default, `<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\``, `<:clipboard:1502789887907205293> **Descrição:** ${existing.description}`, `<:cloud_check:1502789867355115690> **Link:** ${existing.url}`);
@@ -520,7 +520,7 @@ createResponder({
                             : null;
                         const openedAtTimestamp = Math.floor(ticket.openedAt.getTime() / 1000);
                         const closedAtTimestamp = Math.floor(new Date().getTime() / 1000);
-                        const logContainer = createContainer("#3b82f6", createSection({
+                        const logContainer = createContainer(constants.colors.primary, createSection({
                             content: `## <:folder:1502789880214720533> Atendimento Deletado: ${ticket.ticketId}\nO atendimento \`${ticket.ticketId}\` foi deletado por ${user}. O histórico de mensagens foi salvo e pode ser acessado abaixo.`,
                             thumbnail: owner?.displayAvatarURL(),
                         }), Separator.Default, `**Identificação**\n` +

@@ -205,7 +205,7 @@ async function processCloseSubmission(interaction: any) {
         const closedAtTimestamp = Math.floor(new Date().getTime() / 1000);
 
         const logContainer = createContainer(
-          "#3b82f6",
+          constants.colors.primary,
           createSection({
             content: `## <:folder:1502789880214720533> Atendimento ${ticket.ticketId}\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
             thumbnail: owner?.displayAvatarURL() as any,

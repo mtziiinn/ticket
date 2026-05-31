@@ -75,7 +75,7 @@ async function processDmQueue() {
           : `<:file_add:1502789905112105071> **Arquivo:** \`${item.filename}\``;
 
         const dmContainer = createContainer(
-          "#3b82f6",
+          constants.colors.primary,
           createSection({
             content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${user}, o arquivo final do seu pedido foi entregue!`,
             thumbnail: staff.displayAvatarURL() as any,
