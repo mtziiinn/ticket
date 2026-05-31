@@ -11,6 +11,7 @@ import { ButtonBuilder, ButtonStyle } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
+import { sendActionLog } from "./logger.js";
 
 // Função compartilhada para renomear
 async function processRename(interaction: any) {
@@ -50,6 +51,11 @@ async function processRename(interaction: any) {
         flags: ["Ephemeral"],
       })
       .catch((err: any) => console.error("[Admin]", err));
+
+    const ticket = await db.tickets.getByChannel(channel.id);
+    if (ticket) {
+      await sendActionLog(interaction.guild, ticket, interaction.user, "Renomear Ticket", `Alterou o nome do canal do ticket para \`${formattedName}\`.`);
+    }
   } catch (error) {
     console.error("[Renomear] Erro ao processar:", error);
   }
@@ -110,6 +116,9 @@ async function processDeliverMedia(interaction: any) {
       content: `<:action_check:1502789797821939752> Link de upload gerado!\n<:file_add:1502789905112105071> Acesse para enviar o arquivo: ${uploadUrl}\n\nApós o upload, a entrega será finalizada automaticamente.`,
       flags: ["Ephemeral"],
     });
+
+    // Enviar Log de Ação
+    await sendActionLog(interaction.guild, ticket, user, "Entregar Mídia (Link)", `Gerou um link de entrega pendente para o arquivo com a descrição: "${description}".`);
   } catch (error) {
     console.error("[Entregar Mídia] Erro ao processar:", error);
     await interaction.followUp({ content: "Erro ao processar.", flags: ["Ephemeral"] }).catch(() => null);

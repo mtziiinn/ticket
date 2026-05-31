@@ -5,6 +5,8 @@ import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuil
 import { db } from "#database";
 import { env } from "#env";
 import { formatEmoji } from "#functions";
+import { sendActionLog } from "./logger.js";
+import { renderMembersPanel } from "./members.js";
 // Mapeamento de Status de Encomenda
 const statusMap = {
     open: {
@@ -109,6 +111,8 @@ createResponder({
                 await interaction.update({
                     components: [container],
                 });
+                // Enviar Log de Ação
+                await sendActionLog(guild, ticket, user, "Assumir Ticket", "O staff assumiu a responsabilidade pelo atendimento deste ticket.");
                 // Notificação Automática por DM
                 if (owner) {
                     const dmContainer = createContainer(constants.colors.azoxo, createSection({
@@ -271,6 +275,8 @@ createResponder({
                     content: `<:action_check:1502789974276178121> Você largou o atendimento deste ticket.`,
                     flags: ["Ephemeral"],
                 });
+                // Enviar Log de Ação
+                await sendActionLog(guild, ticket, user, "Largar Ticket", "O staff deixou de ser o responsável pelo atendimento deste ticket.");
                 break;
             }
             case "status_menu": {
@@ -327,6 +333,8 @@ createResponder({
                 await interaction.editReply({
                     content: "<:action_check:1502789797821939752> Informações de pagamento enviadas com sucesso!",
                 });
+                // Enviar Log de Ação
+                await sendActionLog(guild, ticket, user, "Enviar Pagamento (PIX)", `Enviou a chave PIX e o QR Code de pagamento no canal para o cliente.`);
                 break;
             }
             case "notify": {
@@ -356,6 +364,8 @@ createResponder({
                     await interaction.editReply({
                         content: `<:action_check:1502789797821939752> O dono do ticket foi notificado com sucesso via DM!`,
                     });
+                    // Enviar Log de Ação
+                    await sendActionLog(guild, ticket, user, "Notificar Dono", `Enviou uma notificação via DM para o cliente informando que a equipe o aguarda no ticket.`);
                 }
                 else {
                     await interaction.editReply({
@@ -394,18 +404,7 @@ createResponder({
             }
             case "members":
             case "members_modal": {
-                const modal = new ModalBuilder()
-                    .setCustomId("ticket/manage/members/submit")
-                    .setTitle("Gerenciar Membros");
-                const label = new LabelBuilder()
-                    .setLabel("ID do Usuário")
-                    .setTextInputComponent(new TextInputBuilder()
-                    .setCustomId("member")
-                    .setPlaceholder("Insira o ID do usuário (ex: 1234567890)")
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(true));
-                modal.addComponents(label);
-                await interaction.showModal(modal).catch((e) => console.error(e));
+                await renderMembersPanel(interaction, channel, ticket, guild);
                 break;
             }
             case "rename_modal": {
@@ -586,6 +585,8 @@ createResponder({
                     components: [container],
                     flags: ["IsComponentsV2"],
                 });
+                // Enviar Log de Ação
+                await sendActionLog(guild, ticket, user, "Gerar Transcript", `Gerou o histórico de mensagens online do atendimento.`);
                 break;
             }
             default: {
@@ -651,10 +652,8 @@ createResponder({
             await interaction.editReply({
                 content: `<:action_check:1502789974276178121> Ticket transferido para a categoria **${newCategory.toUpperCase()}** com sucesso!`,
             });
-            // Log no canal
-            await channel.send({
-                content: `<:action_info:1502789798983766016> Este ticket foi transferido para a categoria **${newCategory.toUpperCase()}** por ${user}.`,
-            });
+            // Enviar Log de Ação
+            await sendActionLog(guild, ticket, user, "Transferir Categoria", `Transferiu o ticket para a categoria **${newCategory.toUpperCase()}**.`);
         }
         catch (error) {
             console.error("[Ticket] Erro ao transferir ticket:", error);
@@ -858,6 +857,8 @@ createResponder({
         await channel.send({
             content: `### ${statusData.emoji} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
         });
+        // Enviar Log de Ação
+        await sendActionLog(guild, ticket, user, "Alterar Status", `Alterou o status do pedido para **${statusData.label.toUpperCase()}**.`);
         await interaction.deleteReply().catch((err) => console.error("[Manage]", err));
     },
 });
