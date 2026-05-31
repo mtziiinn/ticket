@@ -636,6 +636,17 @@ createResponder({
             // 2. Atualizar banco de dados
             ticket.category = newCategory;
             await ticket.save();
+            // Atualizar Painel Principal no canal do ticket
+            const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
+            const container = createMainPanel(ticket, owner);
+            if (ticket.messageId) {
+                const mainMessage = await channel.messages
+                    .fetch(ticket.messageId)
+                    .catch(() => null);
+                if (mainMessage) {
+                    await mainMessage.edit({ components: [container] }).catch((err) => console.error("[Transfer]", err));
+                }
+            }
             // 3. Feedback
             await interaction.editReply({
                 content: `<:action_check:1502789974276178121> Ticket transferido para a categoria **${newCategory.toUpperCase()}** com sucesso!`,
