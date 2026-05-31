@@ -10,6 +10,7 @@ import {
   ApplicationCommandType,
   AttachmentBuilder,
   StringSelectMenuBuilder,
+  EmbedBuilder,
 } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
@@ -208,39 +209,29 @@ createCommand({
 
       const attachment = new AttachmentBuilder("imagens/266e4704c2729e8b0d38506d3a9353e0.png", { name: "banner.png" });
 
-      const container = createContainer(
-        constants.colors.azoxo,
-        createSection({
-          content: `## Central de Atendimento\nSelecione a categoria para ser atendido`,
-          thumbnail: emojis.static.other_ticket,
-        }),
-        createRow(
-          new StringSelectMenuBuilder({
-            customId: "ticket/form/select_open",
-            placeholder: "Selecione uma opcao...",
-            options: dynamicCategories.map((cat) => ({
-              label: cat.name as string,
-              value: cat.value as string,
-              description: (cat.description as string) || undefined,
-              emoji: formatEmoji(cat.emoji),
-            })),
-          }),
-        ),
-      ) as any;
+      const embed = new EmbedBuilder()
+        .setTitle("Central de Atendimento")
+        .setDescription("Selecione a categoria para ser atendido")
+        .setImage("attachment://banner.png")
+        .setColor(constants.colors.azoxo as any);
 
-      if (container.embeds && container.embeds[0]) {
-        if (typeof container.embeds[0].setImage === "function") {
-          container.embeds[0].setImage("attachment://banner.png");
-        } else {
-          container.embeds[0].image = { url: "attachment://banner.png" };
-        }
-      }
+      const row = createRow(
+        new StringSelectMenuBuilder({
+          customId: "ticket/form/select_open",
+          placeholder: "Selecione uma opcao...",
+          options: dynamicCategories.map((cat) => ({
+            label: cat.name as string,
+            value: cat.value as string,
+            description: (cat.description as string) || undefined,
+            emoji: formatEmoji(cat.emoji),
+          })),
+        }),
+      );
 
       await (channel as any).send({
+        embeds: [embed],
         files: [attachment],
-        components: container.components,
-        embeds: container.embeds,
-        flags: ["IsComponentsV2"],
+        components: [row],
       });
 
       await interaction.reply({
