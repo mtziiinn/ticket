@@ -623,12 +623,15 @@ createResponder({
             return;
         }
         try {
-            // 1. Atualizar canal no Discord (parent e nome com novo emoji/categoria)
-            await channel.setParent(parentId, { lockPermissions: false });
             const newChannelEmoji = selectedCategory?.channelEmoji || "🎫";
             const newName = `${newChannelEmoji}・${newCategory}-${ticket.ticketId}`;
-            await channel.setName(newName).catch((err) => {
-                console.error("[Transfer] Erro ao renomear canal:", err);
+            // 1. Atualizar canal no Discord de uma única vez (parent e nome) para evitar rate limits
+            await channel.edit({
+                parent: parentId,
+                name: newName,
+                lockPermissions: false,
+            }).catch((err) => {
+                console.error("[Transfer] Erro ao editar canal (parent e name):", err);
             });
             // 2. Atualizar banco de dados
             ticket.category = newCategory;
