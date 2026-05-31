@@ -626,14 +626,19 @@ createResponder({
         try {
             const newChannelEmoji = selectedCategory?.channelEmoji || "🎫";
             const newName = `${newChannelEmoji}・${newCategory}-${ticket.ticketId}`;
-            // 1. Atualizar canal no Discord de uma única vez (parent e nome) para evitar rate limits
+            // 1. Atualizar categoria (parent) de forma independente para que o rate limit de nome não bloqueie a transferência
             await channel.edit({
                 parent: parentId,
-                name: newName,
                 lockPermissions: false,
             }).catch((err) => {
-                console.error("[Transfer] Erro ao editar canal (parent e name):", err);
+                console.error("[Transfer] Erro ao mover categoria:", err);
             });
+            // 2. Renomear o canal separadamente (apenas se for diferente) para não causar erros se houver rate limit de 2 renames por 10min
+            if (channel.name !== newName) {
+                await channel.setName(newName).catch((err) => {
+                    console.warn("[Transfer] Erro/Rate limit ao renomear canal:", err.message || err);
+                });
+            }
             // 2. Atualizar banco de dados
             ticket.category = newCategory;
             await ticket.save();
