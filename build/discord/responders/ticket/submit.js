@@ -5,7 +5,7 @@ import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSel
 import { db } from "#database";
 import { formatEmoji } from "#functions";
 // Função compartilhada para criar o ticket
-async function processTicketSubmission(interaction) {
+async function processTicketSubmission(interaction, routeCategory) {
     const { guild, user, fields } = interaction;
     // 1. Verificar se o sistema está fechado (Loja Fechada)
     const guildData = await db.guilds.get(guild.id);
@@ -34,7 +34,8 @@ async function processTicketSubmission(interaction) {
         }
         const data = modalFieldsToRecord(fields);
         const categoryRaw = data.category;
-        const category = (Array.isArray(categoryRaw) ? categoryRaw[0] : categoryRaw) ||
+        const category = routeCategory ||
+            (Array.isArray(categoryRaw) ? categoryRaw[0] : categoryRaw) ||
             "suporte";
         const description = data.description || "Nenhuma descrição.";
         const ticketId = Math.random().toString(36).substring(2, 9).toUpperCase();
@@ -217,7 +218,61 @@ createResponder({
         });
     },
 });
-// 2. Responder que recebe a submissão
+// 1. Responder de Seleção direta do Painel
+createResponder({
+    customId: "ticket/form/select_open",
+    types: [ResponderType.StringSelect],
+    cache: "cached",
+    async run(interaction) {
+        const { values, guild } = interaction;
+        const category = values[0];
+        const guildData = await db.guilds.get(guild.id);
+        if (guildData.channels?.closed) {
+            await interaction.reply({
+                content: `<:action_x:1502789802918150206> Desculpe, o setor de atendimentos está temporariamente **fechado**. Tente novamente mais tarde!`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        // Verificar se o usuário já possui um ticket aberto
+        const existingTicket = await db.tickets.findOne({
+            guildId: guild.id,
+            ownerId: interaction.user.id,
+            closed: false,
+        });
+        if (existingTicket) {
+            await interaction.reply({
+                content: `<:action_x:1502789802918150206> Você já possui um ticket aberto em <#${existingTicket.channelId}>! Finalize-o antes de abrir um novo.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const modal = new ModalBuilder()
+            .setCustomId(`ticket/form/submit/${category}`)
+            .setTitle("Abertura de Ticket");
+        const descriptionLabel = new LabelBuilder()
+            .setLabel("Descrição do Problema")
+            .setTextInputComponent(new TextInputBuilder()
+            .setCustomId("description")
+            .setPlaceholder("Descreva detalhadamente o motivo do seu contato...")
+            .setStyle(TextInputStyle.Paragraph)
+            .setRequired(true));
+        modal.addComponents(descriptionLabel);
+        await interaction.showModal(modal).catch((e) => {
+            console.error("[Ticket] Erro ao abrir modal de seleção:", e);
+        });
+    },
+});
+// 2. Responder que recebe a submissão via parâmetro de categoria
+createResponder({
+    customId: "ticket/form/submit/:category",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction, { category }) {
+        await processTicketSubmission(interaction, category);
+    },
+});
+// 3. Responder que recebe a submissão legado
 createResponder({
     customId: "ticket/form/submit",
     types: [ResponderType.Modal, ResponderType.ModalComponent],
@@ -226,7 +281,7 @@ createResponder({
         await processTicketSubmission(interaction);
     },
 });
-// 3. Responder de backup
+// 4. Responder de backup legado
 createResponder({
     customId: "Abertura de Ticket",
     types: [ResponderType.Modal, ResponderType.ModalComponent],

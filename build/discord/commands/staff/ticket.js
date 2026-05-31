@@ -1,8 +1,9 @@
 import { createCommand } from "#base";
 import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
-import { ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, } from "discord.js";
+import { ApplicationCommandOptionType, ApplicationCommandType, AttachmentBuilder, StringSelectMenuBuilder, } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
+import { formatEmoji } from "#functions";
 function startOfDay() {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -167,21 +168,41 @@ createCommand({
                 });
                 return;
             }
+            // Fetch dynamic categories to populate the select menu
+            const dynamicCategories = guildData.channels?.ticketCategories || [];
+            if (dynamicCategories.length === 0) {
+                await interaction.reply({
+                    content: "❌ Nenhuma categoria de atendimento foi configurada no sistema ainda. Acesse `/ticket configurar` para configurar uma.",
+                    flags: ["Ephemeral"],
+                });
+                return;
+            }
+            const attachment = new AttachmentBuilder("imagens/266e4704c2729e8b0d38506d3a9353e0.png", { name: "banner.png" });
             const container = createContainer(constants.colors.azoxo, createSection({
-                content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-                thumbnail: emojis.static.other_ticket,
-            }), Separator.Default, [
-                `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
-                `● Não chame membros da equipe no privado.`,
-                `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
-            ].join("\n"), Separator.Default, "Clique no botão abaixo para iniciar o seu atendimento.", createRow(new ButtonBuilder({
-                customId: "ticket/form/open",
-                label: "Abrir Ticket",
-                style: ButtonStyle.Primary,
-                emoji: "1502789959378145300",
+                content: `## Central de Atendimento\nSelecione a categoria para ser atendido`,
+                thumbnail: undefined,
+            }), createRow(new StringSelectMenuBuilder({
+                customId: "ticket/form/select_open",
+                placeholder: "Selecione uma opcao...",
+                options: dynamicCategories.map((cat) => ({
+                    label: cat.name,
+                    value: cat.value,
+                    description: cat.description || undefined,
+                    emoji: formatEmoji(cat.emoji),
+                })),
             })));
+            if (container.embeds && container.embeds[0]) {
+                if (typeof container.embeds[0].setImage === "function") {
+                    container.embeds[0].setImage("attachment://banner.png");
+                }
+                else {
+                    container.embeds[0].image = { url: "attachment://banner.png" };
+                }
+            }
             await channel.send({
-                components: [container],
+                files: [attachment],
+                components: container.components,
+                embeds: container.embeds,
                 flags: ["IsComponentsV2"],
             });
             await interaction.reply({
