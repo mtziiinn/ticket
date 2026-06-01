@@ -54,21 +54,21 @@ async function getCategoryStats(guildId: string) {
               total: { $sum: 1 },
               today: {
                 $sum: {
-                  $cond: [{ $gte: ["$openedAt", todayStart] }, 1, 0]
-                }
+                  $cond: [{ $gte: ["$openedAt", todayStart] }, 1, 0],
+                },
               },
               week: {
                 $sum: {
-                  $cond: [{ $gte: ["$openedAt", weekStart] }, 1, 0]
-                }
+                  $cond: [{ $gte: ["$openedAt", weekStart] }, 1, 0],
+                },
               },
               month: {
                 $sum: {
-                  $cond: [{ $gte: ["$openedAt", monthStart] }, 1, 0]
-                }
-              }
-            }
-          }
+                  $cond: [{ $gte: ["$openedAt", monthStart] }, 1, 0],
+                },
+              },
+            },
+          },
         ],
         totals: [
           {
@@ -77,28 +77,31 @@ async function getCategoryStats(guildId: string) {
               totalAll: { $sum: 1 },
               totalToday: {
                 $sum: {
-                  $cond: [{ $gte: ["$openedAt", todayStart] }, 1, 0]
-                }
+                  $cond: [{ $gte: ["$openedAt", todayStart] }, 1, 0],
+                },
               },
               totalWeek: {
                 $sum: {
-                  $cond: [{ $gte: ["$openedAt", weekStart] }, 1, 0]
-                }
+                  $cond: [{ $gte: ["$openedAt", weekStart] }, 1, 0],
+                },
               },
               totalMonth: {
                 $sum: {
-                  $cond: [{ $gte: ["$openedAt", monthStart] }, 1, 0]
-                }
-              }
-            }
-          }
-        ]
-      }
-    }
+                  $cond: [{ $gte: ["$openedAt", monthStart] }, 1, 0],
+                },
+              },
+            },
+          },
+        ],
+      },
+    },
   ]);
 
-  const stats: Record<string, { today: number; week: number; month: number; total: number }> = {};
-  
+  const stats: Record<
+    string,
+    { today: number; week: number; month: number; total: number }
+  > = {};
+
   if (result && result.byCategory) {
     for (const catData of result.byCategory) {
       stats[catData._id] = {
@@ -110,7 +113,12 @@ async function getCategoryStats(guildId: string) {
     }
   }
 
-  const totals = result?.totals?.[0] || { totalToday: 0, totalWeek: 0, totalMonth: 0, totalAll: 0 };
+  const totals = result?.totals?.[0] || {
+    totalToday: 0,
+    totalWeek: 0,
+    totalMonth: 0,
+    totalAll: 0,
+  };
 
   return {
     stats,
@@ -120,7 +128,6 @@ async function getCategoryStats(guildId: string) {
     totalAll: totals.totalAll,
   };
 }
-
 
 createCommand({
   name: "ticket",
@@ -196,15 +203,17 @@ createCommand({
         return;
       }
 
-      const logo = new AttachmentBuilder("imagens/266e4704c2729e8b0d38506d3a9353e0.png", { name: "logo.png" });
+      const logoUrl =
+        "https://lh3.googleusercontent.com/d/1XgX0U1_6-L77A3t_H4H7-T_f88e_0-1_";
 
-      const bannerUrl = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
+      const bannerUrl =
+        "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 
       const container = createContainer(
         constants.colors.azoxo,
         createSection({
           content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-          thumbnail: "attachment://logo.png",
+          thumbnail: logoUrl,
         }),
         Separator.Default,
         [
@@ -226,7 +235,6 @@ createCommand({
       );
 
       await (channel as any).send({
-        files: [logo],
         components: [container],
         flags: ["IsComponentsV2"],
       });
@@ -287,7 +295,8 @@ createCommand({
     if (subcommand === "stats") {
       await interaction.deferReply({ flags: ["Ephemeral"] });
 
-      const { stats, totalToday, totalWeek, totalMonth, totalAll } = await getCategoryStats(guildId!);
+      const { stats, totalToday, totalWeek, totalMonth, totalAll } =
+        await getCategoryStats(guildId!);
 
       const categoryLines = Object.entries(stats)
         .sort(([, a], [, b]) => b.total - a.total)
