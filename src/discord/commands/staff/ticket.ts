@@ -11,6 +11,7 @@ import {
   ApplicationCommandType,
   ButtonBuilder,
   ButtonStyle,
+  AttachmentBuilder,
 } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
@@ -202,8 +203,11 @@ createCommand({
         return;
       }
 
-      const logoUrl =
-        "https://media.r2rp.com/v1/files/1780280285942-bkq9rnef.png";
+      const logo = new AttachmentBuilder("imagens/logo.png", {
+        name: "logo.png",
+      });
+
+      const logoUrl = "attachment://logo.png";
 
       const bannerUrl =
         "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
@@ -234,6 +238,7 @@ createCommand({
       );
 
       await (channel as any).send({
+        files: [logo],
         components: [container],
         flags: ["IsComponentsV2"],
       });
