@@ -178,7 +178,7 @@ createCommand({
             });
             const container = createContainer(constants.colors.azoxo, createSection({
                 content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-                thumbnail: "attachment://logo.png",
+                thumbnail: { media: { url: "attachment://logo.png" } },
             }), Separator.Default, [
                 `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
                 `● Não chame membros da equipe no privado.`,
