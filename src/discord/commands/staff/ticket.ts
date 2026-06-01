@@ -11,7 +11,6 @@ import {
   ApplicationCommandType,
   ButtonBuilder,
   ButtonStyle,
-  AttachmentBuilder,
 } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
