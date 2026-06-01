@@ -1,6 +1,6 @@
 import { createCommand } from "#base";
 import { createContainer, createSection, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
-import { ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, } from "discord.js";
+import { ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, AttachmentBuilder, } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
 function startOfDay() {
@@ -172,8 +172,17 @@ createCommand({
                 });
                 return;
             }
-            const logoUrl = "https://lh3.googleusercontent.com/d/1XgX0U1_6-L77A3t_H4H7-T_f88e_0-1_";
             const bannerUrl = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
+            // Envia a logo como attachment para obter uma URL direta do CDN do Discord
+            const logoAttachment = new AttachmentBuilder("imagens/logo.png", {
+                name: "logo.png",
+            });
+            const tempMsg = await channel.send({
+                files: [logoAttachment],
+            });
+            const logoUrl = tempMsg.attachments.first()?.url ||
+                "https://cdn.discordapp.com/embed/avatars/0.png";
+            await tempMsg.delete().catch(() => null);
             const container = createContainer(constants.colors.azoxo, createSection({
                 content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
                 thumbnail: logoUrl,

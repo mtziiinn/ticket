@@ -203,14 +203,20 @@ createCommand({
         return;
       }
 
-      const logo = new AttachmentBuilder("imagens/logo.png", {
-        name: "logo.png",
-      });
-
-      const logoUrl = "attachment://logo.png";
-
       const bannerUrl =
         "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
+
+      // Envia a logo como attachment para obter uma URL direta do CDN do Discord
+      const logoAttachment = new AttachmentBuilder("imagens/logo.png", {
+        name: "logo.png",
+      });
+      const tempMsg = await (channel as any).send({
+        files: [logoAttachment],
+      });
+      const logoUrl =
+        tempMsg.attachments.first()?.url ||
+        "https://cdn.discordapp.com/embed/avatars/0.png";
+      await tempMsg.delete().catch(() => null);
 
       const container = createContainer(
         constants.colors.azoxo,
@@ -238,7 +244,6 @@ createCommand({
       );
 
       await (channel as any).send({
-        files: [logo],
         components: [container],
         flags: ["IsComponentsV2"],
       });
