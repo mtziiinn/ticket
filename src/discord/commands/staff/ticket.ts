@@ -15,22 +15,6 @@ import {
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
 
-let cachedLogoUrl = "";
-
-async function getLogoUrl(channel: any) {
-  if (cachedLogoUrl) return cachedLogoUrl;
-  try {
-    const tempMsg = await channel.send({
-      files: [{ attachment: "imagens/logo.png", name: "logo.png" }],
-    });
-    cachedLogoUrl = tempMsg.attachments.first()?.url ?? "";
-    await tempMsg.delete();
-  } catch {
-    cachedLogoUrl = "";
-  }
-  return cachedLogoUrl;
-}
-
 function startOfDay() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -221,13 +205,13 @@ createCommand({
       const bannerUrl =
         "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 
-      const logoUrl = await getLogoUrl(channel);
+      const guildIcon = interaction.guild?.iconURL({ size: 128 }) ?? undefined;
 
       const container = createContainer(
         constants.colors.azoxo,
         createSection({
           content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-          thumbnail: logoUrl,
+          thumbnail: guildIcon as any,
         }),
         Separator.Default,
         [
