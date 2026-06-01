@@ -2,7 +2,6 @@ import { createCommand } from "#base";
 import {
   createContainer,
   createSection,
-  createEmbed,
   Separator,
   createRow,
   createMediaGallery,
@@ -12,7 +11,6 @@ import {
   ApplicationCommandType,
   ButtonBuilder,
   ButtonStyle,
-  AttachmentBuilder,
 } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
@@ -207,31 +205,19 @@ createCommand({
       const bannerUrl =
         "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 
-      // Envia a logo como attachment para obter uma URL direta do CDN do Discord
-      const logoAttachment = new AttachmentBuilder("imagens/logo.png", {
-        name: "logo.png",
-      });
-      const tempMsg = await (channel as any).send({
-        files: [logoAttachment],
-      });
-      const logoUrl =
-        tempMsg.attachments.first()?.url ||
-        "https://cdn.discordapp.com/embed/avatars/0.png";
-      await tempMsg.delete().catch(() => null);
-
-      const embed = createEmbed({
-        title: "Central de Atendimento",
-        description: `Seja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.
-
-● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.
-● Não chame membros da equipe no privado.
-● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
-        thumbnail: logoUrl,
-        color: constants.colors.azoxo,
-      });
-
       const container = createContainer(
         constants.colors.azoxo,
+        createSection({
+          content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+          thumbnail: emojis.static.other_ticket,
+        }),
+        Separator.Default,
+        [
+          `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
+          `● Não chame membros da equipe no privado.`,
+          `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
+        ].join("\n"),
+        Separator.Default,
         bannerUrl ? [createMediaGallery(bannerUrl), Separator.Default] : [],
         "Clique no botão abaixo para iniciar o seu atendimento.",
         createRow(
@@ -245,7 +231,6 @@ createCommand({
       );
 
       await (channel as any).send({
-        embeds: [embed],
         components: [container],
         flags: ["IsComponentsV2"],
       });
