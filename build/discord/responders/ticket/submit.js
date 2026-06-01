@@ -123,9 +123,8 @@ async function processTicketSubmission(interaction, routeCategory) {
         // Apagar a mensagem automática do Discord com um pequeno delay
         setTimeout(async () => {
             try {
-                const messages = await channel.messages.fetch({ limit: 10 });
-                const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage &&
-                    m.reference?.messageId === mainMessage.id);
+                const messages = await channel.messages.fetch({ limit: 20 });
+                const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage);
                 if (pinSystemMessage) {
                     await pinSystemMessage.delete().catch(() => null);
                 }
@@ -133,7 +132,7 @@ async function processTicketSubmission(interaction, routeCategory) {
             catch (e) {
                 console.error("[Submit] Erro ao apagar aviso de pin do Discord:", e);
             }
-        }, 2000);
+        }, 3000);
         // 4. Salvar no banco
         await db.tickets.create({
             guildId: guild.id,

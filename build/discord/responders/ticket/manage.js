@@ -325,12 +325,11 @@ createResponder({
                 if (pixMessage) {
                     // Fixar a mensagem do PIX
                     await pixMessage.pin().catch(() => null);
-                    // Apagar a notificação de pin com um pequeno delay para garantir que o Discord a criou
+                    // Apagar a notificação de pin com um delay maior para garantir que o Discord a criou
                     setTimeout(async () => {
                         try {
-                            const messages = await channel.messages.fetch({ limit: 10 });
-                            const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage &&
-                                m.reference?.messageId === pixMessage.id);
+                            const messages = await channel.messages.fetch({ limit: 20 });
+                            const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage);
                             if (pinSystemMessage) {
                                 await pinSystemMessage.delete().catch(() => null);
                             }
@@ -338,7 +337,7 @@ createResponder({
                         catch (e) {
                             console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
                         }
-                    }, 2000);
+                    }, 3000);
                 }
                 // 2. Enviar o QR Code GRANDE em uma mensagem separada
                 const qrEmbed = createEmbed({
