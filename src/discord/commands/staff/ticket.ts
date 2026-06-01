@@ -202,7 +202,8 @@ createCommand({
         return;
       }
 
-      const logoUrl = "https://i.imgur.com/uR2N8Qh.png";
+      const logoUrl =
+        "https://raw.githubusercontent.com/mtziiinn/ticket/main/imagens/logo.png";
 
       const bannerUrl =
         "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
