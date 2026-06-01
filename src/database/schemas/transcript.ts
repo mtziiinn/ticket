@@ -50,6 +50,20 @@ export const transcriptSchema = new Schema(
       username: String,
       avatar: String,
     },
+    claimedBy: {
+      id: String,
+      username: String,
+      avatar: String,
+    },
+    deliveries: [
+      {
+        url: String,
+        filename: String,
+        description: String,
+        deliveredBy: String,
+        deliveredAt: String,
+      },
+    ],
     messageCount: { type: Number, default: 0 },
     messages: [messageSchema],
   },

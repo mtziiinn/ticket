@@ -26,7 +26,6 @@ import { formatEmoji } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 
-
 // Mapeamento de Status de Encomenda
 const statusMap: Record<
   string,
@@ -168,7 +167,13 @@ createResponder({
         });
 
         // Enviar Log de Ação
-        await sendActionLog(guild, ticket, user, "Assumir Ticket", "O staff assumiu a responsabilidade pelo atendimento deste ticket.");
+        await sendActionLog(
+          guild,
+          ticket,
+          user,
+          "Assumir Ticket",
+          "O staff assumiu a responsabilidade pelo atendimento deste ticket.",
+        );
 
         // Notificação Automática por DM
         if (owner) {
@@ -373,7 +378,9 @@ createResponder({
             .fetch(ticket.messageId)
             .catch(() => null);
           if (mainMessage) {
-            await mainMessage.edit({ components: [container] }).catch((err: any) => console.error("[Manage]", err));
+            await mainMessage
+              .edit({ components: [container] })
+              .catch((err: any) => console.error("[Manage]", err));
           }
         }
 
@@ -383,7 +390,13 @@ createResponder({
         });
 
         // Enviar Log de Ação
-        await sendActionLog(guild, ticket, user, "Largar Ticket", "O staff deixou de ser o responsável pelo atendimento deste ticket.");
+        await sendActionLog(
+          guild,
+          ticket,
+          user,
+          "Largar Ticket",
+          "O staff deixou de ser o responsável pelo atendimento deste ticket.",
+        );
         break;
       }
 
@@ -459,7 +472,9 @@ createResponder({
           // Apagar a notificação de pin
           try {
             const messages = await channel.messages.fetch({ limit: 5 });
-            const pinSystemMessage = messages.find((m: any) => m.type === MessageType.ChannelPinnedMessage);
+            const pinSystemMessage = messages.find(
+              (m: any) => m.type === MessageType.ChannelPinnedMessage,
+            );
             if (pinSystemMessage) {
               await pinSystemMessage.delete().catch(() => null);
             }
@@ -483,11 +498,18 @@ createResponder({
           .catch((err: any) => console.error("[Manage]", err));
 
         await interaction.editReply({
-          content: "<:action_check:1502789797821939752> Informações de pagamento enviadas com sucesso!",
+          content:
+            "<:action_check:1502789797821939752> Informações de pagamento enviadas com sucesso!",
         });
 
         // Enviar Log de Ação
-        await sendActionLog(guild, ticket, user, "Enviar Pagamento (PIX)", `Enviou a chave PIX e o QR Code de pagamento no canal para o cliente.`);
+        await sendActionLog(
+          guild,
+          ticket,
+          user,
+          "Enviar Pagamento (PIX)",
+          `Enviou a chave PIX e o QR Code de pagamento no canal para o cliente.`,
+        );
         break;
       }
 
@@ -523,7 +545,13 @@ createResponder({
             content: `<:action_check:1502789797821939752> O dono do ticket foi notificado com sucesso via DM!`,
           });
           // Enviar Log de Ação
-          await sendActionLog(guild, ticket, user, "Notificar Dono", `Enviou uma notificação via DM para o cliente informando que a equipe o aguarda no ticket.`);
+          await sendActionLog(
+            guild,
+            ticket,
+            user,
+            "Notificar Dono",
+            `Enviou uma notificação via DM para o cliente informando que a equipe o aguarda no ticket.`,
+          );
         } else {
           await interaction.editReply({
             content: `❌ Não foi possível enviar a DM (Usuário com DMs fechadas). Mencione-o aqui no canal: ${owner}`,
@@ -629,16 +657,23 @@ createResponder({
               // Apagar a notificação de pin
               try {
                 const messages = await channel.messages.fetch({ limit: 5 });
-                const pinSystemMessage = messages.find((m: any) => m.type === MessageType.ChannelPinnedMessage);
+                const pinSystemMessage = messages.find(
+                  (m: any) => m.type === MessageType.ChannelPinnedMessage,
+                );
                 if (pinSystemMessage) {
                   await pinSystemMessage.delete().catch(() => null);
                 }
               } catch (e) {
-                console.error("[Manage] Erro ao apagar aviso de pin da entrega:", e);
+                console.error(
+                  "[Manage] Erro ao apagar aviso de pin da entrega:",
+                  e,
+                );
               }
             }
 
-            const owner = ticket ? await guild.members.fetch(ticket.ownerId).catch(() => null) : null;
+            const owner = ticket
+              ? await guild.members.fetch(ticket.ownerId).catch(() => null)
+              : null;
             if (owner) {
               const dmContainer = createContainer(
                 constants.colors.primary,
@@ -651,8 +686,11 @@ createResponder({
                 `<:clipboard:1502789887907205293> **Descrição:** ${existing.description}`,
                 `<:cloud_check:1502789867355115690> **Link:** ${existing.url}`,
               );
-              await owner.send({ components: [dmContainer], flags: ["IsComponentsV2"] })
-                .catch((err: any) => console.error("[Admin] Erro ao enviar DM:", err));
+              await owner
+                .send({ components: [dmContainer], flags: ["IsComponentsV2"] })
+                .catch((err: any) =>
+                  console.error("[Admin] Erro ao enviar DM:", err),
+                );
             }
 
             await db.pendingDeliveries.deleteOne({ _id: existing._id });
@@ -688,7 +726,9 @@ createResponder({
           );
 
         deliverModal.addComponents(descriptionLabel);
-        await interaction.showModal(deliverModal).catch((e) => console.error(e));
+        await interaction
+          .showModal(deliverModal)
+          .catch((e) => console.error(e));
         break;
       }
 
@@ -727,7 +767,9 @@ createResponder({
         );
 
         if (logChannelId) {
-          const logChannel = await guild.channels.fetch(logChannelId).catch(() => null);
+          const logChannel = await guild.channels
+            .fetch(logChannelId)
+            .catch(() => null);
           if (logChannel?.isTextBased()) {
             const owner = await guild.members
               .fetch(ticket.ownerId)
@@ -783,7 +825,10 @@ createResponder({
           }
         }
 
-        setTimeout(() => channel.delete().catch((err) => console.error("[Manage]", err)), 5000);
+        setTimeout(
+          () => channel.delete().catch((err) => console.error("[Manage]", err)),
+          5000,
+        );
         break;
       }
 
@@ -840,7 +885,13 @@ createResponder({
         });
 
         // Enviar Log de Ação
-        await sendActionLog(guild, ticket, user, "Gerar Transcript", `Gerou o histórico de mensagens online do atendimento.`);
+        await sendActionLog(
+          guild,
+          ticket,
+          user,
+          "Gerar Transcript",
+          `Gerou o histórico de mensagens online do atendimento.`,
+        );
         break;
       }
 
@@ -888,12 +939,14 @@ createResponder({
 
     try {
       // 1. Atualizar categoria (parent) no Discord
-      await (channel as any).edit({
-        parent: parentId,
-        lockPermissions: false,
-      }).catch((err: any) => {
-        console.error("[Transfer] Erro ao mover categoria:", err);
-      });
+      await (channel as any)
+        .edit({
+          parent: parentId,
+          lockPermissions: false,
+        })
+        .catch((err: any) => {
+          console.error("[Transfer] Erro ao mover categoria:", err);
+        });
 
       // 2. Atualizar banco de dados
       ticket.category = newCategory;
@@ -908,7 +961,9 @@ createResponder({
           .fetch(ticket.messageId)
           .catch(() => null);
         if (mainMessage) {
-          await mainMessage.edit({ components: [container] }).catch((err: any) => console.error("[Transfer]", err));
+          await mainMessage
+            .edit({ components: [container] })
+            .catch((err: any) => console.error("[Transfer]", err));
         }
       }
 
@@ -917,8 +972,39 @@ createResponder({
         content: `<:action_check:1502789974276178121> Ticket transferido para a categoria **${newCategory.toUpperCase()}** com sucesso!`,
       });
 
+      // Notificação Automática por DM ao Cliente
+      if (owner) {
+        const dmContainer = createContainer(
+          constants.colors.azoxo,
+          createSection({
+            content: `### <:arrow_right:1502789809142239243> Transferência de Categoria\nOlá ${owner}, seu ticket foi transferido para a nova categoria: **${newCategory.toUpperCase()}**.\n\nA equipe responsável por esta categoria dará continuidade ao seu atendimento.`,
+            thumbnail: guild.iconURL() as any,
+          }),
+          createRow(
+            new ButtonBuilder({
+              label: "Ir para o atendimento",
+              style: ButtonStyle.Link,
+              url: `https://discord.com/channels/${guild.id}/${channel.id}`,
+            }),
+          ),
+        );
+
+        await owner
+          .send({
+            components: [dmContainer],
+            flags: ["IsComponentsV2"],
+          })
+          .catch((err: any) => console.error("[Transfer DM]", err));
+      }
+
       // Enviar Log de Ação
-      await sendActionLog(guild, ticket, user, "Transferir Categoria", `Transferiu o ticket para a categoria **${newCategory.toUpperCase()}**.`);
+      await sendActionLog(
+        guild,
+        ticket,
+        user,
+        "Transferir Categoria",
+        `Transferiu o ticket para a categoria **${newCategory.toUpperCase()}**.`,
+      );
     } catch (error) {
       console.error("[Ticket] Erro ao transferir ticket:", error);
       await interaction.editReply({
@@ -942,7 +1028,7 @@ export async function generateTranscript(
       const options: any = { limit: 100 };
       if (lastId) options.before = lastId;
 
-      const fetched = await channel.messages.fetch(options) as any;
+      const fetched = (await channel.messages.fetch(options)) as any;
       if (fetched.size === 0) break;
 
       allMessages.push(...fetched.values());
@@ -966,8 +1052,13 @@ export async function generateTranscript(
       .fetch(ticket.ownerId)
       .catch(() => null);
 
+    const claimerMember = ticket.claimedBy
+      ? await channel.guild.members.fetch(ticket.claimedBy).catch(() => null)
+      : null;
+
     const transcriptId =
-      ticket.ticketId || Math.random().toString(36).substring(2, 9).toUpperCase();
+      ticket.ticketId ||
+      Math.random().toString(36).substring(2, 9).toUpperCase();
 
     const messagesData = [];
 
@@ -1051,6 +1142,20 @@ export async function generateTranscript(
         username: closer.username,
         avatar: closer.displayAvatarURL(),
       },
+      claimedBy: claimerMember
+        ? {
+            id: claimerMember.id,
+            username: claimerMember.user.username,
+            avatar: claimerMember.displayAvatarURL(),
+          }
+        : undefined,
+      deliveries: ticket.deliveries?.map((d: any) => ({
+        url: d.url,
+        filename: d.filename,
+        description: d.description,
+        deliveredBy: d.deliveredBy,
+        deliveredAt: d.deliveredAt.toISOString(),
+      })),
       messageCount: sortedMessages.length,
       messages: messagesData,
     };
@@ -1078,10 +1183,7 @@ const priorityOrder: Record<string, number> = {
   completed: 4,
 };
 
-async function repositionTicketByStatus(
-  channel: any,
-  newStatus: string,
-) {
+async function repositionTicketByStatus(channel: any, newStatus: string) {
   try {
     const category = channel.parent;
     if (!category) return;
@@ -1143,7 +1245,6 @@ createResponder({
       console.error("[Status] Erro assíncrono ao reposicionar:", err);
     });
 
-
     // Atualizar Painel Principal
     const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
     const container = createMainPanel(ticket, owner);
@@ -1153,7 +1254,9 @@ createResponder({
         .fetch(ticket.messageId)
         .catch(() => null);
       if (mainMessage) {
-        await mainMessage.edit({ components: [container] }).catch((err: any) => console.error("[Manage]", err));
+        await mainMessage
+          .edit({ components: [container] })
+          .catch((err: any) => console.error("[Manage]", err));
       }
     }
 
@@ -1162,9 +1265,42 @@ createResponder({
       content: `### ${statusData.emoji} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
     });
 
-    // Enviar Log de Ação
-    await sendActionLog(guild, ticket, user, "Alterar Status", `Alterou o status do pedido para **${statusData.label.toUpperCase()}**.`);
+    // Notificação Automática por DM ao Cliente
+    if (owner) {
+      const dmContainer = createContainer(
+        constants.colors.azoxo,
+        createSection({
+          content: `### <:bell:1502789830155702333> Atualização no Pedido\nOlá ${owner}, o status do seu pedido na categoria \`${ticket.category.toUpperCase()}\` foi atualizado para **${statusData.label.toUpperCase()}**.\n\n> ${statusData.description}`,
+          thumbnail: guild.iconURL() as any,
+        }),
+        createRow(
+          new ButtonBuilder({
+            label: "Ir para o atendimento",
+            style: ButtonStyle.Link,
+            url: `https://discord.com/channels/${guild.id}/${channel.id}`,
+          }),
+        ),
+      );
 
-    await interaction.deleteReply().catch((err: any) => console.error("[Manage]", err));
+      await owner
+        .send({
+          components: [dmContainer],
+          flags: ["IsComponentsV2"],
+        })
+        .catch((err: any) => console.error("[Status DM]", err));
+    }
+
+    // Enviar Log de Ação
+    await sendActionLog(
+      guild,
+      ticket,
+      user,
+      "Alterar Status",
+      `Alterou o status do pedido para **${statusData.label.toUpperCase()}**.`,
+    );
+
+    await interaction
+      .deleteReply()
+      .catch((err: any) => console.error("[Manage]", err));
   },
 });

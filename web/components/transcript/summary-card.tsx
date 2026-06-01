@@ -11,6 +11,10 @@ import {
   Clock,
   Hash,
   HelpCircle,
+  ShieldCheck,
+  DownloadCloud,
+  ExternalLink,
+  CheckCircle,
 } from "lucide-react";
 import type { Transcript } from "@/lib/types";
 
@@ -150,6 +154,25 @@ export function SummaryCard({ transcript }: SummaryCardProps) {
             </div>
           )}
 
+          {transcript.claimedBy && (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8 border border-border">
+                {transcript.claimedBy.avatar ? (
+                  <AvatarImage src={transcript.claimedBy.avatar} />
+                ) : null}
+                <AvatarFallback className="bg-primary/20 text-primary text-xs">
+                  {getInitials(transcript.claimedBy.username)}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="text-xs text-muted-foreground">Responsável</p>
+                <p className="text-sm font-medium text-foreground">
+                  {transcript.claimedBy.username}
+                </p>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
               <Tag className="h-4 w-4 text-primary" />
@@ -177,6 +200,53 @@ export function SummaryCard({ transcript }: SummaryCardProps) {
           )}
         </div>
       </CardContent>
+
+      {transcript.deliveries && transcript.deliveries.length > 0 && (
+        <div className="px-6 pb-6 pt-2">
+          <div className="border-t border-border/50 pt-4">
+            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+              <DownloadCloud className="h-4 w-4 text-primary" />
+              Arquivos Entregues
+            </h3>
+            <div className="grid grid-cols-1 gap-3">
+              {transcript.deliveries.map((delivery, index) => (
+                <div
+                  key={index}
+                  className="flex items-start justify-between gap-4 p-3 rounded-lg bg-primary/5 border border-primary/10"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1">
+                      <CheckCircle className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        {delivery.filename}
+                      </p>
+                      {delivery.description && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {delivery.description}
+                        </p>
+                      )}
+                      <p className="text-[10px] text-muted-foreground/60 mt-2">
+                        Entregue em {formatDate(delivery.deliveredAt)}
+                      </p>
+                    </div>
+                  </div>
+                  <a
+                    href={delivery.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors text-primary flex-shrink-0"
+                    title="Baixar arquivo"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {transcript.description && (
         <div className="px-6 pb-6 pt-2">

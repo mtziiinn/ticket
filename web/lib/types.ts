@@ -40,6 +40,18 @@ export interface Transcript {
     username: string;
     avatar?: string;
   };
+  claimedBy?: {
+    id: string;
+    username: string;
+    avatar?: string;
+  };
+  deliveries?: Array<{
+    url: string;
+    filename: string;
+    description?: string;
+    deliveredBy: string;
+    deliveredAt: string;
+  }>;
   messageCount: number;
   messages: TranscriptMessage[];
 }
