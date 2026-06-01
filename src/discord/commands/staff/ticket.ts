@@ -203,7 +203,7 @@ createCommand({
       }
 
       const logoUrl =
-        "https://lh3.googleusercontent.com/d/1XgX0U1_6-L77A3t_H4H7-T_f88e_0-1_";
+        "https://media.r2rp.com/v1/files/1780274941946-bkq9rnef.png";
 
       const bannerUrl =
         "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
