@@ -22,10 +22,11 @@ import {
 import { db } from "#database";
 import { formatEmoji } from "#functions";
 
-
 // Função compartilhada para criar o ticket
-async function processTicketSubmission(interaction: any, routeCategory?: string) {
-
+async function processTicketSubmission(
+  interaction: any,
+  routeCategory?: string,
+) {
   const { guild, user, fields } = interaction;
 
   // 1. Verificar se o sistema está fechado (Loja Fechada)
@@ -40,7 +41,9 @@ async function processTicketSubmission(interaction: any, routeCategory?: string)
     return;
   }
 
-  await interaction.deferReply({ flags: ["Ephemeral"] }).catch((err: any) => console.error("[Submit]", err));
+  await interaction
+    .deferReply({ flags: ["Ephemeral"] })
+    .catch((err: any) => console.error("[Submit]", err));
 
   try {
     // 0. Verificar se o usuário já possui um ticket aberto
@@ -168,18 +171,28 @@ async function processTicketSubmission(interaction: any, routeCategory?: string)
     });
 
     // Fixar a mensagem principal no canal do ticket
-    await mainMessage.pin().catch((err: any) => console.error("[Submit] Erro ao fixar mensagem:", err));
+    await mainMessage
+      .pin()
+      .catch((err: any) =>
+        console.error("[Submit] Erro ao fixar mensagem:", err),
+      );
 
-    // Apagar a mensagem automática do Discord informando que a mensagem foi fixada
-    try {
-      const messages = await channel.messages.fetch({ limit: 5 });
-      const pinSystemMessage = messages.find((m: any) => m.type === MessageType.ChannelPinnedMessage);
-      if (pinSystemMessage) {
-        await pinSystemMessage.delete().catch(() => null);
+    // Apagar a mensagem automática do Discord com um pequeno delay
+    setTimeout(async () => {
+      try {
+        const messages = await channel.messages.fetch({ limit: 10 });
+        const pinSystemMessage = messages.find(
+          (m: any) =>
+            m.type === MessageType.ChannelPinnedMessage &&
+            m.reference?.messageId === mainMessage.id,
+        );
+        if (pinSystemMessage) {
+          await pinSystemMessage.delete().catch(() => null);
+        }
+      } catch (e) {
+        console.error("[Submit] Erro ao apagar aviso de pin do Discord:", e);
       }
-    } catch (e) {
-      console.error("[Submit] Erro ao apagar aviso de pin do Discord:", e);
-    }
+    }, 2000);
 
     // 4. Salvar no banco
     await db.tickets.create({
@@ -195,7 +208,9 @@ async function processTicketSubmission(interaction: any, routeCategory?: string)
     // 5. Enviar Log de Abertura
     const logChannelId = guildData.channels?.tickets;
     if (logChannelId) {
-      const logChannel = await guild.channels.fetch(logChannelId).catch(() => null);
+      const logChannel = await guild.channels
+        .fetch(logChannelId)
+        .catch(() => null);
       if (logChannel?.isTextBased()) {
         const openedAtTimestamp = Math.floor(Date.now() / 1000);
         const categoryName = selectedCategory?.name || category.toUpperCase();

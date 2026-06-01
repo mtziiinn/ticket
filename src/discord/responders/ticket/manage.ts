@@ -22,7 +22,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { formatEmoji } from "#functions";
+import { formatEmoji, generatePixPayload } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 
@@ -446,14 +446,16 @@ createResponder({
           return;
         }
 
-        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixKey)}`;
+        // Gerar o Payload Real do PIX (BRCode)
+        const pixPayload = generatePixPayload(pixKey);
+        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
 
         // 1. Enviar o texto premium
         const textContainer = createContainer(
           constants.colors.success,
-          `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou a chave para realizar o pagamento.`,
+          `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou o código "Copia e Cola" para realizar o pagamento.`,
           Separator.Default,
-          `**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``,
+          `**Código PIX Copia e Cola:**\n\`\`\`\n${pixPayload}\n\`\`\``,
           Separator.Default,
           `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
         );
@@ -469,18 +471,22 @@ createResponder({
           // Fixar a mensagem do PIX
           await pixMessage.pin().catch(() => null);
 
-          // Apagar a notificação de pin
-          try {
-            const messages = await channel.messages.fetch({ limit: 5 });
-            const pinSystemMessage = messages.find(
-              (m: any) => m.type === MessageType.ChannelPinnedMessage,
-            );
-            if (pinSystemMessage) {
-              await pinSystemMessage.delete().catch(() => null);
+          // Apagar a notificação de pin com um pequeno delay para garantir que o Discord a criou
+          setTimeout(async () => {
+            try {
+              const messages = await channel.messages.fetch({ limit: 10 });
+              const pinSystemMessage = messages.find(
+                (m: any) =>
+                  m.type === MessageType.ChannelPinnedMessage &&
+                  m.reference?.messageId === pixMessage.id,
+              );
+              if (pinSystemMessage) {
+                await pinSystemMessage.delete().catch(() => null);
+              }
+            } catch (e) {
+              console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
             }
-          } catch (e) {
-            console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
-          }
+          }, 2000);
         }
 
         // 2. Enviar o QR Code GRANDE em uma mensagem separada
