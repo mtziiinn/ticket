@@ -474,17 +474,47 @@ createResponder({
           // Apagar a notificação de pin com um delay maior para garantir que o Discord a criou
           setTimeout(async () => {
             try {
-              const messages = await channel.messages.fetch({ limit: 20 });
-              const pinSystemMessage = messages.find(
-                (m: any) => m.type === MessageType.ChannelPinnedMessage,
+              console.log(
+                `[Manage] Iniciando busca de mensagem de pin PIX em: ${channel.id}`,
               );
+              const messages = await (channel as any).messages.fetch({
+                limit: 50,
+              });
+              console.log(`[Manage] Mensagens buscadas: ${messages.size}`);
+
+              const pinSystemMessage = messages.find((m: any) => {
+                console.log(
+                  `[Manage] Verificando msg ${m.id} - Tipo: ${m.type}`,
+                );
+                return m.type === MessageType.ChannelPinnedMessage;
+              });
+
               if (pinSystemMessage) {
-                await pinSystemMessage.delete().catch(() => null);
+                console.log(
+                  `[Manage] Mensagem de pin encontrada (${pinSystemMessage.id}). Tentando deletar...`,
+                );
+                await pinSystemMessage
+                  .delete()
+                  .then(() =>
+                    console.log(
+                      `[Manage] Mensagem de pin deletada com sucesso.`,
+                    ),
+                  )
+                  .catch((err: any) =>
+                    console.error(`[Manage] Erro ao deletar msg de pin:`, err),
+                  );
+              } else {
+                console.log(
+                  `[Manage] Nenhuma mensagem de pin encontrada nas últimas 50 mensagens.`,
+                );
               }
             } catch (e) {
-              console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
+              console.error(
+                "[Manage] Erro crítico ao processar limpeza de pin PIX:",
+                e,
+              );
             }
-          }, 3000);
+          }, 5000);
         }
 
         // 2. Enviar o QR Code GRANDE em uma mensagem separada

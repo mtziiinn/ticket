@@ -123,16 +123,28 @@ async function processTicketSubmission(interaction, routeCategory) {
         // Apagar a mensagem automática do Discord com um pequeno delay
         setTimeout(async () => {
             try {
-                const messages = await channel.messages.fetch({ limit: 20 });
-                const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage);
+                console.log(`[Submit] Iniciando busca de mensagem de pin em: ${channel.id}`);
+                const messages = await channel.messages.fetch({ limit: 50 });
+                console.log(`[Submit] Mensagens buscadas: ${messages.size}`);
+                const pinSystemMessage = messages.find((m) => {
+                    console.log(`[Submit] Verificando msg ${m.id} - Tipo: ${m.type}`);
+                    return m.type === MessageType.ChannelPinnedMessage;
+                });
                 if (pinSystemMessage) {
-                    await pinSystemMessage.delete().catch(() => null);
+                    console.log(`[Submit] Mensagem de pin encontrada (${pinSystemMessage.id}). Tentando deletar...`);
+                    await pinSystemMessage
+                        .delete()
+                        .then(() => console.log(`[Submit] Mensagem de pin deletada com sucesso.`))
+                        .catch((err) => console.error(`[Submit] Erro ao deletar msg de pin:`, err));
+                }
+                else {
+                    console.log(`[Submit] Nenhuma mensagem de pin encontrada nas últimas 50 mensagens.`);
                 }
             }
             catch (e) {
-                console.error("[Submit] Erro ao apagar aviso de pin do Discord:", e);
+                console.error("[Submit] Erro crítico ao processar limpeza de pin:", e);
             }
-        }, 3000);
+        }, 5000);
         // 4. Salvar no banco
         await db.tickets.create({
             guildId: guild.id,
