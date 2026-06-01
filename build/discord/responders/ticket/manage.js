@@ -4,7 +4,7 @@ import { createContainer, createSection, createEmbed, Separator, createRow, } fr
 import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, LabelBuilder, PermissionFlagsBits, RadioGroupBuilder, StringSelectMenuBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { formatEmoji } from "#functions";
+import { formatEmoji, generatePixPayload } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 // Mapeamento de Status de Encomenda
@@ -268,7 +268,9 @@ createResponder({
                         .fetch(ticket.messageId)
                         .catch(() => null);
                     if (mainMessage) {
-                        await mainMessage.edit({ components: [container] }).catch((err) => console.error("[Manage]", err));
+                        await mainMessage
+                            .edit({ components: [container] })
+                            .catch((err) => console.error("[Manage]", err));
                     }
                 }
                 await interaction.reply({
@@ -309,9 +311,11 @@ createResponder({
                     });
                     return;
                 }
-                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixKey)}`;
+                // Gerar o Payload Real do PIX (BRCode)
+                const pixPayload = generatePixPayload(pixKey);
+                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
                 // 1. Enviar o texto premium
-                const textContainer = createContainer(constants.colors.success, `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou a chave para realizar o pagamento.`, Separator.Default, `**Chave PIX para copiar:**\n\`\`\`\n${pixKey}\n\`\`\``, Separator.Default, `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`);
+                const textContainer = createContainer(constants.colors.success, `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou o código "Copia e Cola" para realizar o pagamento.`, Separator.Default, `**Código PIX Copia e Cola:**\n\`\`\`\n${pixPayload}\n\`\`\``, Separator.Default, `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`);
                 const pixMessage = await channel
                     .send({
                     components: [textContainer],
@@ -321,17 +325,20 @@ createResponder({
                 if (pixMessage) {
                     // Fixar a mensagem do PIX
                     await pixMessage.pin().catch(() => null);
-                    // Apagar a notificação de pin
-                    try {
-                        const messages = await channel.messages.fetch({ limit: 5 });
-                        const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage);
-                        if (pinSystemMessage) {
-                            await pinSystemMessage.delete().catch(() => null);
+                    // Apagar a notificação de pin com um pequeno delay para garantir que o Discord a criou
+                    setTimeout(async () => {
+                        try {
+                            const messages = await channel.messages.fetch({ limit: 10 });
+                            const pinSystemMessage = messages.find((m) => m.type === MessageType.ChannelPinnedMessage &&
+                                m.reference?.messageId === pixMessage.id);
+                            if (pinSystemMessage) {
+                                await pinSystemMessage.delete().catch(() => null);
+                            }
                         }
-                    }
-                    catch (e) {
-                        console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
-                    }
+                        catch (e) {
+                            console.error("[Manage] Erro ao apagar aviso de pin do PIX:", e);
+                        }
+                    }, 2000);
                 }
                 // 2. Enviar o QR Code GRANDE em uma mensagem separada
                 const qrEmbed = createEmbed({
@@ -474,13 +481,16 @@ createResponder({
                                 console.error("[Manage] Erro ao apagar aviso de pin da entrega:", e);
                             }
                         }
-                        const owner = ticket ? await guild.members.fetch(ticket.ownerId).catch(() => null) : null;
+                        const owner = ticket
+                            ? await guild.members.fetch(ticket.ownerId).catch(() => null)
+                            : null;
                         if (owner) {
                             const dmContainer = createContainer(constants.colors.primary, createSection({
                                 content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${owner}, o arquivo final do seu pedido foi entregue!`,
                                 thumbnail: user.displayAvatarURL(),
                             }), Separator.Default, `<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\``, `<:clipboard:1502789887907205293> **Descrição:** ${existing.description}`, `<:cloud_check:1502789867355115690> **Link:** ${existing.url}`);
-                            await owner.send({ components: [dmContainer], flags: ["IsComponentsV2"] })
+                            await owner
+                                .send({ components: [dmContainer], flags: ["IsComponentsV2"] })
                                 .catch((err) => console.error("[Admin] Erro ao enviar DM:", err));
                         }
                         await db.pendingDeliveries.deleteOne({ _id: existing._id });
@@ -511,7 +521,9 @@ createResponder({
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true));
                 deliverModal.addComponents(descriptionLabel);
-                await interaction.showModal(deliverModal).catch((e) => console.error(e));
+                await interaction
+                    .showModal(deliverModal)
+                    .catch((e) => console.error(e));
                 break;
             }
             case "close": {
@@ -539,7 +551,9 @@ createResponder({
                 const logChannelId = guildData.channels?.tickets;
                 const transcriptUrl = await generateTranscript(channel, ticket, user);
                 if (logChannelId) {
-                    const logChannel = await guild.channels.fetch(logChannelId).catch(() => null);
+                    const logChannel = await guild.channels
+                        .fetch(logChannelId)
+                        .catch(() => null);
                     if (logChannel?.isTextBased()) {
                         const owner = await guild.members
                             .fetch(ticket.ownerId)
@@ -655,10 +669,12 @@ createResponder({
         }
         try {
             // 1. Atualizar categoria (parent) no Discord
-            await channel.edit({
+            await channel
+                .edit({
                 parent: parentId,
                 lockPermissions: false,
-            }).catch((err) => {
+            })
+                .catch((err) => {
                 console.error("[Transfer] Erro ao mover categoria:", err);
             });
             // 2. Atualizar banco de dados
@@ -672,13 +688,32 @@ createResponder({
                     .fetch(ticket.messageId)
                     .catch(() => null);
                 if (mainMessage) {
-                    await mainMessage.edit({ components: [container] }).catch((err) => console.error("[Transfer]", err));
+                    await mainMessage
+                        .edit({ components: [container] })
+                        .catch((err) => console.error("[Transfer]", err));
                 }
             }
             // 3. Feedback
             await interaction.editReply({
                 content: `<:action_check:1502789974276178121> Ticket transferido para a categoria **${newCategory.toUpperCase()}** com sucesso!`,
             });
+            // Notificação Automática por DM ao Cliente
+            if (owner) {
+                const dmContainer = createContainer(constants.colors.azoxo, createSection({
+                    content: `### <:arrow_right:1502789809142239243> Transferência de Categoria\nOlá ${owner}, seu ticket foi transferido para a nova categoria: **${newCategory.toUpperCase()}**.\n\nA equipe responsável por esta categoria dará continuidade ao seu atendimento.`,
+                    thumbnail: guild.iconURL(),
+                }), createRow(new ButtonBuilder({
+                    label: "Ir para o atendimento",
+                    style: ButtonStyle.Link,
+                    url: `https://discord.com/channels/${guild.id}/${channel.id}`,
+                })));
+                await owner
+                    .send({
+                    components: [dmContainer],
+                    flags: ["IsComponentsV2"],
+                })
+                    .catch((err) => console.error("[Transfer DM]", err));
+            }
             // Enviar Log de Ação
             await sendActionLog(guild, ticket, user, "Transferir Categoria", `Transferiu o ticket para a categoria **${newCategory.toUpperCase()}**.`);
         }
@@ -698,7 +733,7 @@ export async function generateTranscript(channel, ticket, closer) {
             const options = { limit: 100 };
             if (lastId)
                 options.before = lastId;
-            const fetched = await channel.messages.fetch(options);
+            const fetched = (await channel.messages.fetch(options));
             if (fetched.size === 0)
                 break;
             allMessages.push(...fetched.values());
@@ -716,7 +751,11 @@ export async function generateTranscript(channel, ticket, closer) {
         const ownerMember = await channel.guild.members
             .fetch(ticket.ownerId)
             .catch(() => null);
-        const transcriptId = ticket.ticketId || Math.random().toString(36).substring(2, 9).toUpperCase();
+        const claimerMember = ticket.claimedBy
+            ? await channel.guild.members.fetch(ticket.claimedBy).catch(() => null)
+            : null;
+        const transcriptId = ticket.ticketId ||
+            Math.random().toString(36).substring(2, 9).toUpperCase();
         const messagesData = [];
         for (const msg of sortedMessages) {
             const attachments = [];
@@ -793,6 +832,20 @@ export async function generateTranscript(channel, ticket, closer) {
                 username: closer.username,
                 avatar: closer.displayAvatarURL(),
             },
+            claimedBy: claimerMember
+                ? {
+                    id: claimerMember.id,
+                    username: claimerMember.user.username,
+                    avatar: claimerMember.displayAvatarURL(),
+                }
+                : undefined,
+            deliveries: ticket.deliveries?.map((d) => ({
+                url: d.url,
+                filename: d.filename,
+                description: d.description,
+                deliveredBy: d.deliveredBy,
+                deliveredAt: d.deliveredAt.toISOString(),
+            })),
             messageCount: sortedMessages.length,
             messages: messagesData,
         };
@@ -877,15 +930,36 @@ createResponder({
                 .fetch(ticket.messageId)
                 .catch(() => null);
             if (mainMessage) {
-                await mainMessage.edit({ components: [container] }).catch((err) => console.error("[Manage]", err));
+                await mainMessage
+                    .edit({ components: [container] })
+                    .catch((err) => console.error("[Manage]", err));
             }
         }
         // Notificar no Canal
         await channel.send({
             content: `### ${statusData.emoji} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
         });
+        // Notificação Automática por DM ao Cliente
+        if (owner) {
+            const dmContainer = createContainer(constants.colors.azoxo, createSection({
+                content: `### <:bell:1502789830155702333> Atualização no Pedido\nOlá ${owner}, o status do seu pedido na categoria \`${ticket.category.toUpperCase()}\` foi atualizado para **${statusData.label.toUpperCase()}**.\n\n> ${statusData.description}`,
+                thumbnail: guild.iconURL(),
+            }), createRow(new ButtonBuilder({
+                label: "Ir para o atendimento",
+                style: ButtonStyle.Link,
+                url: `https://discord.com/channels/${guild.id}/${channel.id}`,
+            })));
+            await owner
+                .send({
+                components: [dmContainer],
+                flags: ["IsComponentsV2"],
+            })
+                .catch((err) => console.error("[Status DM]", err));
+        }
         // Enviar Log de Ação
         await sendActionLog(guild, ticket, user, "Alterar Status", `Alterou o status do pedido para **${statusData.label.toUpperCase()}**.`);
-        await interaction.deleteReply().catch((err) => console.error("[Manage]", err));
+        await interaction
+            .deleteReply()
+            .catch((err) => console.error("[Manage]", err));
     },
 });
