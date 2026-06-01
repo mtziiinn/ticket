@@ -236,7 +236,7 @@ export function SummaryCard({ transcript }: SummaryCardProps) {
                     href={delivery.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors text-primary flex-shrink-0"
+                    className="p-2 rounded-md bg-primary/10 hover:bg-primary/20 transition-colors text-primary shrink-0"
                     title="Baixar arquivo"
                   >
                     <ExternalLink className="h-4 w-4" />
