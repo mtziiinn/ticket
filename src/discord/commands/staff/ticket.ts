@@ -11,7 +11,6 @@ import {
   ApplicationCommandType,
   ButtonBuilder,
   ButtonStyle,
-  AttachmentBuilder,
 } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
@@ -206,15 +205,13 @@ createCommand({
       const bannerUrl =
         "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 
-      const logoAttachment = new AttachmentBuilder("imagens/logo.png", {
-        name: "logo.png",
-      });
+      const logoUrl = "https://cdn.discordapp.com/embed/avatars/0.png";
 
       const container = createContainer(
         constants.colors.azoxo,
         createSection({
           content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-          thumbnail: { media: { url: "attachment://logo.png" } },
+          thumbnail: logoUrl,
         }),
         Separator.Default,
         [
@@ -236,7 +233,6 @@ createCommand({
       );
 
       await (channel as any).send({
-        files: [logoAttachment],
         components: [container],
         flags: ["IsComponentsV2"],
       });
