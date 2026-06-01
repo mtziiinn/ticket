@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-const { ZipArchive } = require("archiver") as any;
+const { ZipArchive } = require("archiver") as { ZipArchive: new (opts: Record<string, any>) => any };
 
 const DISCORD_API = "https://discord.com/api/v10";
 
