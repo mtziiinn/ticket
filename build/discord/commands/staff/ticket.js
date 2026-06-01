@@ -176,9 +176,9 @@ createCommand({
             const logoAttachment = new AttachmentBuilder("imagens/logo.png", {
                 name: "logo.png",
             });
-            const container = createContainer(constants.colors.azoxo, createMediaGallery(logoAttachment), Separator.Default, createSection({
+            const container = createContainer(constants.colors.azoxo, createSection({
                 content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-                thumbnail: emojis.static.other_ticket,
+                thumbnail: "attachment://logo.png",
             }), Separator.Default, [
                 `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
                 `● Não chame membros da equipe no privado.`,

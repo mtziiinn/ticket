@@ -212,11 +212,9 @@ createCommand({
 
       const container = createContainer(
         constants.colors.azoxo,
-        createMediaGallery(logoAttachment),
-        Separator.Default,
         createSection({
           content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-          thumbnail: emojis.static.other_ticket,
+          thumbnail: "attachment://logo.png",
         }),
         Separator.Default,
         [
