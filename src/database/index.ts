@@ -1,4 +1,10 @@
-import mongoose, { InferSchemaType, model, Schema } from "mongoose";
+import mongoose, {
+  InferSchemaType,
+  model,
+  Schema,
+  Model,
+  HydratedDocument,
+} from "mongoose";
 import { guildSchema } from "./schemas/guild.js";
 import { memberSchema } from "./schemas/member.js";
 import { ticketSchema } from "./schemas/ticket.js";
@@ -32,13 +38,47 @@ const dmQueueSchema = new Schema({
 
 dmQueueSchema.index({ createdAt: 1 });
 
+interface IGuild {
+  id: string;
+  channels?: {
+    logs?: string;
+    vault?: string;
+    general?: string;
+    tickets?: string;
+    staffRole?: string;
+    pixKey?: string;
+    closed?: boolean;
+    categories?: {
+      suporte?: string;
+      denuncia?: string;
+      financeiro?: string;
+      bugs?: string;
+    };
+    ticketCategories?: Array<{
+      name?: string;
+      value?: string;
+      description?: string;
+      emoji?: string;
+      channelEmoji?: string;
+      parentId?: string;
+    }>;
+  };
+}
+
+interface GuildModel extends Model<IGuild> {
+  get(id: string): Promise<HydratedDocument<IGuild>>;
+}
 
 export const db = {
-  guilds: model("guild", guildSchema, "guilds"),
+  guilds: model<IGuild, GuildModel>("guild", guildSchema, "guilds"),
   members: model("member", memberSchema, "members"),
   tickets: model("ticket", ticketSchema, "tickets"),
   transcripts: model("transcript", transcriptSchema, "transcripts"),
-  pendingDeliveries: model("pendingDelivery", pendingDeliverySchema, "pending_deliveries"),
+  pendingDeliveries: model(
+    "pendingDelivery",
+    pendingDeliverySchema,
+    "pending_deliveries",
+  ),
   dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
 };
 

@@ -27,11 +27,19 @@ export const guildSchema = new Schema({
             },
         ],
     },
-}, {
-    statics: {
-        async get(id) {
-            return (await this.findOne({ id })) ?? this.create({ id });
-        },
-    },
 });
 guildSchema.index({ id: 1 }, { unique: true });
+const cache = new Map();
+const CACHE_TTL = 60 * 1000; // 1 minuto
+guildSchema.post("save", (doc) => {
+    cache.set(doc.id, { data: doc, expires: Date.now() + CACHE_TTL });
+});
+guildSchema.statics.get = async function (id) {
+    const cached = cache.get(id);
+    if (cached && cached.expires > Date.now()) {
+        return cached.data;
+    }
+    const doc = (await this.findOne({ id })) ?? (await this.create({ id }));
+    cache.set(id, { data: doc, expires: Date.now() + CACHE_TTL });
+    return doc;
+};

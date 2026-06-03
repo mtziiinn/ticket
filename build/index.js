@@ -3,10 +3,37 @@ import { bootstrap } from "@constatic/base";
 import { db } from "#database";
 import { createContainer, createSection, Separator } from "@magicyan/discord";
 import "./constants.js";
+import { GatewayIntentBits, Options, Partials } from "discord.js";
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
 console.log("------------------------------------------");
-const { client } = await bootstrap({ meta: import.meta, env });
+const { client } = await bootstrap({
+    meta: import.meta,
+    env,
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.DirectMessages,
+    ],
+    partials: [Partials.Message, Partials.Channel, Partials.User],
+    makeCache: Options.cacheWithLimits({
+        ...Options.DefaultMakeCacheSettings,
+        MessageManager: 100,
+        PresenceManager: 0,
+        ReactionManager: 0,
+        ThreadManager: 0,
+        VoiceStateManager: 0,
+        ApplicationCommandManager: 0,
+        BaseGuildEmojiManager: 0,
+        GuildEmojiManager: 0,
+        GuildInviteManager: 0,
+        GuildStickerManager: 0,
+        GuildScheduledEventManager: 0,
+        StageInstanceManager: 0,
+    }),
+});
 async function cleanupOldTranscripts() {
     try {
         const thirtyDaysAgo = new Date();
@@ -52,7 +79,11 @@ async function cleanupPendingDeliveries() {
 }
 async function processDmQueue() {
     try {
-        const queue = await db.dmQueue.find().sort({ createdAt: 1 }).limit(5);
+        const queue = await db.dmQueue
+            .find()
+            .sort({ createdAt: 1 })
+            .limit(5)
+            .lean();
         for (const item of queue) {
             try {
                 const user = await client.users.fetch(item.ownerId);
@@ -64,7 +95,10 @@ async function processDmQueue() {
                     content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${user}, o arquivo final do seu pedido foi entregue!`,
                     thumbnail: staff.displayAvatarURL(),
                 }), Separator.Default, fileLine, `<:clipboard:1502789887907205293> **Descrição:** ${item.description || "Mídia entregue"}`, `<:cloud_check:1502789867355115690> **Link:** ${item.downloadUrl}`, Separator.Default, `<:action_warning:1502789801949265990> O link expira em **7 dias**.`);
-                await user.send({ components: [dmContainer], flags: ["IsComponentsV2"] });
+                await user.send({
+                    components: [dmContainer],
+                    flags: ["IsComponentsV2"],
+                });
                 console.log(`[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`);
             }
             catch (err) {
@@ -75,7 +109,9 @@ async function processDmQueue() {
                         await channel.send(`<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`);
                     }
                 }
-                catch { /* ignora */ }
+                catch {
+                    /* ignora */
+                }
             }
             await db.dmQueue.deleteOne({ _id: item._id });
         }
@@ -97,7 +133,7 @@ async function runAllCleanups() {
     }
 }
 // Executa limpezas iniciais de forma assíncrona
-runAllCleanups().catch(err => console.error("[Cleanup] Erro inicial:", err));
+runAllCleanups().catch((err) => console.error("[Cleanup] Erro inicial:", err));
 // Configura intervalos
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
 setInterval(processDmQueue, 10000);

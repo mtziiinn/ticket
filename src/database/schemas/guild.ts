@@ -1,43 +1,81 @@
-import { Schema } from "mongoose";
+import { Model, Schema, HydratedDocument } from "mongoose";
 import { t } from "../utils.js";
 
-export const guildSchema = new Schema(
-  {
-    id: t.string,
-    channels: {
-      logs: String,
-      vault: String,
-      general: String,
-      tickets: String,
-      staffRole: String,
-      pixKey: String,
-      closed: Boolean,
-      categories: {
-        suporte: String,
-        denuncia: String,
-        financeiro: String,
-        bugs: String,
-      },
-      ticketCategories: [
-        {
-          name: String,
-          value: String,
-          description: String,
-          emoji: String,
-          channelEmoji: String,
-          parentId: String,
-        },
-      ],
+interface IGuild {
+  id: string;
+  channels?: {
+    logs?: string;
+    vault?: string;
+    general?: string;
+    tickets?: string;
+    staffRole?: string;
+    pixKey?: string;
+    closed?: boolean;
+    categories?: {
+      suporte?: string;
+      denuncia?: string;
+      financeiro?: string;
+      bugs?: string;
+    };
+    ticketCategories?: Array<{
+      name?: string;
+      value?: string;
+      description?: string;
+      emoji?: string;
+      channelEmoji?: string;
+      parentId?: string;
+    }>;
+  };
+}
+
+interface GuildModel extends Model<IGuild> {
+  get(id: string): Promise<HydratedDocument<IGuild>>;
+}
+
+export const guildSchema = new Schema<IGuild, GuildModel>({
+  id: t.string,
+  channels: {
+    logs: String,
+    vault: String,
+    general: String,
+    tickets: String,
+    staffRole: String,
+    pixKey: String,
+    closed: Boolean,
+    categories: {
+      suporte: String,
+      denuncia: String,
+      financeiro: String,
+      bugs: String,
     },
-  },
-  {
-    statics: {
-      async get(id: string) {
-        return (await this.findOne({ id })) ?? this.create({ id });
+    ticketCategories: [
+      {
+        name: String,
+        value: String,
+        description: String,
+        emoji: String,
+        channelEmoji: String,
+        parentId: String,
       },
-    },
+    ],
   },
-);
+});
 
 guildSchema.index({ id: 1 }, { unique: true });
 
+const cache = new Map<string, { data: any; expires: number }>();
+const CACHE_TTL = 60 * 1000; // 1 minuto
+
+guildSchema.post("save", (doc) => {
+  cache.set(doc.id, { data: doc, expires: Date.now() + CACHE_TTL });
+});
+
+guildSchema.statics.get = async function (id: string) {
+  const cached = cache.get(id);
+  if (cached && cached.expires > Date.now()) {
+    return cached.data;
+  }
+  const doc = (await this.findOne({ id })) ?? (await this.create({ id }));
+  cache.set(id, { data: doc, expires: Date.now() + CACHE_TTL });
+  return doc;
+};

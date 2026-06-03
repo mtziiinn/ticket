@@ -72,3 +72,6 @@ export const transcriptSchema = new Schema(
     collection: "transcripts", // Forçar o nome da coleção para bater com o Next.js
   },
 );
+
+transcriptSchema.index({ guildId: 1, createdAt: -1 });
+transcriptSchema.index({ channelId: 1 });

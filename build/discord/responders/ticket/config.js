@@ -287,6 +287,9 @@ createResponder({
                 .replace(/[\u0300-\u036f]/g, "")
                 .replace(/\s+/g, "_");
         if (guildData.channels) {
+            if (!guildData.channels.ticketCategories) {
+                guildData.channels.ticketCategories = [];
+            }
             guildData.channels.ticketCategories.push({
                 name,
                 value,
@@ -321,7 +324,9 @@ createResponder({
         }
         // Deleta a mensagem do menu (ephemeral)
         await interaction.deferUpdate();
-        await interaction.deleteReply().catch((err) => console.error("[Config]", err));
+        await interaction
+            .deleteReply()
+            .catch((err) => console.error("[Config]", err));
         // Informar o sucesso
         await interaction.followUp({
             content: "<:action_check:1502789797821939752> Categoria removida com sucesso! Atualize o painel para ver as mudanças.",

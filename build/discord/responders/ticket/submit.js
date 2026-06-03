@@ -4,6 +4,7 @@ import { createContainer, createSection, modalFieldsToRecord, Separator, createR
 import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { formatEmoji } from "#functions";
+const cooldowns = new Map();
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(interaction, routeCategory) {
     const { guild, user, fields } = interaction;
@@ -204,7 +205,19 @@ createResponder({
     types: [ResponderType.Button],
     cache: "cached",
     async run(interaction) {
-        const { guild } = interaction;
+        const { user, guild } = interaction;
+        // Cooldown de 5 segundos
+        const now = Date.now();
+        const userCooldown = cooldowns.get(user.id);
+        if (userCooldown && now < userCooldown) {
+            const remaining = Math.ceil((userCooldown - now) / 1000);
+            await interaction.reply({
+                content: `<:action_x:1502789802918150206> Aguarde **${remaining} segundos** para tentar abrir um ticket novamente.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        cooldowns.set(user.id, now + 5000);
         const guildData = await db.guilds.get(guild.id);
         const dynamicCategories = guildData.channels?.ticketCategories || [];
         if (guildData.channels?.closed) {

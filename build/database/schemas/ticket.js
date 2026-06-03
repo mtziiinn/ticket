@@ -14,13 +14,15 @@ export const ticketSchema = new Schema({
     closedBy: String,
     openedAt: { type: Date, default: Date.now },
     closedAt: Date,
-    deliveries: [{
+    deliveries: [
+        {
             url: { type: String, required: true },
             filename: { type: String, required: true },
             description: { type: String, default: "" },
             deliveredBy: { type: String, required: true },
             deliveredAt: { type: Date, default: Date.now },
-        }],
+        },
+    ],
 }, {
     statics: {
         async getByChannel(channelId) {
@@ -30,4 +32,5 @@ export const ticketSchema = new Schema({
 });
 ticketSchema.index({ channelId: 1 });
 ticketSchema.index({ guildId: 1, ownerId: 1, closed: 1 });
-ticketSchema.index({ guildId: 1 });
+ticketSchema.index({ guildId: 1, openedAt: -1 });
+ticketSchema.index({ openedAt: 1 });

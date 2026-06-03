@@ -22,6 +22,8 @@ import {
 import { db } from "#database";
 import { formatEmoji } from "#functions";
 
+const cooldowns = new Map<string, number>();
+
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(
   interaction: any,
@@ -75,7 +77,7 @@ async function processTicketSubmission(
     const guildData = await db.guilds.get(guild.id);
     const dynamicCategories = guildData.channels?.ticketCategories || [];
     const selectedCategory = dynamicCategories.find(
-      (c) => c.value === category,
+      (c: any) => c.value === category,
     );
 
     // Pega o ID da categoria baseado no assunto escolhido
@@ -288,7 +290,21 @@ createResponder({
   types: [ResponderType.Button],
   cache: "cached",
   async run(interaction) {
-    const { guild } = interaction;
+    const { user, guild } = interaction;
+
+    // Cooldown de 5 segundos
+    const now = Date.now();
+    const userCooldown = cooldowns.get(user.id);
+    if (userCooldown && now < userCooldown) {
+      const remaining = Math.ceil((userCooldown - now) / 1000);
+      await interaction.reply({
+        content: `<:action_x:1502789802918150206> Aguarde **${remaining} segundos** para tentar abrir um ticket novamente.`,
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
+    cooldowns.set(user.id, now + 5000);
+
     const guildData = await db.guilds.get(guild.id);
     const dynamicCategories = guildData.channels?.ticketCategories || [];
 
@@ -321,7 +337,7 @@ createResponder({
           .setCustomId("category")
           .setPlaceholder("Selecione uma categoria...")
           .setOptions(
-            ...dynamicCategories.map((cat) => {
+            ...dynamicCategories.map((cat: any) => {
               return {
                 label: cat.name as string,
                 value: cat.value as string,

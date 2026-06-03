@@ -340,7 +340,7 @@ createResponder({
             new StringSelectMenuBuilder({
               customId: "ticket/manage/transfer_select",
               placeholder: "Escolha uma categoria...",
-              options: dynamicCategories.map((cat) => ({
+              options: dynamicCategories.map((cat: any) => ({
                 label: cat.name as string,
                 value: cat.value as string,
                 emoji: formatEmoji(cat.emoji),
@@ -959,7 +959,7 @@ createResponder({
     const guildData = await db.guilds.get(guild.id);
     const dynamicCategories = guildData.channels?.ticketCategories || [];
     const selectedCategory = dynamicCategories.find(
-      (c) => c.value === newCategory,
+      (c: any) => c.value === newCategory,
     );
 
     const parentId = selectedCategory?.parentId;

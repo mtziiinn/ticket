@@ -39,7 +39,7 @@ export async function createConfigPanel(guildId: string) {
   const catDisplay =
     customCats.length > 0
       ? customCats
-          .map((c) => {
+          .map((c: any) => {
             const modalEmoji =
               c.emoji?.length && c.emoji.length > 5 && !c.emoji.includes(":")
                 ? `<:emoji:${c.emoji}>`
@@ -313,7 +313,7 @@ createResponder({
         .setCustomId("ticket/config/cat_remove_select")
         .setPlaceholder("Selecione a categoria para remover...")
         .addOptions(
-          ...cats.map((c) => ({
+          ...cats.map((c: any) => ({
             label: c.name!,
             value: c.value!,
             description: `ID: ${c.parentId}`,
@@ -407,7 +407,10 @@ createResponder({
           .replace(/\s+/g, "_");
 
     if (guildData.channels) {
-      guildData.channels.ticketCategories.push({
+      if (!guildData.channels.ticketCategories) {
+        guildData.channels.ticketCategories = [] as any;
+      }
+      (guildData.channels.ticketCategories as any).push({
         name,
         value,
         description: data.description as string,
@@ -440,7 +443,7 @@ createResponder({
     if (guildData.channels?.ticketCategories) {
       guildData.channels.ticketCategories =
         guildData.channels.ticketCategories.filter(
-          (c) => c.value !== valueToRemove,
+          (c: any) => c.value !== valueToRemove,
         ) as any;
       guildData.markModified("channels");
       await (guildData as any).save();
@@ -448,7 +451,9 @@ createResponder({
 
     // Deleta a mensagem do menu (ephemeral)
     await interaction.deferUpdate();
-    await interaction.deleteReply().catch((err: any) => console.error("[Config]", err));
+    await interaction
+      .deleteReply()
+      .catch((err: any) => console.error("[Config]", err));
 
     // Informar o sucesso
     await interaction.followUp({
@@ -481,7 +486,7 @@ createResponder({
       .setCustomId("ticket/config/cat_edit_select")
       .setPlaceholder("Selecione a categoria para editar...")
       .addOptions(
-        ...cats.map((c) => ({
+        ...cats.map((c: any) => ({
           label: c.name!,
           value: c.value!,
           description: `Slug: ${c.value}`,
@@ -508,7 +513,7 @@ createResponder({
 
     const guildData = await db.guilds.get(guildId!);
     const cat = guildData.channels?.ticketCategories?.find(
-      (c) => c.value === slug,
+      (c: any) => c.value === slug,
     );
 
     if (!cat) {
@@ -589,7 +594,7 @@ createResponder({
 
     if (guildData.channels?.ticketCategories) {
       const index = guildData.channels.ticketCategories.findIndex(
-        (c) => c.value === oldSlug,
+        (c: any) => c.value === oldSlug,
       );
 
       if (index !== -1) {
@@ -605,7 +610,8 @@ createResponder({
         guildData.channels.ticketCategories[index] = {
           name: data.name as string,
           value: newValue,
-          description: guildData.channels.ticketCategories[index].description || "",
+          description:
+            guildData.channels.ticketCategories[index].description || "",
           parentId: data.parentId as string,
           emoji: (data.emoji as string) || "🎫",
           channelEmoji: (data.channelEmoji as string) || "🎫",
@@ -616,7 +622,8 @@ createResponder({
     }
 
     await interaction.editReply({
-      content: "<:action_check:1502789797821939752> Categoria editada com sucesso!",
+      content:
+        "<:action_check:1502789797821939752> Categoria editada com sucesso!",
       flags: ["Ephemeral"] as any,
     });
   },

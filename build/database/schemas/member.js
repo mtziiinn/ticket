@@ -5,12 +5,13 @@ export const memberSchema = new Schema({
     guildId: t.string,
     wallet: {
         coins: { type: Number, default: 0 },
-    }
+    },
 }, {
     statics: {
         async get(member) {
             const query = { id: member.id, guildId: member.guild.id };
-            return await this.findOne(query) ?? this.create(query);
-        }
-    }
+            return (await this.findOne(query)) ?? this.create(query);
+        },
+    },
 });
+memberSchema.index({ id: 1, guildId: 1 }, { unique: true });

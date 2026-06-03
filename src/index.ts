@@ -3,12 +3,39 @@ import { bootstrap } from "@constatic/base";
 import { db } from "#database";
 import { createContainer, createSection, Separator } from "@magicyan/discord";
 import "./constants.js";
+import { GatewayIntentBits, Options, Partials } from "discord.js";
 
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
 console.log("------------------------------------------");
 
-const { client } = await bootstrap({ meta: import.meta, env });
+const { client } = await bootstrap({
+  meta: import.meta,
+  env,
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.DirectMessages,
+  ],
+  partials: [Partials.Message, Partials.Channel, Partials.User],
+  makeCache: Options.cacheWithLimits({
+    ...Options.DefaultMakeCacheSettings,
+    MessageManager: 100,
+    PresenceManager: 0,
+    ReactionManager: 0,
+    ThreadManager: 0,
+    VoiceStateManager: 0,
+    ApplicationCommandManager: 0,
+    BaseGuildEmojiManager: 0,
+    GuildEmojiManager: 0,
+    GuildInviteManager: 0,
+    GuildStickerManager: 0,
+    GuildScheduledEventManager: 0,
+    StageInstanceManager: 0,
+  }),
+});
 
 async function cleanupOldTranscripts() {
   try {
@@ -20,7 +47,9 @@ async function cleanupOldTranscripts() {
     });
 
     if (result.deletedCount > 0) {
-      console.log(`[Cleanup] ${result.deletedCount} transcripts antigos removidos`);
+      console.log(
+        `[Cleanup] ${result.deletedCount} transcripts antigos removidos`,
+      );
     }
   } catch (error) {
     console.error("[Cleanup] Erro ao limpar transcripts:", error);
@@ -38,7 +67,9 @@ async function cleanupOldDeliveries() {
     );
 
     if (result.modifiedCount > 0) {
-      console.log(`[Cleanup] ${result.modifiedCount} tickets tiveram entregas antigas removidas`);
+      console.log(
+        `[Cleanup] ${result.modifiedCount} tickets tiveram entregas antigas removidas`,
+      );
     }
   } catch (error) {
     console.error("[Cleanup] Erro ao limpar entregas:", error);
@@ -55,7 +86,9 @@ async function cleanupPendingDeliveries() {
     });
 
     if (result.deletedCount > 0) {
-      console.log(`[Cleanup] ${result.deletedCount} pending deliveries expirados removidos`);
+      console.log(
+        `[Cleanup] ${result.deletedCount} pending deliveries expirados removidos`,
+      );
     }
   } catch (error) {
     console.error("[Cleanup] Erro ao limpar pending deliveries:", error);
@@ -64,15 +97,20 @@ async function cleanupPendingDeliveries() {
 
 async function processDmQueue() {
   try {
-    const queue = await db.dmQueue.find().sort({ createdAt: 1 }).limit(5);
+    const queue = await db.dmQueue
+      .find()
+      .sort({ createdAt: 1 })
+      .limit(5)
+      .lean();
     for (const item of queue) {
       try {
         const user = await client.users.fetch(item.ownerId);
         const staff = await client.users.fetch(item.staffId);
 
-        const fileLine = item.fileCount && item.fileCount > 1
-          ? `<:file_add:1502789905112105071> **${item.fileCount} arquivos compactados em ZIP:** \`${item.filename}\``
-          : `<:file_add:1502789905112105071> **Arquivo:** \`${item.filename}\``;
+        const fileLine =
+          item.fileCount && item.fileCount > 1
+            ? `<:file_add:1502789905112105071> **${item.fileCount} arquivos compactados em ZIP:** \`${item.filename}\``
+            : `<:file_add:1502789905112105071> **Arquivo:** \`${item.filename}\``;
 
         const dmContainer = createContainer(
           constants.colors.primary,
@@ -88,16 +126,28 @@ async function processDmQueue() {
           `<:action_warning:1502789801949265990> O link expira em **7 dias**.`,
         );
 
-        await user.send({ components: [dmContainer], flags: ["IsComponentsV2"] });
-        console.log(`[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`);
+        await user.send({
+          components: [dmContainer],
+          flags: ["IsComponentsV2"],
+        });
+        console.log(
+          `[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`,
+        );
       } catch (err) {
-        console.error(`[DM Queue] Erro ao enviar DM para ${item.ownerId}:`, err);
+        console.error(
+          `[DM Queue] Erro ao enviar DM para ${item.ownerId}:`,
+          err,
+        );
         try {
           const channel = await client.channels.fetch(item.channelId);
           if (channel?.isTextBased() && "send" in channel) {
-            await (channel as any).send(`<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`);
+            await (channel as any).send(
+              `<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`,
+            );
           }
-        } catch { /* ignora */ }
+        } catch {
+          /* ignora */
+        }
       }
       await db.dmQueue.deleteOne({ _id: item._id });
     }
@@ -119,9 +169,8 @@ async function runAllCleanups() {
 }
 
 // Executa limpezas iniciais de forma assíncrona
-runAllCleanups().catch(err => console.error("[Cleanup] Erro inicial:", err));
+runAllCleanups().catch((err) => console.error("[Cleanup] Erro inicial:", err));
 
 // Configura intervalos
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
 setInterval(processDmQueue, 10000);
-
