@@ -137,3 +137,11 @@ runAllCleanups().catch((err) => console.error("[Cleanup] Erro inicial:", err));
 // Configura intervalos
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
 setInterval(processDmQueue, 10000);
+// Reinício programado a cada 3 horas (Discloud AUTORESTART=true trará de volta)
+const RESTART_INTERVAL = 3 * 60 * 60 * 1000;
+setTimeout(() => {
+    console.log("------------------------------------------");
+    console.log("[System] Reiniciando bot (agendado - 3h)");
+    console.log("------------------------------------------");
+    process.exit(0);
+}, RESTART_INTERVAL);
