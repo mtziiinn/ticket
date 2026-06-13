@@ -7,6 +7,26 @@ import { GatewayIntentBits, Options, Partials } from "discord.js";
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
 console.log("------------------------------------------");
+// Reinício programado a cada 3 horas (Discloud AUTORESTART=true trará de volta)
+// Movido para o topo para garantir a execução imediata
+const RESTART_INTERVAL = 3 * 60 * 60 * 1000;
+const startTime = Date.now();
+console.log("[System] Reinício programado configurado para 3 horas.");
+setInterval(() => {
+    const elapsed = Date.now() - startTime;
+    const remaining = RESTART_INTERVAL - elapsed;
+    if (remaining > 0) {
+        const hours = Math.floor(remaining / (60 * 60 * 1000));
+        const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+        console.log(`[System] Status: OK | Próximo reinício em: ${hours}h ${minutes}m`);
+    }
+}, 60 * 60 * 1000); // Log informativo a cada 1 hora
+setTimeout(() => {
+    console.log("------------------------------------------");
+    console.log("[System] Reiniciando bot (agendado - 3h)");
+    console.log("------------------------------------------");
+    process.exit(1);
+}, RESTART_INTERVAL);
 const { client } = await bootstrap({
     meta: import.meta,
     env,
@@ -137,11 +157,3 @@ runAllCleanups().catch((err) => console.error("[Cleanup] Erro inicial:", err));
 // Configura intervalos
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
 setInterval(processDmQueue, 10000);
-// Reinício programado a cada 3 horas (Discloud AUTORESTART=true trará de volta)
-const RESTART_INTERVAL = 3 * 60 * 60 * 1000;
-setTimeout(() => {
-    console.log("------------------------------------------");
-    console.log("[System] Reiniciando bot (agendado - 3h)");
-    console.log("------------------------------------------");
-    process.exit(0);
-}, RESTART_INTERVAL);

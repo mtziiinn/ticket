@@ -10,7 +10,8 @@
     "watch": "tsx --watch --env-file=.env ./src/index.ts",
     "watch:dev": "tsx --watch --env-file=.env.dev ./src/index.ts",
     "start": "node --env-file=.env .",
-    "start:dev": "node --env-file=.env.dev ."
+    "start:dev": "node --env-file=.env.dev .",
+    "start:discloud": "node ."
   },
   "dependencies": {
     "@constatic/base": "0.0.10",
