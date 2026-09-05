@@ -25,6 +25,19 @@ export const ticketSchema = new Schema(
         deliveredAt: { type: Date, default: Date.now },
       },
     ],
+    payment: {
+      id: String,
+      amount: Number,
+      status: { type: String, default: "pending" },
+      description: String,
+      method: String,
+      paidAt: Date,
+      preferenceId: String,
+      initPoint: String,
+      qrCode: String,
+      qrCodeBase64: String,
+      ticketUrl: String,
+    },
   },
   {
     statics: {

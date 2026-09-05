@@ -22,7 +22,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { formatEmoji, generatePixPayload } from "#functions";
+import { formatEmoji } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 
@@ -263,10 +263,10 @@ createResponder({
           }),
           Separator.Default,
           createSection({
-            content: `● **Enviar Pagamento (PIX)**\nNesta opção o bot enviará as informações de pagamento para o cliente.`,
+            content: `● **Cobrança / Pagamento (PIX & Cartão)**\nNesta opção você gera uma cobrança oficial com baixa automática via Mercado Pago.`,
             button: new ButtonBuilder({
-              customId: "ticket/manage/send_pix",
-              label: "Enviar PIX",
+              customId: "ticket/manage/charge_modal",
+              label: "Cobrar Cliente",
               style: ButtonStyle.Secondary,
               emoji: "1502789953334280345",
             }),
@@ -432,118 +432,47 @@ createResponder({
         break;
       }
 
-      case "send_pix": {
-        await interaction.deferReply({ flags: ["Ephemeral"] });
+      case "send_pix":
+      case "charge_modal": {
+        const modal = new ModalBuilder()
+          .setCustomId("ticket/manage/charge_submit")
+          .setTitle("Gerar Cobrança");
 
-        const guildData = await db.guilds.get(guild.id);
-        const pixKey = guildData.channels?.pixKey;
+        const amountLabel = new LabelBuilder()
+          .setLabel("Valor da Cobrança (R$)")
+          .setDescription("Digite o valor em reais (Ex: 45.00 ou 120)")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId("charge_amount")
+              .setPlaceholder("Ex: 50.00")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
+          );
 
-        if (!pixKey) {
-          await interaction.editReply({
-            content:
-              "❌ Nenhuma chave PIX configurada no Dashboard (`/ticket configurar`).",
-          });
-          return;
-        }
+        const descLabel = new LabelBuilder()
+          .setLabel("Descrição do Pedido")
+          .setDescription("O que está sendo cobrado neste ticket?")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId("charge_description")
+              .setPlaceholder("Ex: Desenvolvimento de Bot Discord")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(true),
+          );
 
-        // Gerar o Payload Real do PIX (BRCode)
-        const pixPayload = generatePixPayload(pixKey);
-        const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
+        const emailLabel = new LabelBuilder()
+          .setLabel("E-mail do Cliente (Opcional)")
+          .setDescription("Usado para o comprovante do Mercado Pago")
+          .setTextInputComponent(
+            new TextInputBuilder()
+              .setCustomId("charge_email")
+              .setPlaceholder("Ex: cliente@email.com")
+              .setStyle(TextInputStyle.Short)
+              .setRequired(false),
+          );
 
-        // 1. Enviar o texto premium
-        const textContainer = createContainer(
-          constants.colors.success,
-          `## <:other_dollar:1502789953334280345> Informações de Pagamento\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Utilize o QR Code ou o código "Copia e Cola" para realizar o pagamento.`,
-          Separator.Default,
-          `**Código PIX Copia e Cola:**\n\`\`\`\n${pixPayload}\n\`\`\``,
-          Separator.Default,
-          `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no ticket para que possamos atualizar o status da sua encomenda.`,
-        );
-
-        const pixMessage = await channel
-          .send({
-            components: [textContainer],
-            flags: ["IsComponentsV2"],
-          })
-          .catch((err: any) => console.error("[Manage]", err));
-
-        if (pixMessage) {
-          // Fixar a mensagem do PIX
-          await pixMessage.pin().catch(() => null);
-
-          // Apagar a notificação de pin com um delay maior para garantir que o Discord a criou
-          setTimeout(async () => {
-            try {
-              console.log(
-                `[Manage] Iniciando busca de mensagem de pin PIX em: ${channel.id}`,
-              );
-              const messages = await (channel as any).messages.fetch({
-                limit: 50,
-              });
-              console.log(`[Manage] Mensagens buscadas: ${messages.size}`);
-
-              const pinSystemMessage = messages.find((m: any) => {
-                console.log(
-                  `[Manage] Verificando msg ${m.id} - Tipo: ${m.type}`,
-                );
-                return m.type === MessageType.ChannelPinnedMessage;
-              });
-
-              if (pinSystemMessage) {
-                console.log(
-                  `[Manage] Mensagem de pin encontrada (${pinSystemMessage.id}). Tentando deletar...`,
-                );
-                await pinSystemMessage
-                  .delete()
-                  .then(() =>
-                    console.log(
-                      `[Manage] Mensagem de pin deletada com sucesso.`,
-                    ),
-                  )
-                  .catch((err: any) =>
-                    console.error(`[Manage] Erro ao deletar msg de pin:`, err),
-                  );
-              } else {
-                console.log(
-                  `[Manage] Nenhuma mensagem de pin encontrada nas últimas 50 mensagens.`,
-                );
-              }
-            } catch (e) {
-              console.error(
-                "[Manage] Erro crítico ao processar limpeza de pin PIX:",
-                e,
-              );
-            }
-          }, 5000);
-        }
-
-        // 2. Enviar o QR Code GRANDE em uma mensagem separada
-        const qrEmbed = createEmbed({
-          title: `<:device_mobile:1502789873034199060> QR Code para Pagamento`,
-          description: "Escaneie a imagem abaixo com o app do seu banco:",
-          image: qrCodeUrl,
-          color: constants.colors.success,
-        });
-
-        await channel
-          .send({
-            embeds: [qrEmbed],
-          })
-          .catch((err: any) => console.error("[Manage]", err));
-
-        await interaction.editReply({
-          content:
-            "<:action_check:1502789797821939752> Informações de pagamento enviadas com sucesso!",
-        });
-
-        // Enviar Log de Ação
-        await sendActionLog(
-          guild,
-          ticket,
-          user,
-          "Enviar Pagamento (PIX)",
-          `Enviou a chave PIX e o QR Code de pagamento no canal para o cliente.`,
-        );
+        modal.addComponents(amountLabel, descLabel, emailLabel);
+        await interaction.showModal(modal).catch((e: any) => console.error("[Charge Modal]", e));
         break;
       }
 

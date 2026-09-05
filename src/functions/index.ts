@@ -56,3 +56,4 @@ export function generatePixPayload(
 }
 
 export * from "./cacheCleaner.js";
+export * from "./mercadopago.js";

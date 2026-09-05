@@ -47,3 +47,4 @@ export function generatePixPayload(key, name = "MTS TICKETS", city = "SAO PAULO"
     return payload + crc16(payload);
 }
 export * from "./cacheCleaner.js";
+export * from "./mercadopago.js";

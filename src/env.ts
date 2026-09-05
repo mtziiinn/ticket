@@ -8,5 +8,6 @@ export const env = await validateEnv(
     MONGO_URI: z.string("MongoDb URI is required").min(1),
     DATABASE_NAME: z.string().optional(),
     WEB_URL: z.string().url().default("http://localhost:3000"),
+    MP_ACCESS_TOKEN: z.string().optional(),
   }),
 );

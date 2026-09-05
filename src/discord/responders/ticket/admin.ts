@@ -6,12 +6,14 @@ import {
   modalFieldsToRecord,
   Separator,
   createRow,
+  createMediaGallery,
 } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
 import { sendActionLog } from "./logger.js";
+import { createMercadoPagoCharge, generatePixPayload } from "#functions";
 
 // Função compartilhada para renomear
 async function processRename(interaction: any) {
@@ -142,6 +144,205 @@ createResponder({
   cache: "cached",
   async run(interaction) {
     await processDeliverMedia(interaction);
+  },
+});
+
+// Função compartilhada para cobrança (Mercado Pago PIX & Cartão)
+async function processChargeSubmission(interaction: any) {
+  const { channel, user, fields, guild } = interaction;
+  if (!channel?.isTextBased()) return;
+
+  try {
+    await interaction.deferReply({ flags: ["Ephemeral"] }).catch((err: any) => console.error("[Admin]", err));
+
+    const data = modalFieldsToRecord(fields);
+    const amountRaw = String(data.charge_amount || "")
+      .replace("R$", "")
+      .replace(/\s/g, "")
+      .replace(",", ".");
+    const amount = parseFloat(amountRaw);
+    const description = (data.charge_description as string) || "Serviço / Atendimento";
+    const customerEmail = (data.charge_email as string) || undefined;
+
+    if (isNaN(amount) || amount < 1) {
+      await interaction.followUp({
+        content: "<:action_x:1502789802918150206> Valor inválido! O valor mínimo para cobrança é de R$ 1,00.",
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
+
+    const ticket = await db.tickets.getByChannel(channel.id);
+    if (!ticket) {
+      await interaction.followUp({ content: "Ticket não encontrado.", flags: ["Ephemeral"] });
+      return;
+    }
+
+    const formattedAmount = amount.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+    // 1. Gerar via Mercado Pago (PIX dinâmico + Cartão de Crédito)
+    const mpResult = await createMercadoPagoCharge({
+      amount,
+      description,
+      ticketId: String(ticket.ticketId || "TICKET"),
+      channelId: channel.id,
+      customerEmail,
+    });
+
+    if (mpResult.success && mpResult.pix) {
+      (ticket as any).payment = {
+        id: String(mpResult.pix.paymentId),
+        amount,
+        status: "pending",
+        description,
+        preferenceId: mpResult.cardCheckout?.preferenceId,
+        initPoint: mpResult.cardCheckout?.initPoint,
+        qrCode: mpResult.pix.qrCode,
+        qrCodeBase64: mpResult.pix.qrCodeBase64,
+        ticketUrl: mpResult.pix.ticketUrl,
+      };
+      await (ticket as any).save();
+
+      const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(mpResult.pix.qrCode)}`;
+
+      const actionButtons = [];
+      if (mpResult.cardCheckout?.initPoint) {
+        actionButtons.push(
+          new ButtonBuilder({
+            label: "Pagar com Cartão de Crédito",
+            style: ButtonStyle.Link,
+            url: mpResult.cardCheckout.initPoint,
+            emoji: "1502789952365396040",
+          })
+        );
+      }
+      if (mpResult.pix.ticketUrl) {
+        actionButtons.push(
+          new ButtonBuilder({
+            label: "Comprovante Mercado Pago",
+            style: ButtonStyle.Link,
+            url: mpResult.pix.ticketUrl,
+            emoji: "1502789953334280345",
+          })
+        );
+      }
+
+      const chargeContainer = createContainer(
+        constants.colors.success,
+        createSection({
+          content: `## <:other_dollar:1502789953334280345> Cobrança Gerada\nOlá, as informações para o pagamento da sua encomenda já estão disponíveis abaixo. Escolha sua forma preferida de pagamento.`,
+          thumbnail: emojis.static.other_dollar,
+        }),
+        Separator.Default,
+        `**Informações do Pedido**\n` +
+          `> <:action_info:1502789798983766016> **Descrição:** \`${description}\`\n` +
+          `> <:other_wallet:1502789960355283055> **Valor Total:** \`${formattedAmount}\`\n` +
+          `> <:clock_check:1502789856881938502> **Status:** \`Aguardando Pagamento\``,
+        Separator.Default,
+        `### <:device_mobile:1502789873034199060> Pagar via PIX (Aprovação Imediata)\nEscaneie o QR Code abaixo com o app do seu banco ou utilize o código Copia e Cola:`,
+        createMediaGallery(qrImageUrl),
+        `\`\`\`\n${mpResult.pix.qrCode}\n\`\`\``,
+        Separator.Default,
+        actionButtons.length > 0
+          ? [
+              `### <:other_card:1502789952365396040> Pagar com Cartão de Crédito\nClique no botão abaixo para pagar com cartão em até 12x no checkout seguro do Mercado Pago:`,
+              createRow(...actionButtons),
+              Separator.Default,
+            ]
+          : [],
+        `<:action_check:1502789797821939752> **Baixa Automática:** O status do seu atendimento será atualizado para **EM PRODUÇÃO** automaticamente assim que o pagamento for confirmado!`,
+      );
+
+      const chargeMsg = await channel.send({
+        components: [chargeContainer],
+        flags: ["IsComponentsV2"],
+      });
+
+      if (chargeMsg) {
+        await chargeMsg.pin().catch(() => null);
+      }
+
+      await interaction.followUp({
+        content: `<:action_check:1502789797821939752> Cobrança oficial de **${formattedAmount}** enviada no canal com sucesso!`,
+        flags: ["Ephemeral"],
+      });
+
+      await sendActionLog(
+        guild,
+        ticket,
+        user,
+        "Gerar Cobrança",
+        `Gerou cobrança no valor de **${formattedAmount}** via Mercado Pago (PIX e Cartão).`,
+      );
+    } else {
+      // Fallback para PIX Estático se MP_ACCESS_TOKEN não estiver configurado
+      const guildData = await db.guilds.get(guild.id);
+      const pixKey = guildData.channels?.pixKey;
+
+      if (!pixKey) {
+        await interaction.followUp({
+          content: `<:action_x:1502789802918150206> Falha ao gerar cobrança pelo Mercado Pago: \`${mpResult.error}\`\nE nenhuma chave PIX estática está configurada em \`/ticket configurar\`.`,
+          flags: ["Ephemeral"],
+        });
+        return;
+      }
+
+      const pixPayload = generatePixPayload(pixKey);
+      const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
+
+      const fallbackContainer = createContainer(
+        constants.colors.success,
+        createSection({
+          content: `## <:other_dollar:1502789953334280345> Informações de Pagamento (PIX Manual)\nOlá, utilize a chave Copia e Cola ou escaneie o QR Code abaixo para efetuar o pagamento.`,
+          thumbnail: emojis.static.other_dollar,
+        }),
+        Separator.Default,
+        `**Informações do Pedido**\n` +
+          `> <:action_info:1502789798983766016> **Descrição:** \`${description}\`\n` +
+          `> <:other_wallet:1502789960355283055> **Valor Combinado:** \`${formattedAmount}\``,
+        Separator.Default,
+        createMediaGallery(qrCodeUrl),
+        `**Código PIX Copia e Cola:**\n\`\`\`\n${pixPayload}\n\`\`\``,
+        Separator.Default,
+        `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no canal para que a equipe confirme o recebimento. *(Para baixa automática, configure o \`MP_ACCESS_TOKEN\` no .env)*`,
+      );
+
+      await channel.send({
+        components: [fallbackContainer],
+        flags: ["IsComponentsV2"],
+      });
+
+      await interaction.followUp({
+        content: `<:action_check:1502789797821939752> Informações de pagamento enviadas no canal (Modo PIX Manual - configure \`MP_ACCESS_TOKEN\` no .env para baixa automática).`,
+        flags: ["Ephemeral"],
+      });
+    }
+  } catch (err: any) {
+    console.error("[Charge Submit] Erro:", err);
+    await interaction.followUp({
+      content: `Erro ao processar cobrança: ${err.message}`,
+      flags: ["Ephemeral"],
+    }).catch(() => null);
+  }
+}
+
+// Responder Principal de Cobrança
+createResponder({
+  customId: "ticket/manage/charge_submit",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction) {
+    await processChargeSubmission(interaction);
+  },
+});
+
+// Backup para o ID de título
+createResponder({
+  customId: "Gerar Cobrança",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction) {
+    await processChargeSubmission(interaction);
   },
 });
 
