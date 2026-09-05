@@ -24,6 +24,15 @@ import { formatEmoji } from "#functions";
 
 const cooldowns = new Map<string, number>();
 
+export function cleanupCooldowns() {
+  const now = Date.now();
+  for (const [key, expires] of cooldowns.entries()) {
+    if (expires <= now) {
+      cooldowns.delete(key);
+    }
+  }
+}
+
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(
   interaction: any,

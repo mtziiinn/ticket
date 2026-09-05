@@ -14,6 +14,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { createConfigPanel } from "../../responders/ticket/config.js";
+import { clearBotCache } from "#functions";
 
 function startOfDay() {
   const d = new Date();
@@ -171,6 +172,11 @@ createCommand({
       description: "Exibir estatísticas de tickets",
       type: ApplicationCommandOptionType.Subcommand,
     },
+    {
+      name: "limpar-cache",
+      description: "Limpa a memória RAM e o cache temporário do bot",
+      type: ApplicationCommandOptionType.Subcommand,
+    },
   ],
   async run(interaction) {
     const { options, guildId, member } = interaction;
@@ -320,6 +326,41 @@ createCommand({
         Separator.Default,
         "### <:folder_open:1502789875928400103> Por Categoria",
         categoryLines || "*Nenhum ticket encontrado.*",
+      );
+
+      await interaction.editReply({
+        components: [container],
+        flags: ["IsComponentsV2"] as any,
+      });
+    }
+
+    if (subcommand === "limpar-cache") {
+      await interaction.deferReply({ flags: ["Ephemeral"] });
+
+      const result = clearBotCache(interaction.client);
+
+      const container = createContainer(
+        constants.colors.azoxo,
+        createSection({
+          content: `## <:database:1502789865023209512> Limpeza de Cache Concluída\nO cache temporário e a memória RAM foram limpos com sucesso para otimizar o consumo na hospedagem.`,
+          thumbnail: interaction.client.user?.displayAvatarURL() as any,
+        }),
+        Separator.Default,
+        "### <:clock_check:1502789856881938502> Recursos Liberados",
+        [
+          `<:file_check:1502789906122936431> **Mensagens liberadas:** \`${result.messagesSwept}\``,
+          `<:user_check:1502789974276178121> **Usuários limpos do cache:** \`${result.usersSwept}\``,
+          `<:user_users:1502789976327327801> **Membros limpos do cache:** \`${result.membersSwept}\``,
+        ].join("\n"),
+        Separator.Default,
+        "### <:database_check:1502789861869097072> Consumo de Memória",
+        [
+          `<:database:1502789865023209512> **Heap Utilizado:** \`${result.heapUsedAfterMB} MB\` *(era \`${result.heapUsedBeforeMB} MB\`)*`,
+          `<:action_check:1502789797821939752> **Memória Liberada:** \`${result.heapDiffMB} MB\``,
+          `<:cloud_check:1502789867355115690> **Processo RSS Total:** \`${result.rssAfterMB} MB\``,
+        ].join("\n"),
+        Separator.Default,
+        `<:action_info:1502789798983766016> *O sistema também executa limpezas automáticas de cache a cada 15 minutos e varreduras contínuas.*`,
       );
 
       await interaction.editReply({

@@ -743,7 +743,7 @@ export async function generateTranscript(channel, ticket, closer) {
         const allMessages = [];
         let lastId = undefined;
         while (true) {
-            const options = { limit: 100 };
+            const options = { limit: 100, cache: false };
             if (lastId)
                 options.before = lastId;
             const fetched = (await channel.messages.fetch(options));
@@ -869,6 +869,14 @@ export async function generateTranscript(channel, ticket, closer) {
     catch (error) {
         console.error("[Transcript] Erro ao gerar transcript:", error);
         throw error;
+    }
+    finally {
+        try {
+            channel.messages?.cache?.clear();
+        }
+        catch {
+            /* ignore */
+        }
     }
 }
 // Ordem de prioridade dos status (menor = mais acima na lista)

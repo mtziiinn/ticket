@@ -4,39 +4,11 @@ import { db } from "#database";
 import { createContainer, createSection, Separator } from "@magicyan/discord";
 import "./constants.js";
 import { GatewayIntentBits, Options, Partials } from "discord.js";
+import { clearBotCache } from "#functions";
 
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
 console.log("------------------------------------------");
-
-// Reinício programado a cada 3 horas (Discloud AUTORESTART=true trará de volta)
-// Movido para o topo para garantir a execução imediata
-const RESTART_INTERVAL = 3 * 60 * 60 * 1000;
-const startTime = Date.now();
-
-console.log("[System] Reinício programado configurado para 3 horas.");
-
-setInterval(
-  () => {
-    const elapsed = Date.now() - startTime;
-    const remaining = RESTART_INTERVAL - elapsed;
-    if (remaining > 0) {
-      const hours = Math.floor(remaining / (60 * 60 * 1000));
-      const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-      console.log(
-        `[System] Status: OK | Próximo reinício em: ${hours}h ${minutes}m`,
-      );
-    }
-  },
-  60 * 60 * 1000,
-); // Log informativo a cada 1 hora
-
-setTimeout(() => {
-  console.log("------------------------------------------");
-  console.log("[System] Reiniciando bot (agendado - 3h)");
-  console.log("------------------------------------------");
-  process.exit(1);
-}, RESTART_INTERVAL);
 
 const { client } = await bootstrap({
   meta: import.meta,
@@ -51,7 +23,9 @@ const { client } = await bootstrap({
   partials: [Partials.Message, Partials.Channel, Partials.User],
   makeCache: Options.cacheWithLimits({
     ...Options.DefaultMakeCacheSettings,
-    MessageManager: 100,
+    MessageManager: 20,
+    UserManager: 50,
+    GuildMemberManager: 50,
     PresenceManager: 0,
     ReactionManager: 0,
     ThreadManager: 0,
@@ -64,6 +38,21 @@ const { client } = await bootstrap({
     GuildScheduledEventManager: 0,
     StageInstanceManager: 0,
   }),
+  sweepers: {
+    ...Options.DefaultSweeperSettings,
+    messages: {
+      interval: 300,
+      lifetime: 600,
+    },
+    users: {
+      interval: 600,
+      filter: () => (user: any) => user.id !== client?.user?.id,
+    },
+    guildMembers: {
+      interval: 600,
+      filter: () => (member: any) => member.id !== client?.user?.id,
+    },
+  },
 });
 
 async function cleanupOldTranscripts() {
@@ -200,6 +189,18 @@ async function runAllCleanups() {
 // Executa limpezas iniciais de forma assíncrona
 runAllCleanups().catch((err) => console.error("[Cleanup] Erro inicial:", err));
 
+function runPeriodicCacheCleanup() {
+  try {
+    const res = clearBotCache(client);
+    console.log(
+      `[Cache] Limpeza periódica concluída | Msgs: ${res.messagesSwept}, Users: ${res.usersSwept}, Membros: ${res.membersSwept} | Heap: ${res.heapUsedAfterMB}MB (-${res.heapDiffMB}MB) | RSS: ${res.rssAfterMB}MB`,
+    );
+  } catch (error) {
+    console.error("[Cache] Erro na limpeza periódica:", error);
+  }
+}
+
 // Configura intervalos
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
 setInterval(processDmQueue, 10000);
+setInterval(runPeriodicCacheCleanup, 15 * 60 * 1000); // A cada 15 minutos

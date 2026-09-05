@@ -46,3 +46,4 @@ export function generatePixPayload(key, name = "MTS TICKETS", city = "SAO PAULO"
     payload += "6304"; // CRC16
     return payload + crc16(payload);
 }
+export * from "./cacheCleaner.js";

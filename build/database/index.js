@@ -37,3 +37,4 @@ export const db = {
     pendingDeliveries: model("pendingDelivery", pendingDeliverySchema, "pending_deliveries"),
     dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
 };
+export { cleanupGuildCache } from "./schemas/guild.js";

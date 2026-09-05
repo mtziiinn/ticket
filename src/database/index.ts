@@ -86,3 +86,5 @@ export type GuildSchema = InferSchemaType<typeof guildSchema>;
 export type MemberSchema = InferSchemaType<typeof memberSchema>;
 export type TicketSchema = InferSchemaType<typeof ticketSchema>;
 export type TranscriptSchema = InferSchemaType<typeof transcriptSchema>;
+
+export { cleanupGuildCache } from "./schemas/guild.js";

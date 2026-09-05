@@ -79,3 +79,12 @@ guildSchema.statics.get = async function (id: string) {
   cache.set(id, { data: doc, expires: Date.now() + CACHE_TTL });
   return doc;
 };
+
+export function cleanupGuildCache() {
+  const now = Date.now();
+  for (const [key, val] of cache.entries()) {
+    if (val.expires <= now) {
+      cache.delete(key);
+    }
+  }
+}

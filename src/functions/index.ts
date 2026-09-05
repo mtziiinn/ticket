@@ -54,3 +54,5 @@ export function generatePixPayload(
 
   return payload + crc16(payload);
 }
+
+export * from "./cacheCleaner.js";

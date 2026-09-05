@@ -1059,7 +1059,7 @@ export async function generateTranscript(
     let lastId: string | undefined = undefined;
 
     while (true) {
-      const options: any = { limit: 100 };
+      const options: any = { limit: 100, cache: false };
       if (lastId) options.before = lastId;
 
       const fetched = (await channel.messages.fetch(options)) as any;
@@ -1205,6 +1205,12 @@ export async function generateTranscript(
   } catch (error) {
     console.error("[Transcript] Erro ao gerar transcript:", error);
     throw error;
+  } finally {
+    try {
+      channel.messages?.cache?.clear();
+    } catch {
+      /* ignore */
+    }
   }
 }
 

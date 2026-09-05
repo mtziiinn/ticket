@@ -5,13 +5,13 @@
   "scripts": {
     "check": "tsc -p src/tsconfig.json --noEmit && echo ✔ Ok",
     "build": "tsc -p src/tsconfig.json",
-    "dev": "tsx --env-file=.env ./src/index.ts",
-    "dev:dev": "tsx --env-file=.env.dev ./src/index.ts",
-    "watch": "tsx --watch --env-file=.env ./src/index.ts",
-    "watch:dev": "tsx --watch --env-file=.env.dev ./src/index.ts",
-    "start": "node --env-file=.env .",
-    "start:dev": "node --env-file=.env.dev .",
-    "start:discloud": "node ."
+    "dev": "tsx --expose-gc --env-file=.env ./src/index.ts",
+    "dev:dev": "tsx --expose-gc --env-file=.env.dev ./src/index.ts",
+    "watch": "tsx --watch --expose-gc --env-file=.env ./src/index.ts",
+    "watch:dev": "tsx --watch --expose-gc --env-file=.env.dev ./src/index.ts",
+    "start": "node --expose-gc --max-old-space-size=460 --env-file=.env .",
+    "start:dev": "node --expose-gc --max-old-space-size=460 --env-file=.env.dev .",
+    "start:discloud": "node --expose-gc --max-old-space-size=460 ."
   },
   "dependencies": {
     "@constatic/base": "0.0.10",

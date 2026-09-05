@@ -5,6 +5,14 @@ import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSel
 import { db } from "#database";
 import { formatEmoji } from "#functions";
 const cooldowns = new Map();
+export function cleanupCooldowns() {
+    const now = Date.now();
+    for (const [key, expires] of cooldowns.entries()) {
+        if (expires <= now) {
+            cooldowns.delete(key);
+        }
+    }
+}
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(interaction, routeCategory) {
     const { guild, user, fields } = interaction;
