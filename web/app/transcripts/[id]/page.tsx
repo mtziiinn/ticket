@@ -12,7 +12,14 @@ async function getTranscript(id: string): Promise<Transcript | null> {
   try {
     const db = await getDatabase();
     const collection = db.collection<Transcript>("transcripts");
-    const transcript = await collection.findOne({ id });
+    const cleanId = (id || "").trim();
+    const transcript = await collection.findOne({
+      $or: [
+        { id: cleanId },
+        { id: cleanId.toUpperCase() },
+        { id: cleanId.toLowerCase() },
+      ],
+    });
     return transcript;
   } catch (error) {
     console.error("Error fetching transcript:", error);
