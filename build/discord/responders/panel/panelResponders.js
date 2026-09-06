@@ -2,9 +2,10 @@ import { createResponder } from "#base";
 import { ResponderType } from "@constatic/base";
 import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
+import { env } from "#env";
 import { renderTab } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
-import { createContainer, createRow, createSection, Separator, } from "@magicyan/discord";
+import { createContainer, createRow, createSection, Separator, createEmbed, } from "@magicyan/discord";
 async function updatePanelResponse(interaction, container) {
     if (interaction.isFromMessage && interaction.isFromMessage()) {
         await interaction.update({
@@ -471,14 +472,40 @@ createResponder({
     types: [ResponderType.Button],
     cache: "cached",
     async run(interaction) {
-        await interaction.reply({
-            content: [
-                `### 📖 Tutorial Mercado Pago`,
-                `1. Acesse https://www.mercadopago.com.br/developers`,
-                `2. Crie uma aplicação (ex: "Discord Bot")`,
-                `3. Vá em **Credenciais de Produção**`,
-                `4. Copie o **Access Token** e cole nas configurações do bot!`,
+        const webhookUrl = `${env.WEB_URL}/api/mercadopago/webhook`;
+        const embed = createEmbed({
+            title: `${getEmojiTag("book") || "📖"} Tutorial de Configuração: Mercado Pago`,
+            description: [
+                `**1. Gerando o Access Token:**`,
+                ``,
+                `• Acesse o [Painel do Desenvolvedor Mercado Pago](https://www.mercadopago.com.br/developers/panel).`,
+                `• Entre na sua aplicação (ou crie uma nova).`,
+                `• No menu lateral, acesse **Credenciais de produção**.`,
+                `• Copie o **Access Token** (começa com \`APP_USR-\`) e insira no botão de editar acima.`,
+                ``,
+                `**2. Configurando o Webhook de Retorno:**`,
+                ``,
+                `• Ainda no menu lateral da sua aplicação, clique em **Notificações** e depois em **Webhooks**.`,
+                `• No campo **URL de produção**, cole o link exato abaixo:`,
+                ``,
+                `\`\`\``,
+                `${webhookUrl}`,
+                `\`\`\``,
+                ``,
+                `• Na seção **Eventos**, é obrigatório marcar a opção \`Pagamentos\`.`,
+                `• Clique em **Salvar** no final da página para finalizar a integração.`,
             ].join("\n"),
+            color: "#22c55e",
+        });
+        const row = createRow(new ButtonBuilder({
+            label: "Painel do Desenvolvedor",
+            style: ButtonStyle.Link,
+            url: "https://www.mercadopago.com.br/developers/panel",
+            emoji: getEmojiId("other_card") || "💳",
+        }));
+        await interaction.reply({
+            embeds: [embed],
+            components: [row],
             flags: ["Ephemeral"],
         });
     },
@@ -488,14 +515,39 @@ createResponder({
     types: [ResponderType.Button],
     cache: "cached",
     async run(interaction) {
-        await interaction.reply({
-            content: [
-                `### 📖 Tutorial Stripe`,
-                `1. Acesse o Dashboard da Stripe: https://dashboard.stripe.com/`,
-                `2. Vá em **Developers** -> **API keys**`,
-                `3. Copie a **Secret key** (\`sk_live_...\`)`,
-                `4. Cole no painel do bot para pagamentos internacionais via cartão!`,
+        const webhookUrl = `${env.WEB_URL}/api/stripe/webhook`;
+        const embed = createEmbed({
+            title: `${getEmojiTag("book") || "📖"} Tutorial de Configuração: Stripe`,
+            description: [
+                `**1. Obtendo as Chaves de API:**`,
+                ``,
+                `• Acesse o [Dashboard da Stripe](https://dashboard.stripe.com/).`,
+                `• No menu lateral ou superior, acesse **Desenvolvedores** e depois **Chaves de API**.`,
+                `• Copie a **Chave Secreta** (começa com \`sk_live_\` ou \`sk_test_\`) e insira no botão de editar acima.`,
+                ``,
+                `**2. Configurando o Webhook de Retorno:**`,
+                ``,
+                `• No menu **Desenvolvedores**, clique em **Webhooks**.`,
+                `• Clique em **Adicionar endpoint** e no campo **URL do endpoint**, cole:`,
+                ``,
+                `\`\`\``,
+                `${webhookUrl}`,
+                `\`\`\``,
+                ``,
+                `• Na seção **Eventos para enviar**, selecione \`checkout.session.completed\`.`,
+                `• Copie o **Segredo de assinatura** (começa com \`whsec_\`) e salve nas configurações.`,
             ].join("\n"),
+            color: "#22c55e",
+        });
+        const row = createRow(new ButtonBuilder({
+            label: "Dashboard Stripe",
+            style: ButtonStyle.Link,
+            url: "https://dashboard.stripe.com/",
+            emoji: getEmojiId("other_card") || "💳",
+        }));
+        await interaction.reply({
+            embeds: [embed],
+            components: [row],
             flags: ["Ephemeral"],
         });
     },
