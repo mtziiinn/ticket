@@ -6,6 +6,7 @@ export interface CreateChargeParams {
   ticketId: string;
   channelId: string;
   customerEmail?: string;
+  token?: string;
 }
 
 export interface MercadoPagoChargeResult {
@@ -27,13 +28,16 @@ export interface MercadoPagoChargeResult {
 export async function createMercadoPagoCharge(
   params: CreateChargeParams,
 ): Promise<MercadoPagoChargeResult> {
-  const token = env.MP_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+  const token =
+    params.token ||
+    env.MP_ACCESS_TOKEN ||
+    process.env.MP_ACCESS_TOKEN;
 
   if (!token) {
     return {
       success: false,
       error:
-        "O token do Mercado Pago (`MP_ACCESS_TOKEN`) não foi configurado no `.env`.",
+        "O token do Mercado Pago (`MP_ACCESS_TOKEN`) não foi configurado no painel nem no `.env`.",
     };
   }
 

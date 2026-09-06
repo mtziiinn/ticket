@@ -7,6 +7,7 @@ import { env } from "#env";
 import { formatEmoji } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
+import { createPaymentModal } from "../../commands/staff/payment.js";
 // Mapeamento de Status de Encomenda
 const statusMap = {
     open: {
@@ -188,7 +189,7 @@ createResponder({
                         emoji: "1502789856881938502",
                     }),
                 }), Separator.Default, createSection({
-                    content: `● **Cobrança / Pagamento (PIX & Cartão)**\nNesta opção você gera uma cobrança oficial com baixa automática via Mercado Pago.`,
+                    content: `● **Cobrança / Pagamento (PIX, Cartão & Stripe)**\nNesta opção você gera uma cobrança oficial (PIX Manual, Mercado Pago ou Stripe).`,
                     button: new ButtonBuilder({
                         customId: "ticket/manage/charge_modal",
                         label: "Cobrar Cliente",
@@ -313,34 +314,7 @@ createResponder({
             }
             case "send_pix":
             case "charge_modal": {
-                const modal = new ModalBuilder()
-                    .setCustomId("ticket/manage/charge_submit")
-                    .setTitle("Gerar Cobrança");
-                const amountLabel = new LabelBuilder()
-                    .setLabel("Valor da Cobrança (R$)")
-                    .setDescription("Digite o valor em reais (Ex: 45.00 ou 120)")
-                    .setTextInputComponent(new TextInputBuilder()
-                    .setCustomId("charge_amount")
-                    .setPlaceholder("Ex: 50.00")
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(true));
-                const descLabel = new LabelBuilder()
-                    .setLabel("Descrição do Pedido")
-                    .setDescription("O que está sendo cobrado neste ticket?")
-                    .setTextInputComponent(new TextInputBuilder()
-                    .setCustomId("charge_description")
-                    .setPlaceholder("Ex: Desenvolvimento de Bot Discord")
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(true));
-                const emailLabel = new LabelBuilder()
-                    .setLabel("E-mail do Cliente (Opcional)")
-                    .setDescription("Usado para o comprovante do Mercado Pago")
-                    .setTextInputComponent(new TextInputBuilder()
-                    .setCustomId("charge_email")
-                    .setPlaceholder("Ex: cliente@email.com")
-                    .setStyle(TextInputStyle.Short)
-                    .setRequired(false));
-                modal.addComponents(amountLabel, descLabel, emailLabel);
+                const modal = createPaymentModal(ticket.ownerId);
                 await interaction.showModal(modal).catch((e) => console.error("[Charge Modal]", e));
                 break;
             }
