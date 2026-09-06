@@ -202,7 +202,7 @@ async function processTicketSubmission(interaction, routeCategory) {
         console.error("[Ticket] ERRO NA CRIAÇÃO:", error);
         await interaction
             .editReply({
-            content: `❌ Erro ao criar ticket: \`${error.message}\``,
+            content: `<:action_x:1502789802918150206> Erro ao criar ticket: \`${error.message}\``,
         })
             .catch((err) => console.error("[Submit]", err));
     }
@@ -237,7 +237,7 @@ createResponder({
         }
         if (dynamicCategories.length === 0) {
             await interaction.reply({
-                content: "❌ Nenhuma categoria de atendimento foi configurada pela Staff ainda.",
+                content: "<:action_x:1502789802918150206> Nenhuma categoria de atendimento foi configurada pela Staff ainda.",
                 flags: ["Ephemeral"],
             });
             return;

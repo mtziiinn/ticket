@@ -10,6 +10,7 @@ import {
   StringSelectMenuOptionBuilder,
 } from "discord.js";
 import { db } from "#database";
+import { getEmojiTag } from "#functions";
 
 // Map temporário para armazenar códigos de captcha por usuário
 // userId -> { code: string, expires: number }
@@ -42,7 +43,7 @@ createResponder({
   async run(interaction) {
     const container = createContainer(
       "#22c55e",
-      "## 🛡️ Por que a verificação é necessária?",
+      `## ${getEmojiTag("shield_check")} Por que a verificação é necessária?`,
       Separator.Default,
       [
         `A verificação por captcha é uma medida de proteção essencial para manter nossa comunidade segura e agradável para todos os membros:`,
@@ -100,7 +101,7 @@ createResponder({
 
     const container = createContainer(
       "#22c55e",
-      "## 🛡️ Verificação de Segurança (Captcha)",
+      `## ${getEmojiTag("shield_check")} Verificação de Segurança (Captcha)`,
       Separator.Default,
       `Para provar que você é humano, identifique o código exibido abaixo e selecione a alternativa correta no menu:`,
       Separator.Default,
@@ -130,7 +131,7 @@ createResponder({
         components: [
           createContainer(
             "#ED4245",
-            "## ⏱️ Captcha Expirado",
+            `## ${getEmojiTag("clock")} Captcha Expirado`,
             "O tempo limite para resolver este captcha expirou. Clique no botão **Verificar-se** novamente para gerar um novo desafio.",
           ),
         ],
@@ -145,7 +146,7 @@ createResponder({
         components: [
           createContainer(
             "#ED4245",
-            "## ❌ Resposta Incorreta",
+            `## ${getEmojiTag("action_x")} Resposta Incorreta`,
             `O código selecionado (\`${selected}\`) não corresponde ao código gerado.\nClique no botão **Verificar-se** novamente para tentar um novo código.`,
           ),
         ],
@@ -174,7 +175,7 @@ createResponder({
         if (logChan && logChan.isTextBased()) {
           const logContainer = createContainer(
             "#22c55e",
-            `| ✅ **Membro Verificado:** <@${member.id}> (\`${member.user.tag}\`)\n| **Horário:** <t:${Math.floor(Date.now() / 1000)}:F>`,
+            `| ${getEmojiTag("action_check")} **Membro Verificado:** <@${member.id}> (\`${member.user.tag}\`)\n| **Horário:** <t:${Math.floor(Date.now() / 1000)}:F>`,
           );
           await (logChan as any)
             .send({
@@ -192,7 +193,7 @@ createResponder({
       components: [
         createContainer(
           "#22c55e",
-          "## ✅ Verificação Concluída!",
+          `## ${getEmojiTag("action_check")} Verificação Concluída!`,
           `Parabéns, <@${interaction.user.id}>! Sua identidade foi verificada com sucesso e seu acesso ao servidor já está liberado.`,
         ),
       ],

@@ -6,6 +6,7 @@ import {
   TextChannel,
 } from "discord.js";
 import { createContainer } from "@magicyan/discord";
+import { getEmojiTag } from "#functions";
 
 // 1. Comando /bloquear-chat
 createCommand({
@@ -20,7 +21,7 @@ createCommand({
 
     if (!channel || !(channel instanceof TextChannel)) {
       await interaction.reply({
-        content: "⚠️ Este comando só pode ser executado em canais de texto!",
+        content: `${getEmojiTag("action_warning")} Este comando só pode ser executado em canais de texto!`,
         flags: ["Ephemeral"],
       });
       return;
@@ -36,7 +37,7 @@ createCommand({
 
       const container = createContainer(
         "#ED4245",
-        `| 🔒 **Chat Bloqueado:**\nEste canal foi bloqueado por <@${interaction.user.id}>. Apenas a equipe pode enviar mensagens no momento.`,
+        `| ${getEmojiTag("lock")} **Chat Bloqueado:**\nEste canal foi bloqueado por <@${interaction.user.id}>. Apenas a equipe pode enviar mensagens no momento.`,
       );
 
       await interaction.reply({
@@ -47,7 +48,7 @@ createCommand({
       console.error("[bloquear-chat] Erro:", err);
       await interaction.reply({
         content:
-          "❌ Erro ao bloquear o canal. Verifique se o bot possui permissão de Gerenciar Canais.",
+          `${getEmojiTag("action_x")} Erro ao bloquear o canal. Verifique se o bot possui permissão de Gerenciar Canais.`,
         flags: ["Ephemeral"],
       });
     }
@@ -67,7 +68,7 @@ createCommand({
 
     if (!channel || !(channel instanceof TextChannel)) {
       await interaction.reply({
-        content: "⚠️ Este comando só pode ser executado em canais de texto!",
+        content: `${getEmojiTag("action_warning")} Este comando só pode ser executado em canais de texto!`,
         flags: ["Ephemeral"],
       });
       return;
@@ -83,7 +84,7 @@ createCommand({
 
       const container = createContainer(
         "#22c55e",
-        `| 🔓 **Chat Desbloqueado:**\nEste canal foi liberado por <@${interaction.user.id}>. Todos os membros podem digitar novamente.`,
+        `| ${getEmojiTag("unlock")} **Chat Desbloqueado:**\nEste canal foi liberado por <@${interaction.user.id}>. Todos os membros podem digitar novamente.`,
       );
 
       await interaction.reply({
@@ -94,7 +95,7 @@ createCommand({
       console.error("[desbloquear-chat] Erro:", err);
       await interaction.reply({
         content:
-          "❌ Erro ao desbloquear o canal. Verifique se o bot possui permissão de Gerenciar Canais.",
+          `${getEmojiTag("action_x")} Erro ao desbloquear o canal. Verifique se o bot possui permissão de Gerenciar Canais.`,
         flags: ["Ephemeral"],
       });
     }
@@ -123,7 +124,7 @@ createCommand({
 
     if (!channel || !(channel instanceof TextChannel)) {
       await interaction.reply({
-        content: "⚠️ Este comando só pode ser executado em canais de texto!",
+        content: `${getEmojiTag("action_warning")} Este comando só pode ser executado em canais de texto!`,
         flags: ["Ephemeral"],
       });
       return;
@@ -134,14 +135,14 @@ createCommand({
       true,
     );
 
-    await interaction.deferReply({ flags: ["Ephemeral"] });
+    await interaction.deferReply({ flags: ["Ephemeral", "IsComponentsV2"] as any });
 
     try {
       const deleted = await channel.bulkDelete(amount, true);
 
       const container = createContainer(
         "#22c55e",
-        `| 🧹 **Limpeza Concluída:**\nForam apagadas com sucesso \`${deleted.size}\` mensagens deste canal.`,
+        `| ${getEmojiTag("file_remove")} **Limpeza Concluída:**\nForam apagadas com sucesso \`${deleted.size}\` mensagens deste canal.`,
       );
 
       await interaction.editReply({
@@ -152,7 +153,7 @@ createCommand({
       console.error("[limpar-chat] Erro:", err);
       await interaction.editReply({
         content:
-          "❌ Erro ao apagar mensagens. Lembre-se que mensagens com mais de 14 dias não podem ser apagadas em massa pelo Discord.",
+          `${getEmojiTag("action_x")} Erro ao apagar mensagens. Lembre-se que mensagens com mais de 14 dias não podem ser apagadas em massa pelo Discord.`,
       });
     }
   },

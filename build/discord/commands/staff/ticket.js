@@ -3,7 +3,7 @@ import { createContainer, createSection, Separator, createRow, createMediaGaller
 import { ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, } from "discord.js";
 import { db } from "#database";
 import { renderTab } from "../../responders/panel/panelView.js";
-import { clearBotCache } from "#functions";
+import { clearBotCache, getEmojiId, getEmojiTag } from "#functions";
 function startOfDay() {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -164,7 +164,7 @@ createCommand({
             member.roles.cache.has(guildData.channels.staffRole);
         if (!isAdm && !isStaff) {
             await interaction.reply({
-                content: "❌ Você não possui permissão para usar os comandos de Staff do sistema de tickets.",
+                content: `${getEmojiTag("action_x")} Você não possui permissão para usar os comandos de Staff do sistema de tickets.`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -181,7 +181,7 @@ createCommand({
             const bannerUrl = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
             const guildIcon = interaction.guild?.iconURL({ size: 128 }) ?? undefined;
             const container = createContainer("#22c55e", createSection({
-                content: `## 🎫 Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+                content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
                 thumbnail: guildIcon,
             }), Separator.Default, [
                 `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
@@ -191,7 +191,7 @@ createCommand({
                 customId: "ticket/form/open",
                 label: "Abrir Ticket",
                 style: ButtonStyle.Success,
-                emoji: "🎫",
+                emoji: getEmojiId("other_ticket") || "🎫",
             })));
             await channel.send({
                 components: [container],

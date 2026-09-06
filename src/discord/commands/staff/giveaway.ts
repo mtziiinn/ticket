@@ -20,6 +20,7 @@ import {
   Separator,
 } from "@magicyan/discord";
 import { db } from "#database";
+import { getEmojiId, getEmojiTag } from "#functions";
 
 function parseDuration(str: string): number | null {
   const match = str.trim().match(/^(\d+)\s*(s|m|h|d)$/i);
@@ -69,7 +70,7 @@ export async function finishGiveaway(
 
       const updatedContainer = createContainer(
         "#22c55e",
-        `## 🎉 Sorteio Finalizado: ${giveawayDoc.item}`,
+        `## ${getEmojiTag("other_ticket")} Sorteio Finalizado: ${giveawayDoc.item}`,
         Separator.Default,
         `| **Ganhadores (${winners.length}):**\n${winnersText}`,
         Separator.Default,
@@ -86,7 +87,7 @@ export async function finishGiveaway(
       if (winners.length > 0) {
         const announceContainer = createContainer(
           "#22c55e",
-          `| **Parabéns ${winnersText}!**\nVocê(s) ganhou/ganharam **${giveawayDoc.item}** no sorteio!`,
+          `| ${getEmojiTag("action_check")} **Parabéns ${winnersText}!**\nVocê(s) ganhou/ganharam **${giveawayDoc.item}** no sorteio!`,
         );
 
         await (channel as any).send({
@@ -140,7 +141,7 @@ createCommand({
     if (!durationMs || durationMs < 10000) {
       await interaction.reply({
         content:
-          "⚠️ Duração inválida! Use formatos como `10m`, `1h`, `2d` (mínimo de 10 segundos).",
+          `${getEmojiTag("action_warning")} Duração inválida! Use formatos como \`10m\`, \`1h\`, \`2d\` (mínimo de 10 segundos).`,
         flags: ["Ephemeral"],
       });
       return;
@@ -153,7 +154,7 @@ createCommand({
 
     const tempContainer = createContainer(
       "#22c55e",
-      `## 🎁 Sorteio: ${item}`,
+      `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`,
       Separator.Default,
       `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`,
       Separator.Default,
@@ -164,18 +165,18 @@ createCommand({
           .setCustomId("giveaway/join/pending")
           .setLabel("Participar")
           .setStyle(ButtonStyle.Success)
-          .setEmoji("👤"),
+          .setEmoji(getEmojiId("user") || "👤"),
         new ButtonBuilder()
           .setCustomId("giveaway/manage/pending")
           .setStyle(ButtonStyle.Secondary)
-          .setEmoji("⚙️"),
+          .setEmoji(getEmojiId("other_bot") || "⚙️"),
       ),
     );
 
     const channel = interaction.channel;
     if (!channel || !channel.isTextBased()) {
       await interaction.editReply({
-        content: "⚠️ Este comando só pode ser usado em canais de texto.",
+        content: `${getEmojiTag("action_warning")} Este comando só pode ser usado em canais de texto.`,
       });
       return;
     }
@@ -187,7 +188,7 @@ createCommand({
 
     const finalContainer = createContainer(
       "#22c55e",
-      `## 🎁 Sorteio: ${item}`,
+      `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`,
       Separator.Default,
       `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`,
       Separator.Default,
@@ -198,11 +199,11 @@ createCommand({
           .setCustomId(`giveaway/join/${message.id}`)
           .setLabel("Participar")
           .setStyle(ButtonStyle.Success)
-          .setEmoji("👤"),
+          .setEmoji(getEmojiId("user") || "👤"),
         new ButtonBuilder()
           .setCustomId(`giveaway/manage/${message.id}`)
           .setStyle(ButtonStyle.Secondary)
-          .setEmoji("⚙️"),
+          .setEmoji(getEmojiId("other_bot") || "⚙️"),
       ),
     );
 
@@ -224,7 +225,7 @@ createCommand({
     });
 
     await interaction.editReply({
-      content: "✅ Sorteio iniciado com sucesso!",
+      content: `${getEmojiTag("action_check")} Sorteio iniciado com sucesso!`,
     });
   },
 });
@@ -238,7 +239,7 @@ createResponder({
     const giveaway = await db.giveaways.findOne({ messageId });
     if (!giveaway || giveaway.ended) {
       await interaction.reply({
-        content: "⚠️ Este sorteio já foi finalizado ou não foi encontrado.",
+        content: `${getEmojiTag("action_warning")} Este sorteio já foi finalizado ou não foi encontrado.`,
         flags: ["Ephemeral"],
       });
       return;
@@ -254,7 +255,7 @@ createResponder({
       await giveaway.save();
 
       await interaction.reply({
-        content: "👋 Você saiu do sorteio.",
+        content: `${getEmojiTag("user_remove")} Você saiu do sorteio.`,
         flags: ["Ephemeral"],
       });
     } else {
@@ -262,7 +263,7 @@ createResponder({
       await giveaway.save();
 
       await interaction.reply({
-        content: `🎉 Você agora está participando do sorteio de **${giveaway.item}**! Total de participantes: \`${giveaway.participants.length}\`.`,
+        content: `${getEmojiTag("action_check")} Você agora está participando do sorteio de **${giveaway.item}**! Total de participantes: \`${giveaway.participants.length}\`.`,
         flags: ["Ephemeral"],
       });
     }
@@ -279,7 +280,7 @@ createResponder({
       !interaction.memberPermissions.has(PermissionFlagsBits.ManageGuild)
     ) {
       await interaction.reply({
-        content: "⚠️ Apenas administradores podem gerenciar sorteios.",
+        content: `${getEmojiTag("action_warning")} Apenas administradores podem gerenciar sorteios.`,
         flags: ["Ephemeral"],
       });
       return;
@@ -288,7 +289,7 @@ createResponder({
     const giveaway = await db.giveaways.findOne({ messageId });
     if (!giveaway) {
       await interaction.reply({
-        content: "⚠️ Sorteio não encontrado.",
+        content: `${getEmojiTag("action_warning")} Sorteio não encontrado.`,
         flags: ["Ephemeral"],
       });
       return;
@@ -302,34 +303,34 @@ createResponder({
           .setValue("edit_winners")
           .setLabel("Alterar Ganhadores")
           .setDescription("Modifica a quantidade de vencedores.")
-          .setEmoji("✏️"),
+          .setEmoji(getEmojiId("action_add") || "✏️"),
         new StringSelectMenuOptionBuilder()
           .setValue("view_participants")
           .setLabel("Ver Participantes")
           .setDescription("Exibe a quantidade e lista de participantes.")
-          .setEmoji("👤"),
+          .setEmoji(getEmojiId("user") || "👤"),
         new StringSelectMenuOptionBuilder()
           .setValue("finish_now")
           .setLabel("Finalizar Agora")
           .setDescription(
             "Encerra o sorteio imediatamente e puxa os ganhadores.",
           )
-          .setEmoji("🎁"),
+          .setEmoji(getEmojiId("action_check") || "🎁"),
         new StringSelectMenuOptionBuilder()
           .setValue("reroll")
           .setLabel("Reroll (Sortear Novamente)")
           .setDescription("Sorteia novos ganhadores para este sorteio.")
-          .setEmoji("🔁"),
+          .setEmoji(getEmojiId("clock") || "🔁"),
         new StringSelectMenuOptionBuilder()
           .setValue("delete")
           .setLabel("Excluir Sorteio")
           .setDescription("Cancela e deleta o sorteio.")
-          .setEmoji("📁"),
+          .setEmoji(getEmojiId("action_remove") || "📁"),
       );
 
     const container = createContainer(
       "#22c55e",
-      "## ⚙️ Gerenciar Sorteio",
+      `## ${getEmojiTag("other_bot")} Gerenciar Sorteio`,
       `Escolha uma ação abaixo:`,
       Separator.Default,
       createRow(select),
@@ -353,7 +354,7 @@ createResponder({
 
     if (!giveaway) {
       await interaction.update({
-        content: "⚠️ Sorteio não encontrado.",
+        content: `${getEmojiTag("action_warning")} Sorteio não encontrado.`,
         components: [],
       });
       return;
@@ -374,7 +375,7 @@ createResponder({
 
       const container = createContainer(
         "#22c55e",
-        `## 👤 Participantes do Sorteio (${participants.length})`,
+        `## ${getEmojiTag("user")} Participantes do Sorteio (${participants.length})`,
         Separator.Default,
         list,
       );
@@ -389,7 +390,7 @@ createResponder({
     if (action === "finish_now") {
       if (giveaway.ended) {
         await interaction.update({
-          content: "⚠️ Este sorteio já está encerrado.",
+          content: `${getEmojiTag("action_warning")} Este sorteio já está encerrado.`,
           components: [],
         });
         return;
@@ -401,7 +402,7 @@ createResponder({
         components: [
           createContainer(
             "#22c55e",
-            `| ✅ **Sorteio encerrado com sucesso.**`,
+            `| ${getEmojiTag("action_check")} **Sorteio encerrado com sucesso.**`,
           ),
         ],
         flags: ["IsComponentsV2"] as any,
@@ -417,7 +418,7 @@ createResponder({
 
       if (winners.length === 0) {
         await interaction.update({
-          content: "⚠️ Não há participantes suficientes para reroll.",
+          content: `${getEmojiTag("action_warning")} Não há participantes suficientes para reroll.`,
           components: [],
         });
         return;
@@ -432,7 +433,7 @@ createResponder({
       if (channel && channel.isTextBased()) {
         const announceContainer = createContainer(
           "#22c55e",
-          `| 🔁 **Novo Sorteio (Reroll):**\nParabéns ${winnersText}! Você(s) foi(ram) sorteado(s) para **${giveaway.item}**!`,
+          `| ${getEmojiTag("clock")} **Novo Sorteio (Reroll):**\nParabéns ${winnersText}! Você(s) foi(ram) sorteado(s) para **${giveaway.item}**!`,
         );
         await (channel as any).send({
           components: [announceContainer],
@@ -444,7 +445,7 @@ createResponder({
         components: [
           createContainer(
             "#22c55e",
-            `| ✅ **Reroll realizado com sucesso:** ${winnersText}`,
+            `| ${getEmojiTag("action_check")} **Reroll realizado com sucesso:** ${winnersText}`,
           ),
         ],
         flags: ["IsComponentsV2"] as any,
@@ -465,7 +466,7 @@ createResponder({
 
       await interaction.update({
         components: [
-          createContainer("#ED4245", `| 🗑️ **Sorteio excluído com sucesso.**`),
+          createContainer("#ED4245", `| ${getEmojiTag("action_remove")} **Sorteio excluído com sucesso.**`),
         ],
         flags: ["IsComponentsV2"] as any,
       });
@@ -506,7 +507,7 @@ createResponder({
 
     if (isNaN(count) || count < 1 || count > 25) {
       await interaction.reply({
-        content: "⚠️ Quantidade inválida! Escolha um número entre 1 e 25.",
+        content: `${getEmojiTag("action_warning")} Quantidade inválida! Escolha um número entre 1 e 25.`,
         flags: ["Ephemeral"],
       });
       return;
@@ -515,7 +516,7 @@ createResponder({
     const giveaway = await db.giveaways.findOne({ messageId });
     if (!giveaway) {
       await interaction.reply({
-        content: "⚠️ Sorteio não encontrado.",
+        content: `${getEmojiTag("action_warning")} Sorteio não encontrado.`,
         flags: ["Ephemeral"],
       });
       return;
@@ -525,7 +526,7 @@ createResponder({
     await giveaway.save();
 
     await interaction.reply({
-      content: `✅ Quantidade de ganhadores atualizada para **${count}**!`,
+      content: `${getEmojiTag("action_check")} Quantidade de ganhadores atualizada para **${count}**!`,
       flags: ["Ephemeral"],
     });
   },

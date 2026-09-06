@@ -1,3 +1,15 @@
+export function getEmojiId(name: keyof typeof emojis.static): string {
+  const url = (emojis.static as any)[name];
+  if (!url) return "";
+  const match = url.match(/\/(\d+)\.png/);
+  return match ? match[1] : "";
+}
+
+export function getEmojiTag(name: keyof typeof emojis.static): string {
+  const id = getEmojiId(name);
+  return id ? `<:${name}:${id}>` : "";
+}
+
 export function formatEmoji(emojiRaw: string | null | undefined): any {
   if (!emojiRaw) return undefined;
   if (/^\d+$/.test(emojiRaw)) {

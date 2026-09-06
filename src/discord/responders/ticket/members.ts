@@ -44,7 +44,7 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
         customId: "ticket/manage/members/add_btn",
         label: "Adicionar Membro",
         style: ButtonStyle.Success,
-        emoji: "1502789796278304800",
+        emoji: "1502789972909097093",
       })
     )
   );
@@ -55,7 +55,7 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
       createRow(
         new StringSelectMenuBuilder({
           customId: "ticket/manage/members/remove_select",
-          placeholder: "❌ Selecione o usuário para REMOVER...",
+          placeholder: "Selecione o usuário para REMOVER...",
           options: membersWithAccess.map((m) => ({
             label: m.user.tag || m.user.username,
             value: m.id,
@@ -69,7 +69,7 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
   const container = createContainer(
     constants.colors.primary,
     createSection({
-      content: `## <:user_add:1502789796278304800> Gerenciar Acessos ao Atendimento\nUse as opções abaixo para adicionar novos usuários ao atendimento ou para remover membros que já possuem acesso ao canal.`,
+      content: `## <:user_add:1502789972909097093> Gerenciar Acessos ao Atendimento\nUse as opções abaixo para adicionar novos usuários ao atendimento ou para remover membros que já possuem acesso ao canal.`,
       thumbnail: interaction.user.displayAvatarURL() as any,
     }),
     Separator.Default,
@@ -138,7 +138,7 @@ createResponder({
 
     if (!targetId || !/^\d{17,19}$/.test(targetId.trim())) {
       await interaction.followUp({
-        content: "❌ ID do usuário inválido. Certifique-se de que é um ID numérico válido do Discord.",
+        content: "<:action_x:1502789802918150206> ID do usuário inválido. Certifique-se de que é um ID numérico válido do Discord.",
         flags: ["Ephemeral"],
       }).catch(() => null);
       return;
@@ -148,7 +148,7 @@ createResponder({
 
     if (trimmedId === ticket.ownerId) {
       await interaction.followUp({
-        content: "❌ Você não pode adicionar o dono do ticket como membro adicional.",
+        content: "<:action_x:1502789802918150206> Você não pode adicionar o dono do ticket como membro adicional.",
         flags: ["Ephemeral"],
       }).catch(() => null);
       return;
@@ -157,7 +157,7 @@ createResponder({
     const targetMember = await guild.members.fetch(trimmedId).catch(() => null);
     if (!targetMember) {
       await interaction.followUp({
-        content: "❌ Usuário não encontrado no servidor.",
+        content: "<:action_x:1502789802918150206> Usuário não encontrado no servidor.",
         flags: ["Ephemeral"],
       }).catch(() => null);
       return;
@@ -172,7 +172,7 @@ createResponder({
 
     // Enviar mensagem no canal do ticket
     await channel.send({
-      content: `<:user_add:1502789796278304800> ${targetMember} foi adicionado ao ticket por ${user}.`,
+      content: `<:user_add:1502789972909097093> ${targetMember} foi adicionado ao ticket por ${user}.`,
     }).catch(() => null);
 
     // Enviar Log de Ação
@@ -205,7 +205,7 @@ createResponder({
 
     // Enviar mensagem no canal do ticket
     await channel.send({
-      content: `<:user_remove:1502789800967536741> ${targetMember || `Usuário (\`${targetId}\`)`} foi removido do ticket por ${user}.`,
+      content: `<:user_remove:1502789975232483348> ${targetMember || `Usuário (\`${targetId}\`)`} foi removido do ticket por ${user}.`,
     }).catch(() => null);
 
     // Enviar Log de Ação

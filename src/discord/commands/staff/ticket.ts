@@ -14,7 +14,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { renderTab } from "../../responders/panel/panelView.js";
-import { clearBotCache } from "#functions";
+import { clearBotCache, getEmojiId, getEmojiTag } from "#functions";
 
 function startOfDay() {
   const d = new Date();
@@ -192,7 +192,7 @@ createCommand({
     if (!isAdm && !isStaff) {
       await interaction.reply({
         content:
-          "❌ Você não possui permissão para usar os comandos de Staff do sistema de tickets.",
+          `${getEmojiTag("action_x")} Você não possui permissão para usar os comandos de Staff do sistema de tickets.`,
         flags: ["Ephemeral"],
       });
       return;
@@ -216,7 +216,7 @@ createCommand({
       const container = createContainer(
         "#22c55e",
         createSection({
-          content: `## 🎫 Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+          content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
           thumbnail: guildIcon as any,
         }),
         Separator.Default,
@@ -233,7 +233,7 @@ createCommand({
             customId: "ticket/form/open",
             label: "Abrir Ticket",
             style: ButtonStyle.Success,
-            emoji: "🎫",
+            emoji: getEmojiId("other_ticket") || "🎫",
           }),
         ),
       );

@@ -3,6 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
 import { renderTab } from "./panelView.js";
+import { getEmojiId, getEmojiTag } from "#functions";
 import { createContainer, createRow, createSection, Separator, } from "@magicyan/discord";
 async function updatePanelResponse(interaction, container) {
     if (interaction.isFromMessage && interaction.isFromMessage()) {
@@ -45,7 +46,7 @@ createResponder({
         const targetChannelId = guildData.channels?.general || guildData.channels?.tickets;
         if (!targetChannelId) {
             await interaction.reply({
-                content: "⚠️ Você precisa configurar o **Canal de Abertura** antes de enviar o painel!",
+                content: `${getEmojiTag("action_warning")} Você precisa configurar o **Canal de Abertura** antes de enviar o painel!`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -53,31 +54,31 @@ createResponder({
         const channel = interaction.guild.channels.cache.get(targetChannelId);
         if (!channel || !channel.isTextBased()) {
             await interaction.reply({
-                content: "⚠️ O canal de abertura configurado não foi encontrado ou não é de texto.",
+                content: `${getEmojiTag("action_warning")} O canal de abertura configurado não foi encontrado ou não é de texto.`,
                 flags: ["Ephemeral"],
             });
             return;
         }
         const guildIcon = interaction.guild.iconURL({ size: 128 }) ?? undefined;
         const container = createContainer("#22c55e", createSection({
-            content: `## 🎫 Central de Atendimento\nSeja bem-vindo(a) ao nosso suporte oficial. Clique no botão abaixo para iniciar o seu atendimento diretamente com a nossa equipe.`,
+            content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
             thumbnail: guildIcon,
         }), Separator.Default, [
             `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
             `● Não chame membros da equipe no privado.`,
             `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
-        ].join("\n"), Separator.Default, createRow(new ButtonBuilder({
+        ].join("\n"), Separator.Default, "Clique no botão abaixo para iniciar o seu atendimento.", createRow(new ButtonBuilder({
             customId: "ticket/form/open",
             label: "Abrir Ticket",
             style: ButtonStyle.Success,
-            emoji: "🎫",
+            emoji: getEmojiId("other_ticket") || "🎫",
         })));
         await channel.send({
             components: [container],
             flags: ["IsComponentsV2"],
         });
         await interaction.reply({
-            content: `✅ Painel de tickets enviado com sucesso em <#${targetChannelId}>!`,
+            content: `${getEmojiTag("action_check")} Painel de tickets enviado com sucesso em <#${targetChannelId}>!`,
             flags: ["Ephemeral"],
         });
     },
@@ -264,7 +265,7 @@ createResponder({
         const categories = guildData.channels?.ticketCategories || [];
         if (categories.length === 0) {
             await interaction.reply({
-                content: "⚠️ Nenhuma opção de categoria cadastrada para remover.",
+                content: `${getEmojiTag("action_warning")} Nenhuma opção de categoria cadastrada para remover.`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -684,7 +685,7 @@ createResponder({
         const targetChannelId = guildData.verification?.channel;
         if (!targetChannelId) {
             await interaction.reply({
-                content: "⚠️ Você precisa configurar o **Canal de Verificação** antes de enviar o painel!",
+                content: `${getEmojiTag("action_warning")} Você precisa configurar o **Canal de Verificação** antes de enviar o painel!`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -692,26 +693,26 @@ createResponder({
         const channel = interaction.guild.channels.cache.get(targetChannelId);
         if (!channel || !channel.isTextBased()) {
             await interaction.reply({
-                content: "⚠️ O canal de verificação configurado não foi encontrado ou não é de texto.",
+                content: `${getEmojiTag("action_warning")} O canal de verificação configurado não foi encontrado ou não é de texto.`,
                 flags: ["Ephemeral"],
             });
             return;
         }
-        const container = createContainer("#22c55e", "## 🛡️ VERIFICAÇÃO", `Para ter acesso completo aos canais do servidor, realize a sua verificação de segurança abaixo.`, Separator.Default, `> Este sistema protege a nossa comunidade contra bots maliciosos, raids e invasões automáticas.`, Separator.Default, createRow(new ButtonBuilder()
+        const container = createContainer("#22c55e", `## ${getEmojiTag("shield_check")} VERIFICAÇÃO`, `Para ter acesso completo aos canais do servidor, realize a sua verificação de segurança abaixo.`, Separator.Default, `> Este sistema protege a nossa comunidade contra bots maliciosos, raids e invasões automáticas.`, Separator.Default, createRow(new ButtonBuilder()
             .setCustomId("verify/captcha/start")
             .setLabel("Verificar-se")
             .setStyle(ButtonStyle.Success)
-            .setEmoji("✅"), new ButtonBuilder()
+            .setEmoji(getEmojiId("action_check") || "✅"), new ButtonBuilder()
             .setCustomId("verify/captcha/info")
             .setLabel("Por que a verificação é necessária?")
             .setStyle(ButtonStyle.Secondary)
-            .setEmoji("❓")));
+            .setEmoji(getEmojiId("action_info") || "❓")));
         await channel.send({
             components: [container],
             flags: ["IsComponentsV2"],
         });
         await interaction.reply({
-            content: `✅ Painel de verificação enviado com sucesso em <#${targetChannelId}>!`,
+            content: `${getEmojiTag("action_check")} Painel de verificação enviado com sucesso em <#${targetChannelId}>!`,
             flags: ["Ephemeral"],
         });
     },

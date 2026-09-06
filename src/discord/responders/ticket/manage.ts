@@ -29,33 +29,49 @@ import { renderMembersPanel } from "./members.js";
 // Mapeamento de Status de Encomenda
 const statusMap: Record<
   string,
-  { emoji: string; label: string; description: string }
+  {
+    channelEmoji: string;
+    emojiTag: string;
+    emojiId: string;
+    label: string;
+    description: string;
+  }
 > = {
   open: {
-    emoji: "🔴",
+    channelEmoji: "🔴",
+    emojiId: "1502789798983766016",
+    emojiTag: "<:action_info:1502789798983766016>",
     label: "Alinhando Detalhes",
     description:
       "Estamos conversando sobre sua encomenda e alinhando todos os pontos do projeto.",
   },
   payment: {
-    emoji: "🟡",
+    channelEmoji: "🟡",
+    emojiId: "1502789953334280345",
+    emojiTag: "<:other_dollar:1502789953334280345>",
     label: "Pagamento Iniciado",
     description:
       "A primeira parte do pagamento foi realizada e o prazo de entrega já está contando.",
   },
   production: {
-    emoji: "🟠",
+    channelEmoji: "🟠",
+    emojiId: "1502789958430232688",
+    emojiTag: "<:other_terminal:1502789958430232688>",
     label: "Em produção",
     description:
       "Sua encomenda começou a ser feita e o processo será compartilhado para aprovação.",
   },
   completed: {
-    emoji: "🟢",
+    channelEmoji: "🟢",
+    emojiId: "1502789797821939752",
+    emojiTag: "<:action_check:1502789797821939752>",
     label: "Concluída",
     description: "Encomenda finalizada e entregue.",
   },
   queue: {
-    emoji: "🟣",
+    channelEmoji: "🟣",
+    emojiId: "1502789859960422502",
+    emojiTag: "<:clock:1502789859960422502>",
     label: "Fila",
     description: "Atualmente se encontra em fila de espera.",
   },
@@ -78,7 +94,7 @@ function createMainPanel(ticket: any, owner: any) {
         "https://cdn.discordapp.com/embed/avatars/0.png") as any,
     }),
     Separator.Default,
-    `### ${currentStatus.emoji} Status do Pedido: \`${currentStatus.label.toUpperCase()}\` \n> ${currentStatus.description}`,
+    `### ${currentStatus.emojiTag} Status do Pedido: \`${currentStatus.label.toUpperCase()}\` \n> ${currentStatus.description}`,
     Separator.Default,
     `<:folder_open:1502789875928400103> **Categoria do atendimento:**\n\`\`\`\n${ticket.category.toUpperCase()}\n\`\`\``,
     `<:action_info:1502789798983766016> **Motivo do contato:**\n\`\`\`\n${ticket.description}\n\`\`\``,
@@ -323,7 +339,7 @@ createResponder({
 
         if (dynamicCategories.length === 0) {
           await interaction.reply({
-            content: "❌ Nenhuma categoria configurada para transferência.",
+            content: "<:action_x:1502789802918150206> Nenhuma categoria configurada para transferência.",
             flags: ["Ephemeral"],
           });
           return;
@@ -402,10 +418,10 @@ createResponder({
 
       case "status_menu": {
         const options = Object.entries(statusMap).map(
-          ([value, { emoji, label }]) => ({
+          ([value, { emojiId, label }]) => ({
             label,
             value,
-            emoji,
+            emoji: { id: emojiId },
           }),
         );
 
@@ -517,7 +533,7 @@ createResponder({
           );
         } else {
           await interaction.editReply({
-            content: `❌ Não foi possível enviar a DM (Usuário com DMs fechadas). Mencione-o aqui no canal: ${owner}`,
+            content: `<:action_x:1502789802918150206> Não foi possível enviar a DM (Usuário com DMs fechadas). Mencione-o aqui no canal: ${owner}`,
           });
         }
         break;
@@ -814,7 +830,7 @@ createResponder({
         await (ticket as any).save();
 
         await interaction.editReply({
-          content: "🔓 Ticket reaberto com sucesso!",
+          content: "<:unlock_check:1502789940612698192> Ticket reaberto com sucesso!",
         });
         break;
       }
@@ -1032,7 +1048,7 @@ export async function generateTranscript(
         for (const att of msg.attachments.values()) {
           try {
             const backup = await (vaultChannel as any).send({
-              content: `📦 **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author.tag}\``,
+              content: `<:file_files:1502789907511247010> **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author.tag}\``,
               files: [att.url],
             });
             const permanentUrl = backup.attachments.first()?.url;
@@ -1204,7 +1220,7 @@ createResponder({
     // Atualizar Nome do Canal com o novo Emoji (mantendo o slug)
     const nameParts = channel.name.split("・");
     const slug = nameParts[1] || "";
-    const newName = `${statusData.emoji}・${slug}`;
+    const newName = `${statusData.channelEmoji}・${slug}`;
     await (channel as any).setName(newName).catch((err: any) => {
       console.error("[Status] Erro ao renomear canal:", err);
     });
@@ -1231,7 +1247,7 @@ createResponder({
 
     // Notificar no Canal
     await channel.send({
-      content: `### ${statusData.emoji} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
+      content: `### ${statusData.emojiTag} Status Atualizado\nO status deste pedido foi alterado para: **${statusData.label.toUpperCase()}** por ${user}.\n> ${statusData.description}`,
     });
 
     // Notificação Automática por DM ao Cliente

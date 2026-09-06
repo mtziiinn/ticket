@@ -1,3 +1,14 @@
+export function getEmojiId(name) {
+    const url = emojis.static[name];
+    if (!url)
+        return "";
+    const match = url.match(/\/(\d+)\.png/);
+    return match ? match[1] : "";
+}
+export function getEmojiTag(name) {
+    const id = getEmojiId(name);
+    return id ? `<:${name}:${id}>` : "";
+}
 export function formatEmoji(emojiRaw) {
     if (!emojiRaw)
         return undefined;

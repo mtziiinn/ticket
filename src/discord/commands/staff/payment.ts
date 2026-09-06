@@ -19,7 +19,7 @@ import {
   Separator,
 } from "@magicyan/discord";
 import { db } from "#database";
-import { createMercadoPagoCharge } from "#functions";
+import { createMercadoPagoCharge, getEmojiId, getEmojiTag } from "#functions";
 
 createCommand({
   name: "gerar-pagamento",
@@ -52,22 +52,22 @@ createCommand({
         new StringSelectMenuOptionBuilder()
           .setLabel("PIX (Manual)")
           .setValue("pix_manual")
-          .setEmoji("🟢")
+          .setEmoji(getEmojiId("other_dollar") || "🟢")
           .setDescription("Chave PIX manual para transferência direta"),
         new StringSelectMenuOptionBuilder()
           .setLabel("PIX (Mercado Pago)")
           .setValue("pix_mp")
-          .setEmoji("🟢")
+          .setEmoji(getEmojiId("other_dollar") || "🟢")
           .setDescription("PIX dinâmico com aprovação automática"),
         new StringSelectMenuOptionBuilder()
           .setLabel("Cartão/Boleto (Mercado Pago)")
           .setValue("card_mp")
-          .setEmoji("🟢")
+          .setEmoji(getEmojiId("other_card") || "🟢")
           .setDescription("Checkout transparente via Mercado Pago"),
         new StringSelectMenuOptionBuilder()
           .setLabel("Stripe (Cartão Internacional)")
           .setValue("stripe")
-          .setEmoji("💳")
+          .setEmoji(getEmojiId("other_card") || "💳")
           .setDescription("Pagamento internacional em USD/BRL via cartão"),
       );
 
@@ -78,12 +78,12 @@ createCommand({
         new StringSelectMenuOptionBuilder()
           .setLabel("Real Brasileiro (BRL)")
           .setValue("BRL")
-          .setEmoji("🇧🇷")
+          .setEmoji(getEmojiId("other_dollar"))
           .setDefault(true),
         new StringSelectMenuOptionBuilder()
           .setLabel("Dólar Americano (USD)")
           .setValue("USD")
-          .setEmoji("🇺🇸"),
+          .setEmoji(getEmojiId("other_card")),
       );
 
     const gatewayLabel = new LabelBuilder()
@@ -140,7 +140,7 @@ createResponder({
     const amount = parseFloat(amountStr.replace(",", "."));
     if (isNaN(amount) || amount <= 0) {
       await interaction.reply({
-        content: "⚠️ Valor de cobrança inválido!",
+        content: `${getEmojiTag("action_warning")} Valor de cobrança inválido!`,
         flags: ["Ephemeral"],
       });
       return;
@@ -162,7 +162,7 @@ createResponder({
 
       const container = createContainer(
         "#22c55e",
-        "## 💳 Cobrança Gerada",
+        `## ${getEmojiTag("other_dollar")} Cobrança Gerada`,
         Separator.Default,
         [
           `| **Cliente:** ${clientMention}`,
@@ -193,7 +193,7 @@ createResponder({
 
       if (!chargeResult.success) {
         await interaction.editReply({
-          content: `❌ Erro ao gerar cobrança no Mercado Pago:\n${chargeResult.error}`,
+          content: `${getEmojiTag("action_x")} Erro ao gerar cobrança no Mercado Pago:\n${chargeResult.error}`,
         });
         return;
       }
@@ -219,14 +219,14 @@ createResponder({
               .setLabel("Pagar com Cartão / Boleto")
               .setStyle(ButtonStyle.Link)
               .setURL(chargeResult.cardCheckout.initPoint)
-              .setEmoji("💳"),
+              .setEmoji(getEmojiId("other_card") || "💳"),
           ),
         );
       }
 
       const container = createContainer(
         "#22c55e",
-        "## 💳 Cobrança Gerada (Mercado Pago)",
+        `## ${getEmojiTag("other_dollar")} Cobrança Gerada (Mercado Pago)`,
         Separator.Default,
         sections.join("\n"),
         Separator.Default,
@@ -244,7 +244,7 @@ createResponder({
     // Stripe
     const container = createContainer(
       "#22c55e",
-      "## 💳 Cobrança Gerada (Stripe)",
+      `## ${getEmojiTag("other_card")} Cobrança Gerada (Stripe)`,
       Separator.Default,
       [
         `| **Cliente:** ${clientMention}`,

@@ -1,6 +1,7 @@
 import { createCommand } from "#base";
 import { ApplicationCommandType, PermissionFlagsBits } from "discord.js";
 import { renderHomeTab } from "../../responders/panel/panelView.js";
+import { getEmojiTag } from "#functions";
 createCommand({
     name: "painel",
     description: "Exibe o painel completo de configuração do BOT.",
@@ -22,7 +23,7 @@ createCommand({
         catch (err) {
             console.error("[Painel] Erro ao renderizar painel:", err);
             await interaction.editReply({
-                content: "❌ Ocorreu um erro ao carregar o painel de configurações.",
+                content: `${getEmojiTag("action_x")} Ocorreu um erro ao carregar o painel de configurações.`,
             });
         }
     },

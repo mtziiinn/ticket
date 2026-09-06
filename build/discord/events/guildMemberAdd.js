@@ -1,6 +1,7 @@
 import { createEvent } from "#base";
 import { db } from "#database";
 import { createContainer } from "@magicyan/discord";
+import { getEmojiTag } from "#functions";
 createEvent({
     name: "guildMemberAdd",
     event: "guildMemberAdd",
@@ -20,7 +21,7 @@ createEvent({
                     if (guildData.botLogsChannel) {
                         const logChan = member.guild.channels.cache.get(guildData.botLogsChannel);
                         if (logChan && logChan.isTextBased()) {
-                            const alertContainer = createContainer("#ED4245", `| ⚠️ **Alerta de Segurança (Anti-Fake):**\nO usuário <@${member.id}> (\`${member.user.tag}\`) entrou no servidor com conta criada há apenas \`${Math.floor(ageDays)}\` dia(s) (mínimo exigido: \`${minAge}\` dias).`);
+                            const alertContainer = createContainer("#ED4245", `| ${getEmojiTag("action_warning")} **Alerta de Segurança (Anti-Fake):**\nO usuário <@${member.id}> (\`${member.user.tag}\`) entrou no servidor com conta criada há apenas \`${Math.floor(ageDays)}\` dia(s) (mínimo exigido: \`${minAge}\` dias).`);
                             await logChan.send({
                                 components: [alertContainer],
                                 flags: ["IsComponentsV2"],
@@ -39,7 +40,7 @@ createEvent({
             if (w.channelEntry) {
                 const entryChan = member.guild.channels.cache.get(w.channelEntry);
                 if (entryChan && entryChan.isTextBased()) {
-                    const welcomeContainer = createContainer("#22c55e", `## 👋 Bem-vindo(a) ao servidor, <@${member.id}>!`, `Você é o membro de número **#${member.guild.memberCount}**!\nEsperamos que aproveite a sua estadia conosco.`);
+                    const welcomeContainer = createContainer("#22c55e", `## ${getEmojiTag("user_add")} Bem-vindo(a) ao servidor, <@${member.id}>!`, `Você é o membro de número **#${member.guild.memberCount}**!\nEsperamos que aproveite a sua estadia conosco.`);
                     await entryChan.send({
                         components: [welcomeContainer],
                         flags: ["IsComponentsV2"],

@@ -1,6 +1,7 @@
 import { createEvent } from "#base";
 import { db } from "#database";
 import { createContainer } from "@magicyan/discord";
+import { getEmojiTag } from "#functions";
 createEvent({
     name: "guildMemberRemove",
     event: "guildMemberRemove",
@@ -12,7 +13,7 @@ createEvent({
                 return;
             const exitChan = member.guild.channels.cache.get(w.channelExit);
             if (exitChan && exitChan.isTextBased()) {
-                const exitContainer = createContainer("#ED4245", `## 🚪 Um membro saiu do servidor`, `<@${member.id}> (\`${member.user?.tag || "Desconhecido"}\`) saiu do servidor.\nAgora somos **${member.guild.memberCount}** membros.`);
+                const exitContainer = createContainer("#ED4245", `## ${getEmojiTag("user_remove")} Um membro saiu do servidor`, `<@${member.id}> (\`${member.user?.tag || "Desconhecido"}\`) saiu do servidor.\nAgora somos **${member.guild.memberCount}** membros.`);
                 await exitChan.send({
                     components: [exitContainer],
                     flags: ["IsComponentsV2"],
