@@ -3,7 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { renderTab, formatHexColor, BANNER_URL, getTicketEmbedColor } from "./panelView.js";
+import { renderTab, formatHexColor, BANNER_URL, getTicketEmbedColor, getVerifyEmbedColor, } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
 import { createContainer, createRow, createSection, Separator, createEmbed, } from "@magicyan/discord";
 async function updatePanelResponse(interaction, container) {
@@ -768,7 +768,8 @@ createResponder({
             });
             return;
         }
-        const container = createContainer("#22c55e", `## ${getEmojiTag("shield_check")} VERIFICAÇÃO`, `Para ter acesso completo aos canais do servidor, realize a sua verificação de segurança abaixo.`, Separator.Default, `> Este sistema protege a nossa comunidade contra bots maliciosos, raids e invasões automáticas.`, Separator.Default, createRow(new ButtonBuilder()
+        const verifyColor = getVerifyEmbedColor(guildData);
+        const container = createContainer(verifyColor, `## ${getEmojiTag("shield_check")} VERIFICAÇÃO`, `Para ter acesso completo aos canais do servidor, realize a sua verificação de segurança abaixo.`, Separator.Default, `> Este sistema protege a nossa comunidade contra bots maliciosos, raids e invasões automáticas.`, Separator.Default, createRow(new ButtonBuilder()
             .setCustomId("verify/captcha/start")
             .setLabel("Verificar-se")
             .setStyle(ButtonStyle.Success)
@@ -1235,6 +1236,57 @@ createResponder({
         await updatePanelResponse(interaction, container);
     },
 });
+// 7.3.2 Alterar Cor do Painel de Verificação
+createResponder({
+    customId: "panel/identity/edit_verify_color",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const currentVerifyColor = getVerifyEmbedColor(guildData);
+        const modal = new ModalBuilder()
+            .setCustomId("panel/identity/modal/verify_color")
+            .setTitle("Cor do Painel de Verificação");
+        const input = new TextInputBuilder()
+            .setCustomId("verify_color_hex")
+            .setPlaceholder("#22c55e")
+            .setValue(currentVerifyColor)
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(4)
+            .setMaxLength(9)
+            .setRequired(true);
+        const label = new LabelBuilder()
+            .setLabel("Código Hex da Cor (Ex: #22c55e, #1900ff):")
+            .setTextInputComponent(input);
+        modal.addComponents(label);
+        await interaction.showModal(modal);
+    },
+});
+createResponder({
+    customId: "panel/identity/modal/verify_color",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        const colorHex = interaction.fields
+            .getTextInputValue("verify_color_hex")
+            .trim();
+        if (!/^#?([0-9a-fA-F]{3,8})$/.test(colorHex)) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} Cor inválida! Forneça um código hexadecimal válido, ex: \`#22c55e\` ou \`#1900ff\`.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const formattedColor = formatHexColor(colorHex);
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.identity = guildData.identity || {};
+        guildData.identity.verifyEmbedColor = formattedColor;
+        guildData.markModified("identity");
+        await guildData.save();
+        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});
 // 7.4 Alterar Banner do Painel
 createResponder({
     customId: "panel/identity/edit_banner",
@@ -1293,6 +1345,7 @@ createResponder({
             avatarUrl: undefined,
             primaryColor: undefined,
             ticketEmbedColor: undefined,
+            verifyEmbedColor: undefined,
             bannerUrl: undefined,
         };
         guildData.markModified("identity");

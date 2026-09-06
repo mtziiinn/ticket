@@ -53,6 +53,7 @@ export const guildSchema = new Schema({
         avatarUrl: String,
         primaryColor: String,
         ticketEmbedColor: String,
+        verifyEmbedColor: String,
         bannerUrl: String,
     },
 });

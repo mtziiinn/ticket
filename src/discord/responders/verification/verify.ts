@@ -14,6 +14,7 @@ import {
 import { createCanvas } from "@napi-rs/canvas";
 import { db } from "#database";
 import { getEmojiTag } from "#functions";
+import { getVerifyEmbedColor } from "../panel/panelView.js";
 
 // Map temporário para armazenar códigos de captcha por usuário
 // userId -> { code: string, expires: number }
@@ -102,8 +103,10 @@ createResponder({
   types: [ResponderType.Button],
   cache: "cached",
   async run(interaction) {
+    const guildData = await db.guilds.get(interaction.guild.id);
+    const verifyColor = getVerifyEmbedColor(guildData);
     const container = createContainer(
-      "#22c55e",
+      verifyColor,
       `## ${getEmojiTag("shield_check")} Por que a verificação é necessária?`,
       Separator.Default,
       [
@@ -162,8 +165,10 @@ createResponder({
         ),
       );
 
+    const guildData = await db.guilds.get(interaction.guild.id);
+    const verifyColor = getVerifyEmbedColor(guildData);
     const container = createContainer(
-      "#22c55e",
+      verifyColor,
       createMediaGallery("attachment://captcha.png"),
       Separator.Default,
       createRow(select),
@@ -233,8 +238,9 @@ createResponder({
       if (v.logsChannel) {
         const logChan = interaction.guild.channels.cache.get(v.logsChannel);
         if (logChan && logChan.isTextBased()) {
+          const verifyColor = getVerifyEmbedColor(guildData);
           const logContainer = createContainer(
-            "#22c55e",
+            verifyColor,
             `| ${getEmojiTag("action_check")} **Membro Verificado:** <@${member.id}> (\`${member.user.tag}\`)\n| **Horário:** <t:${Math.floor(Date.now() / 1000)}:F>`,
           );
           await (logChan as any)
@@ -249,10 +255,11 @@ createResponder({
       console.error("[Verification] Erro ao atribuir cargos:", err);
     }
 
+    const verifyColor = getVerifyEmbedColor(guildData);
     await interaction.update({
       components: [
         createContainer(
-          "#22c55e",
+          verifyColor,
           `## ${getEmojiTag("action_check")} Verificação Concluída!`,
           `Parabéns, <@${interaction.user.id}>! Sua identidade foi verificada com sucesso e seu acesso ao servidor já está liberado.`,
         ),

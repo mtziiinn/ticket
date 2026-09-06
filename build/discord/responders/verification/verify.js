@@ -5,6 +5,7 @@ import { AttachmentBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuild
 import { createCanvas } from "@napi-rs/canvas";
 import { db } from "#database";
 import { getEmojiTag } from "#functions";
+import { getVerifyEmbedColor } from "../panel/panelView.js";
 // Map temporário para armazenar códigos de captcha por usuário
 // userId -> { code: string, expires: number }
 const userCaptchas = new Map();
@@ -79,7 +80,9 @@ createResponder({
     types: [ResponderType.Button],
     cache: "cached",
     async run(interaction) {
-        const container = createContainer("#22c55e", `## ${getEmojiTag("shield_check")} Por que a verificação é necessária?`, Separator.Default, [
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const verifyColor = getVerifyEmbedColor(guildData);
+        const container = createContainer(verifyColor, `## ${getEmojiTag("shield_check")} Por que a verificação é necessária?`, Separator.Default, [
             `A verificação por captcha é uma medida de proteção essencial para manter nossa comunidade segura e agradável para todos os membros:`,
             ``,
             `• **Anti-Raid:** Impede que bots de spam e ataques em massa invadam os canais.`,
@@ -120,7 +123,9 @@ createResponder({
             .setValue(opt)
             .setDescription("Clique para selecionar este texto.")
             .setEmoji("1502789932727668788")));
-        const container = createContainer("#22c55e", createMediaGallery("attachment://captcha.png"), Separator.Default, createRow(select));
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const verifyColor = getVerifyEmbedColor(guildData);
+        const container = createContainer(verifyColor, createMediaGallery("attachment://captcha.png"), Separator.Default, createRow(select));
         await interaction.reply({
             components: [container],
             files: [attachment],
@@ -170,7 +175,8 @@ createResponder({
             if (v.logsChannel) {
                 const logChan = interaction.guild.channels.cache.get(v.logsChannel);
                 if (logChan && logChan.isTextBased()) {
-                    const logContainer = createContainer("#22c55e", `| ${getEmojiTag("action_check")} **Membro Verificado:** <@${member.id}> (\`${member.user.tag}\`)\n| **Horário:** <t:${Math.floor(Date.now() / 1000)}:F>`);
+                    const verifyColor = getVerifyEmbedColor(guildData);
+                    const logContainer = createContainer(verifyColor, `| ${getEmojiTag("action_check")} **Membro Verificado:** <@${member.id}> (\`${member.user.tag}\`)\n| **Horário:** <t:${Math.floor(Date.now() / 1000)}:F>`);
                     await logChan
                         .send({
                         components: [logContainer],
@@ -183,9 +189,10 @@ createResponder({
         catch (err) {
             console.error("[Verification] Erro ao atribuir cargos:", err);
         }
+        const verifyColor = getVerifyEmbedColor(guildData);
         await interaction.update({
             components: [
-                createContainer("#22c55e", `## ${getEmojiTag("action_check")} Verificação Concluída!`, `Parabéns, <@${interaction.user.id}>! Sua identidade foi verificada com sucesso e seu acesso ao servidor já está liberado.`),
+                createContainer(verifyColor, `## ${getEmojiTag("action_check")} Verificação Concluída!`, `Parabéns, <@${interaction.user.id}>! Sua identidade foi verificada com sucesso e seu acesso ao servidor já está liberado.`),
             ],
             flags: ["IsComponentsV2"],
         });
