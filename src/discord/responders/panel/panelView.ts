@@ -108,7 +108,7 @@ export async function renderHomeTab(guild: Guild, client: Client) {
     "## PAINEL DE CONFIGURAÇÕES",
     buildPanelDropdown("home"),
     Separator.Default,
-    `| ${getEmojiTag("other_bot")} **Status do BOT:** \`${getEmojiTag("action_check")} Online - ${ping}ms\``,
+    `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
     Separator.Default,
     `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``,
     Separator.Default,
@@ -216,7 +216,7 @@ export async function renderPaymentsTab(guildData: any) {
     }),
     Separator.Default,
     createSection({
-      content: `| **Mercado Pago (Nacional):**\nStatus: \`${mpToken ? `Configurado ${getEmojiTag("action_check")}` : `Pendente ${getEmojiTag("action_x")}`}\``,
+      content: `| **Mercado Pago (Nacional):**\nStatus: ${mpToken ? `${getEmojiTag("action_check")} \`Configurado\`` : `${getEmojiTag("action_x")} \`Pendente\``}`,
       button: new ButtonBuilder()
         .setCustomId("panel/payments/edit_mp")
         .setLabel("Editar Mercado Pago")
@@ -225,7 +225,7 @@ export async function renderPaymentsTab(guildData: any) {
     }),
     Separator.Default,
     createSection({
-      content: `| **Stripe (Internacional):**\nStatus: \`${stripeKey ? `Configurado ${getEmojiTag("action_check")}` : `Pendente ${getEmojiTag("action_x")}`}\``,
+      content: `| **Stripe (Internacional):**\nStatus: ${stripeKey ? `${getEmojiTag("action_check")} \`Configurado\`` : `${getEmojiTag("action_x")} \`Pendente\``}`,
       button: new ButtonBuilder()
         .setCustomId("panel/payments/edit_stripe")
         .setLabel("Editar Stripe")
