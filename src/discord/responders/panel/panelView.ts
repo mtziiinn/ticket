@@ -44,11 +44,11 @@ export function getVerifyEmbedColor(guildData?: any): `#${string}` {
   return getPanelColor(guildData);
 }
 
-export function getBannerUrl(guildData?: any): string {
+export function getBannerUrl(guildData?: any): string | null {
   if (guildData?.identity?.bannerUrl) {
     return guildData.identity.bannerUrl;
   }
-  return BANNER_URL;
+  return null;
 }
 
 export function buildPanelDropdown(currentTab: string = "home") {
@@ -129,9 +129,16 @@ export async function renderHomeTab(
   });
   const memberCount = guild.memberCount;
 
-  return createContainer(
-    color,
-    "## PAINEL DE CONFIGURAÇÕES",
+  const botAvatar =
+    guildData.identity?.avatarUrl ||
+    client.user?.displayAvatarURL() ||
+    emojis.static.other_bot;
+
+  const items: any[] = [
+    createSection({
+      content: `## PAINEL DE CONFIGURAÇÕES\nGerencie tickets, moderação, gateways e identidades com facilidade.`,
+      thumbnail: botAvatar as any,
+    }),
     buildPanelDropdown("home"),
     Separator.Default,
     `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
@@ -139,9 +146,13 @@ export async function renderHomeTab(
     `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``,
     Separator.Default,
     `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``,
-    Separator.Default,
-    createMediaGallery(banner),
-  );
+  ];
+
+  if (banner) {
+    items.push(Separator.Default, createMediaGallery(banner));
+  }
+
+  return (createContainer as any)(color, ...items);
 }
 
 export async function renderTicketTab(guildData: any) {
@@ -432,14 +443,21 @@ export async function renderIdentityTab(
     guild.members.me?.displayName || client.user?.username || "Bot";
   const avatarDisplay = identity.avatarUrl
     ? `[Visualizar Imagem](${identity.avatarUrl})`
-    : `[Avatar Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
-  const bannerDisplay = identity.bannerUrl
-    ? `[Visualizar Banner](${identity.bannerUrl})`
-    : `\`Visual padrão configurado\``;
+    : `[Foto Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
+  const bannerDisplay = currentBanner
+    ? `[Visualizar Banner](${currentBanner})`
+    : `\`Sem banner configurado (Padrão)\``;
 
-  return createContainer(
-    currentColor,
-    `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT`,
+  const botAvatar =
+    identity.avatarUrl ||
+    client.user?.displayAvatarURL() ||
+    emojis.static.other_bot;
+
+  const items: any[] = [
+    createSection({
+      content: `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT\nPersonalize o nome, foto de perfil, cores e banner do sistema.`,
+      thumbnail: botAvatar as any,
+    }),
     buildPanelDropdown("identity"),
     Separator.Default,
     createSection({
@@ -485,9 +503,13 @@ export async function renderIdentityTab(
         .setStyle(ButtonStyle.Danger)
         .setEmoji(getEmojiId("action_remove") || "🔄"),
     ),
-    Separator.Default,
-    createMediaGallery(currentBanner),
-  );
+  ];
+
+  if (currentBanner) {
+    items.push(Separator.Default, createMediaGallery(currentBanner));
+  }
+
+  return (createContainer as any)(currentColor, ...items);
 }
 
 export async function renderCommandsTab(guildData?: any) {

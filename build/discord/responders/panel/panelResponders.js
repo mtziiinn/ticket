@@ -3,7 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { renderTab, formatHexColor, BANNER_URL, getTicketEmbedColor, getVerifyEmbedColor, } from "./panelView.js";
+import { renderTab, formatHexColor, getTicketEmbedColor, getVerifyEmbedColor, } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
 import { createContainer, createRow, createSection, Separator, createEmbed, } from "@magicyan/discord";
 async function updatePanelResponse(interaction, container) {
@@ -1124,15 +1124,15 @@ createResponder({
         const currentAvatar = guildData.identity?.avatarUrl || "";
         const modal = new ModalBuilder()
             .setCustomId("panel/identity/modal/avatar")
-            .setTitle("Editar Perfil (Avatar)");
+            .setTitle("Editar Foto de Perfil");
         const input = new TextInputBuilder()
             .setCustomId("avatar_url")
-            .setPlaceholder("https://exemplo.com/avatar.png")
+            .setPlaceholder("https://exemplo.com/avatar.png (vazio para foto padrão)")
             .setValue(currentAvatar)
             .setStyle(TextInputStyle.Short)
-            .setRequired(true);
+            .setRequired(false);
         const label = new LabelBuilder()
-            .setLabel("URL da Imagem de Perfil (PNG/JPG/WebP):")
+            .setLabel("URL da Imagem (vazio para foto padrão do bot):")
             .setTextInputComponent(input);
         modal.addComponents(label);
         await interaction.showModal(modal);
@@ -1143,41 +1143,53 @@ createResponder({
     types: [ResponderType.Modal, ResponderType.ModalComponent],
     cache: "cached",
     async run(interaction) {
-        const avatarUrl = interaction.fields.getTextInputValue("avatar_url").trim();
-        if (!avatarUrl.startsWith("http://") && !avatarUrl.startsWith("https://")) {
-            await interaction.reply({
-                content: `${getEmojiTag("action_x")} URL inválida! O link deve começar com \`http://\` ou \`https://\`.`,
+        const rawInput = interaction.fields.getTextInputValue("avatar_url").trim();
+        const isReset = !rawInput ||
+            ["padrao", "default", "remover", "none"].includes(rawInput.toLowerCase());
+        if (!isReset &&
+            !rawInput.startsWith("http://") &&
+            !rawInput.startsWith("https://")) {
+            await interaction
+                .reply({
+                content: `${getEmojiTag("action_x")} URL inválida! O link deve começar com \`http://\` ou \`https://\` (ou deixe vazio para foto padrão).`,
                 flags: ["Ephemeral"],
-            }).catch(() => { });
+            })
+                .catch(() => { });
             return;
         }
-        // Acknowledge imediato para evitar timeout de 3 segundos do Discord enquanto faz download/upload do avatar
         if (interaction.isFromMessage?.()) {
             await interaction.deferUpdate().catch(() => { });
         }
         else {
             await interaction.deferReply({ ephemeral: true }).catch(() => { });
         }
-        let discordAvatarError = false;
-        try {
-            await interaction.client.user?.setAvatar(avatarUrl);
-        }
-        catch (err) {
-            console.error("[Identity] Erro ao alterar avatar global no Discord:", err);
-            discordAvatarError = true;
-        }
         const guildData = await db.guilds.get(interaction.guild.id);
         guildData.identity = guildData.identity || {};
-        guildData.identity.avatarUrl = avatarUrl;
+        let discordAvatarError = false;
+        if (isReset) {
+            guildData.identity.avatarUrl = undefined;
+        }
+        else {
+            guildData.identity.avatarUrl = rawInput;
+            try {
+                await interaction.client.user?.setAvatar(rawInput);
+            }
+            catch (err) {
+                console.error("[Identity] Erro ao alterar avatar global no Discord:", err);
+                discordAvatarError = true;
+            }
+        }
         guildData.markModified("identity");
         await guildData.save();
         const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
         await updatePanelResponse(interaction, container);
         if (discordAvatarError) {
-            await interaction.followUp({
+            await interaction
+                .followUp({
                 content: `${getEmojiTag("action_warning")} O avatar foi salvo nas configurações, mas o Discord bloqueou a alteração imediata da foto global por limite de taxa (máximo 2 trocas por hora). Tente novamente em alguns minutos.`,
                 flags: ["Ephemeral"],
-            }).catch(() => { });
+            })
+                .catch(() => { });
         }
     },
 });
@@ -1237,18 +1249,18 @@ createResponder({
     cache: "cached",
     async run(interaction) {
         const guildData = await db.guilds.get(interaction.guild.id);
-        const currentBanner = guildData.identity?.bannerUrl || BANNER_URL;
+        const currentBanner = guildData.identity?.bannerUrl || "";
         const modal = new ModalBuilder()
             .setCustomId("panel/identity/modal/banner")
             .setTitle("Editar Banner do Sistema");
         const input = new TextInputBuilder()
             .setCustomId("banner_url")
-            .setPlaceholder("https://exemplo.com/banner.png")
+            .setPlaceholder("https://exemplo.com/banner.png (vazio para sem banner)")
             .setValue(currentBanner)
             .setStyle(TextInputStyle.Short)
-            .setRequired(true);
+            .setRequired(false);
         const label = new LabelBuilder()
-            .setLabel("URL da Imagem do Banner (PNG, JPG, GIF):")
+            .setLabel("URL do Banner (vazio para sem banner):")
             .setTextInputComponent(input);
         modal.addComponents(label);
         await interaction.showModal(modal);
@@ -1259,17 +1271,26 @@ createResponder({
     types: [ResponderType.Modal, ResponderType.ModalComponent],
     cache: "cached",
     async run(interaction) {
-        const bannerUrl = interaction.fields.getTextInputValue("banner_url").trim();
-        if (!bannerUrl.startsWith("http://") && !bannerUrl.startsWith("https://")) {
+        const rawInput = interaction.fields.getTextInputValue("banner_url").trim();
+        const isReset = !rawInput ||
+            ["nenhum", "remover", "padrao", "none"].includes(rawInput.toLowerCase());
+        if (!isReset &&
+            !rawInput.startsWith("http://") &&
+            !rawInput.startsWith("https://")) {
             await interaction.reply({
-                content: `${getEmojiTag("action_x")} URL inválida! O link do banner deve começar com \`http://\` ou \`https://\`.`,
+                content: `${getEmojiTag("action_x")} URL inválida! O link do banner deve começar com \`http://\` ou \`https://\` (ou deixe vazio para sem banner).`,
                 flags: ["Ephemeral"],
             });
             return;
         }
         const guildData = await db.guilds.get(interaction.guild.id);
         guildData.identity = guildData.identity || {};
-        guildData.identity.bannerUrl = bannerUrl;
+        if (isReset) {
+            guildData.identity.bannerUrl = undefined;
+        }
+        else {
+            guildData.identity.bannerUrl = rawInput;
+        }
         guildData.markModified("identity");
         await guildData.save();
         const container = await renderTab("identity", interaction.guild, interaction.client, guildData);

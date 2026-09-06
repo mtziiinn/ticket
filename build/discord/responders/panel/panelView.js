@@ -28,7 +28,7 @@ export function getBannerUrl(guildData) {
     if (guildData?.identity?.bannerUrl) {
         return guildData.identity.bannerUrl;
     }
-    return BANNER_URL;
+    return null;
 }
 export function buildPanelDropdown(currentTab = "home") {
     const options = [
@@ -99,7 +99,26 @@ export async function renderHomeTab(guild, client, guildData) {
         closed: false,
     });
     const memberCount = guild.memberCount;
-    return createContainer(color, "## PAINEL DE CONFIGURAÇÕES", buildPanelDropdown("home"), Separator.Default, `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``, Separator.Default, `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``, Separator.Default, `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``, Separator.Default, createMediaGallery(banner));
+    const botAvatar = guildData.identity?.avatarUrl ||
+        client.user?.displayAvatarURL() ||
+        emojis.static.other_bot;
+    const items = [
+        createSection({
+            content: `## PAINEL DE CONFIGURAÇÕES\nGerencie tickets, moderação, gateways e identidades com facilidade.`,
+            thumbnail: botAvatar,
+        }),
+        buildPanelDropdown("home"),
+        Separator.Default,
+        `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
+        Separator.Default,
+        `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``,
+        Separator.Default,
+        `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``,
+    ];
+    if (banner) {
+        items.push(Separator.Default, createMediaGallery(banner));
+    }
+    return createContainer(color, ...items);
 }
 export async function renderTicketTab(guildData) {
     const color = getPanelColor(guildData);
@@ -299,43 +318,66 @@ export async function renderIdentityTab(guild, client, guildData) {
     const botDisplayName = guild.members.me?.displayName || client.user?.username || "Bot";
     const avatarDisplay = identity.avatarUrl
         ? `[Visualizar Imagem](${identity.avatarUrl})`
-        : `[Avatar Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
-    const bannerDisplay = identity.bannerUrl
-        ? `[Visualizar Banner](${identity.bannerUrl})`
-        : `\`Visual padrão configurado\``;
-    return createContainer(currentColor, `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT`, buildPanelDropdown("identity"), Separator.Default, createSection({
-        content: `| ${getEmojiTag("other_bot")} **Nome do Bot no Servidor:**\n\`${botDisplayName}\``,
-        button: new ButtonBuilder()
-            .setCustomId("panel/identity/edit_name")
-            .setLabel("Editar Nome")
-            .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("action_add") || "✏️"),
-    }), Separator.Default, createSection({
-        content: `| ${getEmojiTag("user_users")} **Foto de Perfil (Avatar):**\n${avatarDisplay}`,
-        button: new ButtonBuilder()
-            .setCustomId("panel/identity/edit_avatar")
-            .setLabel("Editar Perfil")
-            .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("action_add") || "🖼️"),
-    }), Separator.Default, createSection({
-        content: `| ${getEmojiTag("apps_figma")} **Cor Principal das Embeds:**\n\`${currentColor}\``,
-        button: new ButtonBuilder()
-            .setCustomId("panel/identity/edit_color")
-            .setLabel("Editar Cor")
-            .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("action_add") || "🎨"),
-    }), Separator.Default, createSection({
-        content: `| ${getEmojiTag("apps_figma")} **Banner do Painel & Sistema:**\n${bannerDisplay}`,
-        button: new ButtonBuilder()
-            .setCustomId("panel/identity/edit_banner")
-            .setLabel("Editar Banner")
-            .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("action_add") || "🖼️"),
-    }), Separator.Default, createRow(new ButtonBuilder()
-        .setCustomId("panel/identity/reset")
-        .setLabel("Restaurar Padrões")
-        .setStyle(ButtonStyle.Danger)
-        .setEmoji(getEmojiId("action_remove") || "🔄")), Separator.Default, createMediaGallery(currentBanner));
+        : `[Foto Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
+    const bannerDisplay = currentBanner
+        ? `[Visualizar Banner](${currentBanner})`
+        : `\`Sem banner configurado (Padrão)\``;
+    const botAvatar = identity.avatarUrl ||
+        client.user?.displayAvatarURL() ||
+        emojis.static.other_bot;
+    const items = [
+        createSection({
+            content: `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT\nPersonalize o nome, foto de perfil, cores e banner do sistema.`,
+            thumbnail: botAvatar,
+        }),
+        buildPanelDropdown("identity"),
+        Separator.Default,
+        createSection({
+            content: `| ${getEmojiTag("other_bot")} **Nome do Bot no Servidor:**\n\`${botDisplayName}\``,
+            button: new ButtonBuilder()
+                .setCustomId("panel/identity/edit_name")
+                .setLabel("Editar Nome")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji(getEmojiId("action_add") || "✏️"),
+        }),
+        Separator.Default,
+        createSection({
+            content: `| ${getEmojiTag("user_users")} **Foto de Perfil (Avatar):**\n${avatarDisplay}`,
+            button: new ButtonBuilder()
+                .setCustomId("panel/identity/edit_avatar")
+                .setLabel("Editar Perfil")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji(getEmojiId("action_add") || "🖼️"),
+        }),
+        Separator.Default,
+        createSection({
+            content: `| ${getEmojiTag("apps_figma")} **Cor Principal das Embeds:**\n\`${currentColor}\``,
+            button: new ButtonBuilder()
+                .setCustomId("panel/identity/edit_color")
+                .setLabel("Editar Cor")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji(getEmojiId("action_add") || "🎨"),
+        }),
+        Separator.Default,
+        createSection({
+            content: `| ${getEmojiTag("apps_figma")} **Banner do Painel & Sistema:**\n${bannerDisplay}`,
+            button: new ButtonBuilder()
+                .setCustomId("panel/identity/edit_banner")
+                .setLabel("Editar Banner")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji(getEmojiId("action_add") || "🖼️"),
+        }),
+        Separator.Default,
+        createRow(new ButtonBuilder()
+            .setCustomId("panel/identity/reset")
+            .setLabel("Restaurar Padrões")
+            .setStyle(ButtonStyle.Danger)
+            .setEmoji(getEmojiId("action_remove") || "🔄")),
+    ];
+    if (currentBanner) {
+        items.push(Separator.Default, createMediaGallery(currentBanner));
+    }
+    return createContainer(currentColor, ...items);
 }
 export async function renderCommandsTab(guildData) {
     const color = getPanelColor(guildData);
