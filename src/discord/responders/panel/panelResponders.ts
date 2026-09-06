@@ -20,6 +20,7 @@ import {
   formatHexColor,
   getTicketEmbedColor,
   getVerifyEmbedColor,
+  getBannerUrl,
 } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
 import {
@@ -28,6 +29,7 @@ import {
   createSection,
   Separator,
   createEmbed,
+  createMediaGallery,
 } from "@magicyan/discord";
 
 async function updatePanelResponse(interaction: any, container: any) {
@@ -115,8 +117,8 @@ createResponder({
       emojis.static.other_ticket;
 
     const ticketColor = getTicketEmbedColor(guildData);
-    const container = createContainer(
-      ticketColor,
+    const banner = getBannerUrl(guildData);
+    const items: any[] = [
       createSection({
         content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
         thumbnail: guildIcon,
@@ -128,7 +130,7 @@ createResponder({
         `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
       ].join("\n"),
       Separator.Default,
-      "Clique no botão abaixo para iniciar o seu atendimento.",
+      "> Caso ocorra algum problema, contate a administração.",
       createRow(
         new ButtonBuilder({
           customId: "ticket/form/open",
@@ -137,7 +139,13 @@ createResponder({
           emoji: getEmojiId("other_ticket") || "🎫",
         }),
       ),
-    );
+    ];
+
+    if (banner) {
+      items.push(Separator.Default, createMediaGallery(banner));
+    }
+
+    const container = (createContainer as any)(ticketColor, ...items);
 
     await (channel as any).send({
       components: [container],

@@ -3,9 +3,9 @@ import { ResponderType } from "@constatic/base";
 import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { renderTab, formatHexColor, getTicketEmbedColor, getVerifyEmbedColor, } from "./panelView.js";
+import { renderTab, formatHexColor, getTicketEmbedColor, getVerifyEmbedColor, getBannerUrl, } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
-import { createContainer, createRow, createSection, Separator, createEmbed, } from "@magicyan/discord";
+import { createContainer, createRow, createSection, Separator, createEmbed, createMediaGallery, } from "@magicyan/discord";
 async function updatePanelResponse(interaction, container) {
     try {
         if (interaction.deferred || interaction.replied) {
@@ -79,19 +79,31 @@ createResponder({
             interaction.client.user?.displayAvatarURL() ||
             emojis.static.other_ticket;
         const ticketColor = getTicketEmbedColor(guildData);
-        const container = createContainer(ticketColor, createSection({
-            content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-            thumbnail: guildIcon,
-        }), Separator.Default, [
-            `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
-            `● Não chame membros da equipe no privado.`,
-            `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
-        ].join("\n"), Separator.Default, "Clique no botão abaixo para iniciar o seu atendimento.", createRow(new ButtonBuilder({
-            customId: "ticket/form/open",
-            label: "Abrir Ticket",
-            style: ButtonStyle.Success,
-            emoji: getEmojiId("other_ticket") || "🎫",
-        })));
+        const banner = getBannerUrl(guildData);
+        const items = [
+            createSection({
+                content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+                thumbnail: guildIcon,
+            }),
+            Separator.Default,
+            [
+                `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
+                `● Não chame membros da equipe no privado.`,
+                `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
+            ].join("\n"),
+            Separator.Default,
+            "> Caso ocorra algum problema, contate a administração.",
+            createRow(new ButtonBuilder({
+                customId: "ticket/form/open",
+                label: "Abrir Ticket",
+                style: ButtonStyle.Success,
+                emoji: getEmojiId("other_ticket") || "🎫",
+            })),
+        ];
+        if (banner) {
+            items.push(Separator.Default, createMediaGallery(banner));
+        }
+        const container = createContainer(ticketColor, ...items);
         await channel.send({
             components: [container],
             flags: ["IsComponentsV2"],
