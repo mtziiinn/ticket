@@ -1,7 +1,7 @@
 import { createEvent } from "#base";
 import { db } from "#database";
-import { createContainer } from "@magicyan/discord";
-import { getEmojiTag } from "#functions";
+import { createContainer, createSection, Separator } from "@magicyan/discord";
+import { getEmojiTag, sendBotLog } from "#functions";
 
 createEvent({
   name: "guildMemberAdd",
@@ -60,6 +60,30 @@ createEvent({
           }).catch(() => {});
         }
       }
+
+      // 4. Registro no Canal de Logs do Discord
+      const timestamp = Math.floor(Date.now() / 1000);
+      const createdTs = Math.floor(member.user.createdTimestamp / 1000);
+      const avatar =
+        member.user.displayAvatarURL() ||
+        "https://cdn.discordapp.com/embed/avatars/0.png";
+
+      const logContainer = createContainer(
+        "#22c55e",
+        createSection({
+          content: `## ${getEmojiTag("user_add")} Novo Membro Entrou\n<@${member.id}> entrou no servidor.`,
+          thumbnail: avatar as any,
+        }),
+        Separator.Default,
+        [
+          `| ${getEmojiTag("user")} **Usuário:** <@${member.id}> (\`${member.user.tag}\` | \`${member.id}\`)`,
+          `| ${getEmojiTag("clock")} **Conta Criada:** <t:${createdTs}:f> (<t:${createdTs}:R>)`,
+          `| ${getEmojiTag("user_users")} **Total de Membros:** \`${member.guild.memberCount}\``,
+          `| ${getEmojiTag("clock")} **Entrou em:** <t:${timestamp}:f> (<t:${timestamp}:R>)`,
+        ].join("\n"),
+      );
+
+      await sendBotLog(member.guild, logContainer);
     } catch (err) {
       console.error("[guildMemberAdd] Erro:", err);
     }

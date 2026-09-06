@@ -59,3 +59,4 @@ export function generatePixPayload(key, name = "MTS TICKETS", city = "SAO PAULO"
 }
 export * from "./cacheCleaner.js";
 export * from "./mercadopago.js";
+export * from "./botLogs.js";
