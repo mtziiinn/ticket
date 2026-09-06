@@ -26,7 +26,7 @@ export function formatHexColor(color: string): `#${string}` {
 
 export const PANEL_COLOR = formatHexColor("#1900ff");
 export const BANNER_URL =
-  "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
+  "https://media.r2rp.com/v1/files/1788668172740-t9zu7jru.png";
 
 export function getPanelColor(guildData?: any): `#${string}` {
   if (guildData?.identity?.primaryColor) {
