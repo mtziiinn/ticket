@@ -21,6 +21,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { formatEmoji } from "#functions";
+import { formatHexColor } from "../panel/panelView.js";
 
 const cooldowns = new Map<string, number>();
 
@@ -142,8 +143,12 @@ async function processTicketSubmission(
     });
 
     // 3. Preparar Interface
+    const panelColor = guildData?.identity?.primaryColor
+      ? formatHexColor(guildData.identity.primaryColor)
+      : (constants.colors.azoxo as `#${string}`);
+
     const container = createContainer(
-      constants.colors.azoxo,
+      panelColor,
       createSection({
         content: `## <:other_ticket:1502789959378145300> Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
         thumbnail: user.displayAvatarURL() as any,

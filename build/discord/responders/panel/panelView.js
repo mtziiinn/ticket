@@ -11,6 +11,18 @@ export function formatHexColor(color) {
 }
 export const PANEL_COLOR = formatHexColor("#1900ff");
 export const BANNER_URL = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
+export function getPanelColor(guildData) {
+    if (guildData?.identity?.primaryColor) {
+        return formatHexColor(guildData.identity.primaryColor);
+    }
+    return PANEL_COLOR;
+}
+export function getBannerUrl(guildData) {
+    if (guildData?.identity?.bannerUrl) {
+        return guildData.identity.bannerUrl;
+    }
+    return BANNER_URL;
+}
 export function buildPanelDropdown(currentTab = "home") {
     const options = [
         new StringSelectMenuOptionBuilder()
@@ -73,7 +85,12 @@ export function buildPanelDropdown(currentTab = "home") {
         .setPlaceholder("📄 Selecione uma opção...")
         .addOptions(options));
 }
-export async function renderHomeTab(guild, client) {
+export async function renderHomeTab(guild, client, guildData) {
+    if (!guildData) {
+        guildData = await db.guilds.get(guild.id);
+    }
+    const color = getPanelColor(guildData);
+    const banner = getBannerUrl(guildData);
     const rawPing = Math.round(client.ws.ping);
     const ping = isNaN(rawPing) || rawPing <= 0 ? 24 : rawPing;
     const openTicketsCount = await db.tickets.countDocuments({
@@ -81,13 +98,14 @@ export async function renderHomeTab(guild, client) {
         closed: false,
     });
     const memberCount = guild.memberCount;
-    return createContainer(PANEL_COLOR, "## PAINEL DE CONFIGURAÇÕES", buildPanelDropdown("home"), Separator.Default, `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``, Separator.Default, `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``, Separator.Default, `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``, Separator.Default, [
+    return createContainer(color, "## PAINEL DE CONFIGURAÇÕES", buildPanelDropdown("home"), Separator.Default, `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``, Separator.Default, `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``, Separator.Default, `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``, Separator.Default, [
         `### ${getEmojiTag("bell")} Avisos Importantes`,
         `• **Emojis da Aplicação:** O bot gerencia e sincroniza os emojis personalizados diretamente pelo Discord Developer Portal.`,
         `• **Não Remova os Emojis:** Evite excluir ou alterar manualmente os emojis cadastrados no portal do desenvolvedor, pois isso pode causar erros visuais e mau funcionamento dos botões e menus do bot.`,
-    ].join("\n"), Separator.Default, createMediaGallery(BANNER_URL));
+    ].join("\n"), Separator.Default, createMediaGallery(banner));
 }
 export async function renderTicketTab(guildData) {
+    const color = getPanelColor(guildData);
     const channels = guildData.channels || {};
     const openChannelDisplay = channels.general
         ? `<#${channels.general}>`
@@ -105,7 +123,7 @@ export async function renderTicketTab(guildData) {
         })
             .join("\n")
         : "*Nenhuma opção de categoria cadastrada.*";
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_ticket")} Sistema de Ticket`, buildPanelDropdown("ticket"), Separator.Default, createRow(new ButtonBuilder()
+    return createContainer(color, `## ${getEmojiTag("other_ticket")} Sistema de Ticket`, buildPanelDropdown("ticket"), Separator.Default, createRow(new ButtonBuilder()
         .setCustomId("panel/ticket/send_panel")
         .setLabel("Enviar Painel do Ticket")
         .setStyle(ButtonStyle.Success)
@@ -135,12 +153,13 @@ export async function renderTicketTab(guildData) {
         .setDisabled(categories.length === 0)));
 }
 export async function renderPaymentsTab(guildData) {
+    const color = getPanelColor(guildData);
     const p = guildData.payments || {};
     const pixKey = p.pixKey || guildData.channels?.pixKey;
     const pixType = p.pixType || "Chave PIX";
     const mpToken = p.mpAccessToken;
     const stripeKey = p.stripeSecretKey;
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_dollar")} Sistema de Pagamentos`, buildPanelDropdown("payments"), Separator.Default, createSection({
+    return createContainer(color, `## ${getEmojiTag("other_dollar")} Sistema de Pagamentos`, buildPanelDropdown("payments"), Separator.Default, createSection({
         content: `| **PIX (Manual):**\nChave: \`${pixKey || "Não configurada"}\` (${pixType})`,
         button: new ButtonBuilder()
             .setCustomId("panel/payments/edit_pix")
@@ -172,12 +191,13 @@ export async function renderPaymentsTab(guildData) {
         .setEmoji(getEmojiId("book") || "📖")));
 }
 export async function renderAutoroleTab(guildData) {
+    const color = getPanelColor(guildData);
     const w = guildData.welcome || {};
     const entryChannel = w.channelEntry ? `<#${w.channelEntry}>` : "*Não configurado*";
     const exitChannel = w.channelExit ? `<#${w.channelExit}>` : "*Não configurado*";
     const roleDisplay = w.autoRole ? `<@&${w.autoRole}>` : "*Não configurado*";
     const minAge = w.minAccountAgeDays ?? 0;
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("user_users")} Sistema de Boas-vindas & Autorole`, buildPanelDropdown("autorole"), Separator.Default, createSection({
+    return createContainer(color, `## ${getEmojiTag("user_users")} Sistema de Boas-vindas & Autorole`, buildPanelDropdown("autorole"), Separator.Default, createSection({
         content: `| **Canal de Entrada:**\n${entryChannel}`,
         button: new ButtonBuilder()
             .setCustomId("panel/welcome/edit_entry")
@@ -208,12 +228,13 @@ export async function renderAutoroleTab(guildData) {
     }));
 }
 export async function renderVerificationTab(guildData) {
+    const color = getPanelColor(guildData);
     const v = guildData.verification || {};
     const vChannel = v.channel ? `<#${v.channel}>` : "*Não configurado*";
     const logsChannel = v.logsChannel ? `<#${v.logsChannel}>` : "*Não configurado*";
     const vRole = v.verifiedRole ? `<@&${v.verifiedRole}>` : "*Não configurado*";
     const unvRole = v.unverifiedRole ? `<@&${v.unverifiedRole}>` : "*Não configurado*";
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("shield_check")} Sistema de Verificação (Captcha)`, buildPanelDropdown("verification"), Separator.Default, createRow(new ButtonBuilder()
+    return createContainer(color, `## ${getEmojiTag("shield_check")} Sistema de Verificação (Captcha)`, buildPanelDropdown("verification"), Separator.Default, createRow(new ButtonBuilder()
         .setCustomId("panel/verification/send_panel")
         .setLabel("Enviar Painel de Verificação")
         .setStyle(ButtonStyle.Success)
@@ -248,10 +269,11 @@ export async function renderVerificationTab(guildData) {
     }));
 }
 export async function renderLogsTab(guildData) {
+    const color = getPanelColor(guildData);
     const logsChannel = guildData.botLogsChannel
         ? `<#${guildData.botLogsChannel}>`
         : "*Não configurado*";
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("folder")} Sistema de Logs do Discord`, buildPanelDropdown("logs"), Separator.Default, createSection({
+    return createContainer(color, `## ${getEmojiTag("folder")} Sistema de Logs do Discord`, buildPanelDropdown("logs"), Separator.Default, createSection({
         content: `| **Canal de Logs:**\n${logsChannel}`,
         button: new ButtonBuilder()
             .setCustomId("panel/logs/edit_channel")
@@ -260,14 +282,61 @@ export async function renderLogsTab(guildData) {
             .setEmoji(getEmojiId("action_add") || "✏️"),
     }), Separator.Default, `*Neste canal, o bot registrará ações administrativas, eventos de moderação e movimentações do sistema.*`);
 }
-export async function renderIdentityTab(guild) {
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT`, buildPanelDropdown("identity"), Separator.Default, `| **Servidor:** ${guild.name}\n| **Cor Principal:** \`${PANEL_COLOR}\` (Azul / Neon)\n| **Banner Atual:** Visual padrão configurado`, Separator.Default, createMediaGallery(BANNER_URL));
+export async function renderIdentityTab(guild, client, guildData) {
+    if (!guildData) {
+        guildData = await db.guilds.get(guild.id);
+    }
+    const identity = guildData.identity || {};
+    const currentColor = getPanelColor(guildData);
+    const currentBanner = getBannerUrl(guildData);
+    const botDisplayName = guild.members.me?.displayName || client.user?.username || "Bot";
+    const avatarDisplay = identity.avatarUrl
+        ? `[Visualizar Imagem](${identity.avatarUrl})`
+        : `[Avatar Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
+    const bannerDisplay = identity.bannerUrl
+        ? `[Visualizar Banner](${identity.bannerUrl})`
+        : `\`Visual padrão configurado\``;
+    return createContainer(currentColor, `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT`, buildPanelDropdown("identity"), Separator.Default, createSection({
+        content: `| ${getEmojiTag("other_bot")} **Nome do Bot no Servidor:**\n\`${botDisplayName}\``,
+        button: new ButtonBuilder()
+            .setCustomId("panel/identity/edit_name")
+            .setLabel("Editar Nome")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_add") || "✏️"),
+    }), Separator.Default, createSection({
+        content: `| ${getEmojiTag("user_users")} **Foto de Perfil (Avatar):**\n${avatarDisplay}`,
+        button: new ButtonBuilder()
+            .setCustomId("panel/identity/edit_avatar")
+            .setLabel("Editar Perfil")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_add") || "🖼️"),
+    }), Separator.Default, createSection({
+        content: `| ${getEmojiTag("apps_figma")} **Cor Principal das Embeds:**\n\`${currentColor}\``,
+        button: new ButtonBuilder()
+            .setCustomId("panel/identity/edit_color")
+            .setLabel("Editar Cor")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_add") || "🎨"),
+    }), Separator.Default, createSection({
+        content: `| ${getEmojiTag("apps_figma")} **Banner do Painel & Sistema:**\n${bannerDisplay}`,
+        button: new ButtonBuilder()
+            .setCustomId("panel/identity/edit_banner")
+            .setLabel("Editar Banner")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_add") || "🖼️"),
+    }), Separator.Default, createRow(new ButtonBuilder()
+        .setCustomId("panel/identity/reset")
+        .setLabel("Restaurar Padrões")
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji(getEmojiId("action_remove") || "🔄")), Separator.Default, createMediaGallery(currentBanner));
 }
-export async function renderSalesTab() {
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_card")} Sistema de Vendas`, buildPanelDropdown("sales"), Separator.Default, `| **Status das Vendas:** Sistema integrado e pronto para cobranças via \`/gerar-pagamento\`.\n| **Gateways:** Suporte a PIX com QR Code, Mercado Pago e Stripe.`, Separator.Default, `*Para emitir cobranças diretas para clientes em um canal de ticket ou chat, use o comando \`/gerar-pagamento\`.*`);
+export async function renderSalesTab(guildData) {
+    const color = getPanelColor(guildData);
+    return createContainer(color, `## ${getEmojiTag("other_card")} Sistema de Vendas`, buildPanelDropdown("sales"), Separator.Default, `| **Status das Vendas:** Sistema integrado e pronto para cobranças via \`/gerar-pagamento\`.\n| **Gateways:** Suporte a PIX com QR Code, Mercado Pago e Stripe.`, Separator.Default, `*Para emitir cobranças diretas para clientes em um canal de ticket ou chat, use o comando \`/gerar-pagamento\`.*`);
 }
-export async function renderCommandsTab() {
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_terminal")} Guia Geral de Comandos`, buildPanelDropdown("commands"), Separator.Default, [
+export async function renderCommandsTab(guildData) {
+    const color = getPanelColor(guildData);
+    return createContainer(color, `## ${getEmojiTag("other_terminal")} Guia Geral de Comandos`, buildPanelDropdown("commands"), Separator.Default, [
         `### ${getEmojiTag("other_bot")} Configuração e Gestão`,
         `• \`/painel\` - Painel central de controle (Tickets, Verificação, Gateways, Autorole e Logs).`,
         `• \`/ticket stats\` - Exibe métricas de atendimento (hoje, semana, mês, total e por categoria).`,
@@ -296,13 +365,13 @@ export async function renderTab(tab, guild, client, guildData) {
     }
     switch (tab) {
         case "identity":
-            return await renderIdentityTab(guild);
+            return await renderIdentityTab(guild, client, guildData);
         case "ticket":
             return await renderTicketTab(guildData);
         case "payments":
             return await renderPaymentsTab(guildData);
         case "sales":
-            return await renderSalesTab();
+            return await renderSalesTab(guildData);
         case "autorole":
             return await renderAutoroleTab(guildData);
         case "verification":
@@ -310,9 +379,9 @@ export async function renderTab(tab, guild, client, guildData) {
         case "logs":
             return await renderLogsTab(guildData);
         case "commands":
-            return await renderCommandsTab();
+            return await renderCommandsTab(guildData);
         case "home":
         default:
-            return await renderHomeTab(guild, client);
+            return await renderHomeTab(guild, client, guildData);
     }
 }

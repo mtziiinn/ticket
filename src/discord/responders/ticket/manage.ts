@@ -26,6 +26,7 @@ import { formatEmoji } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
+import { formatHexColor } from "../panel/panelView.js";
 
 // Mapeamento de Status de Encomenda
 const statusMap: Record<
@@ -79,12 +80,16 @@ const statusMap: Record<
 };
 
 // Função para gerar o painel principal (Assumir ou Painel Admin)
-function createMainPanel(ticket: any, owner: any) {
+async function createMainPanel(ticket: any, owner: any) {
   const isClaimed = !!ticket.claimedBy;
   const currentStatus = statusMap[ticket.status || "open"] || statusMap.open;
+  const guildData = ticket.guildId ? await db.guilds.get(ticket.guildId) : null;
+  const color = guildData?.identity?.primaryColor
+    ? formatHexColor(guildData.identity.primaryColor)
+    : (constants.colors.azoxo as `#${string}`);
 
   return createContainer(
-    constants.colors.azoxo,
+    color,
     createSection({
       content:
         `## <:other_ticket:1502789959378145300> Ticket ${ticket.ticketId}\n${owner || "Usuário"} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas.` +
@@ -177,7 +182,7 @@ createResponder({
         const owner = await guild.members
           .fetch(ticket.ownerId)
           .catch(() => null);
-        const container = createMainPanel(ticket, owner);
+        const container = await createMainPanel(ticket, owner);
 
         await interaction.update({
           components: [container],
@@ -388,7 +393,7 @@ createResponder({
         const owner = await guild.members
           .fetch(ticket.ownerId)
           .catch(() => null);
-        const container = createMainPanel(ticket, owner);
+        const container = await createMainPanel(ticket, owner);
 
         if (ticket.messageId) {
           const mainMessage = await channel.messages
@@ -899,7 +904,7 @@ createResponder({
 
       // Atualizar Painel Principal no canal do ticket
       const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
-      const container = createMainPanel(ticket, owner);
+      const container = await createMainPanel(ticket, owner);
 
       if (ticket.messageId) {
         const mainMessage = await channel.messages
@@ -1200,7 +1205,7 @@ createResponder({
 
     // Atualizar Painel Principal
     const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
-    const container = createMainPanel(ticket, owner);
+    const container = await createMainPanel(ticket, owner);
 
     if (ticket.messageId) {
       const mainMessage = await channel.messages

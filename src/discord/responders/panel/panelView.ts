@@ -28,6 +28,20 @@ export const PANEL_COLOR = formatHexColor("#1900ff");
 export const BANNER_URL =
   "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 
+export function getPanelColor(guildData?: any): `#${string}` {
+  if (guildData?.identity?.primaryColor) {
+    return formatHexColor(guildData.identity.primaryColor);
+  }
+  return PANEL_COLOR;
+}
+
+export function getBannerUrl(guildData?: any): string {
+  if (guildData?.identity?.bannerUrl) {
+    return guildData.identity.bannerUrl;
+  }
+  return BANNER_URL;
+}
+
 export function buildPanelDropdown(currentTab: string = "home") {
   const options = [
     new StringSelectMenuOptionBuilder()
@@ -94,7 +108,16 @@ export function buildPanelDropdown(currentTab: string = "home") {
   );
 }
 
-export async function renderHomeTab(guild: Guild, client: Client) {
+export async function renderHomeTab(
+  guild: Guild,
+  client: Client,
+  guildData?: any,
+) {
+  if (!guildData) {
+    guildData = await db.guilds.get(guild.id);
+  }
+  const color = getPanelColor(guildData);
+  const banner = getBannerUrl(guildData);
   const rawPing = Math.round(client.ws.ping);
   const ping = isNaN(rawPing) || rawPing <= 0 ? 24 : rawPing;
   const openTicketsCount = await db.tickets.countDocuments({
@@ -104,7 +127,7 @@ export async function renderHomeTab(guild: Guild, client: Client) {
   const memberCount = guild.memberCount;
 
   return createContainer(
-    PANEL_COLOR,
+    color,
     "## PAINEL DE CONFIGURAÇÕES",
     buildPanelDropdown("home"),
     Separator.Default,
@@ -120,11 +143,12 @@ export async function renderHomeTab(guild: Guild, client: Client) {
       `• **Não Remova os Emojis:** Evite excluir ou alterar manualmente os emojis cadastrados no portal do desenvolvedor, pois isso pode causar erros visuais e mau funcionamento dos botões e menus do bot.`,
     ].join("\n"),
     Separator.Default,
-    createMediaGallery(BANNER_URL),
+    createMediaGallery(banner),
   );
 }
 
 export async function renderTicketTab(guildData: any) {
+  const color = getPanelColor(guildData);
   const channels = guildData.channels || {};
   const openChannelDisplay = channels.general
     ? `<#${channels.general}>`
@@ -146,7 +170,7 @@ export async function renderTicketTab(guildData: any) {
       : "*Nenhuma opção de categoria cadastrada.*";
 
   return createContainer(
-    PANEL_COLOR,
+    color,
     `## ${getEmojiTag("other_ticket")} Sistema de Ticket`,
     buildPanelDropdown("ticket"),
     Separator.Default,
@@ -195,6 +219,7 @@ export async function renderTicketTab(guildData: any) {
 }
 
 export async function renderPaymentsTab(guildData: any) {
+  const color = getPanelColor(guildData);
   const p = guildData.payments || {};
   const pixKey = p.pixKey || guildData.channels?.pixKey;
   const pixType = p.pixType || "Chave PIX";
@@ -202,7 +227,7 @@ export async function renderPaymentsTab(guildData: any) {
   const stripeKey = p.stripeSecretKey;
 
   return createContainer(
-    PANEL_COLOR,
+    color,
     `## ${getEmojiTag("other_dollar")} Sistema de Pagamentos`,
     buildPanelDropdown("payments"),
     Separator.Default,
@@ -249,6 +274,7 @@ export async function renderPaymentsTab(guildData: any) {
 }
 
 export async function renderAutoroleTab(guildData: any) {
+  const color = getPanelColor(guildData);
   const w = guildData.welcome || {};
   const entryChannel = w.channelEntry ? `<#${w.channelEntry}>` : "*Não configurado*";
   const exitChannel = w.channelExit ? `<#${w.channelExit}>` : "*Não configurado*";
@@ -256,7 +282,7 @@ export async function renderAutoroleTab(guildData: any) {
   const minAge = w.minAccountAgeDays ?? 0;
 
   return createContainer(
-    PANEL_COLOR,
+    color,
     `## ${getEmojiTag("user_users")} Sistema de Boas-vindas & Autorole`,
     buildPanelDropdown("autorole"),
     Separator.Default,
@@ -299,6 +325,7 @@ export async function renderAutoroleTab(guildData: any) {
 }
 
 export async function renderVerificationTab(guildData: any) {
+  const color = getPanelColor(guildData);
   const v = guildData.verification || {};
   const vChannel = v.channel ? `<#${v.channel}>` : "*Não configurado*";
   const logsChannel = v.logsChannel ? `<#${v.logsChannel}>` : "*Não configurado*";
@@ -306,7 +333,7 @@ export async function renderVerificationTab(guildData: any) {
   const unvRole = v.unverifiedRole ? `<@&${v.unverifiedRole}>` : "*Não configurado*";
 
   return createContainer(
-    PANEL_COLOR,
+    color,
     `## ${getEmojiTag("shield_check")} Sistema de Verificação (Captcha)`,
     buildPanelDropdown("verification"),
     Separator.Default,
@@ -357,12 +384,13 @@ export async function renderVerificationTab(guildData: any) {
 }
 
 export async function renderLogsTab(guildData: any) {
+  const color = getPanelColor(guildData);
   const logsChannel = guildData.botLogsChannel
     ? `<#${guildData.botLogsChannel}>`
     : "*Não configurado*";
 
   return createContainer(
-    PANEL_COLOR,
+    color,
     `## ${getEmojiTag("folder")} Sistema de Logs do Discord`,
     buildPanelDropdown("logs"),
     Separator.Default,
@@ -379,21 +407,84 @@ export async function renderLogsTab(guildData: any) {
   );
 }
 
-export async function renderIdentityTab(guild: Guild) {
+export async function renderIdentityTab(
+  guild: Guild,
+  client: Client,
+  guildData?: any,
+) {
+  if (!guildData) {
+    guildData = await db.guilds.get(guild.id);
+  }
+
+  const identity = guildData.identity || {};
+  const currentColor = getPanelColor(guildData);
+  const currentBanner = getBannerUrl(guildData);
+  const botDisplayName =
+    guild.members.me?.displayName || client.user?.username || "Bot";
+  const avatarDisplay = identity.avatarUrl
+    ? `[Visualizar Imagem](${identity.avatarUrl})`
+    : `[Avatar Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
+  const bannerDisplay = identity.bannerUrl
+    ? `[Visualizar Banner](${identity.bannerUrl})`
+    : `\`Visual padrão configurado\``;
+
   return createContainer(
-    PANEL_COLOR,
+    currentColor,
     `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT`,
     buildPanelDropdown("identity"),
     Separator.Default,
-    `| **Servidor:** ${guild.name}\n| **Cor Principal:** \`${PANEL_COLOR}\` (Azul / Neon)\n| **Banner Atual:** Visual padrão configurado`,
+    createSection({
+      content: `| ${getEmojiTag("other_bot")} **Nome do Bot no Servidor:**\n\`${botDisplayName}\``,
+      button: new ButtonBuilder()
+        .setCustomId("panel/identity/edit_name")
+        .setLabel("Editar Nome")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji(getEmojiId("action_add") || "✏️"),
+    }),
     Separator.Default,
-    createMediaGallery(BANNER_URL),
+    createSection({
+      content: `| ${getEmojiTag("user_users")} **Foto de Perfil (Avatar):**\n${avatarDisplay}`,
+      button: new ButtonBuilder()
+        .setCustomId("panel/identity/edit_avatar")
+        .setLabel("Editar Perfil")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji(getEmojiId("action_add") || "🖼️"),
+    }),
+    Separator.Default,
+    createSection({
+      content: `| ${getEmojiTag("apps_figma")} **Cor Principal das Embeds:**\n\`${currentColor}\``,
+      button: new ButtonBuilder()
+        .setCustomId("panel/identity/edit_color")
+        .setLabel("Editar Cor")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji(getEmojiId("action_add") || "🎨"),
+    }),
+    Separator.Default,
+    createSection({
+      content: `| ${getEmojiTag("apps_figma")} **Banner do Painel & Sistema:**\n${bannerDisplay}`,
+      button: new ButtonBuilder()
+        .setCustomId("panel/identity/edit_banner")
+        .setLabel("Editar Banner")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji(getEmojiId("action_add") || "🖼️"),
+    }),
+    Separator.Default,
+    createRow(
+      new ButtonBuilder()
+        .setCustomId("panel/identity/reset")
+        .setLabel("Restaurar Padrões")
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji(getEmojiId("action_remove") || "🔄"),
+    ),
+    Separator.Default,
+    createMediaGallery(currentBanner),
   );
 }
 
-export async function renderSalesTab() {
+export async function renderSalesTab(guildData?: any) {
+  const color = getPanelColor(guildData);
   return createContainer(
-    PANEL_COLOR,
+    color,
     `## ${getEmojiTag("other_card")} Sistema de Vendas`,
     buildPanelDropdown("sales"),
     Separator.Default,
@@ -403,9 +494,10 @@ export async function renderSalesTab() {
   );
 }
 
-export async function renderCommandsTab() {
+export async function renderCommandsTab(guildData?: any) {
+  const color = getPanelColor(guildData);
   return createContainer(
-    PANEL_COLOR,
+    color,
     `## ${getEmojiTag("other_terminal")} Guia Geral de Comandos`,
     buildPanelDropdown("commands"),
     Separator.Default,
@@ -446,13 +538,13 @@ export async function renderTab(
 
   switch (tab) {
     case "identity":
-      return await renderIdentityTab(guild);
+      return await renderIdentityTab(guild, client, guildData);
     case "ticket":
       return await renderTicketTab(guildData);
     case "payments":
       return await renderPaymentsTab(guildData);
     case "sales":
-      return await renderSalesTab();
+      return await renderSalesTab(guildData);
     case "autorole":
       return await renderAutoroleTab(guildData);
     case "verification":
@@ -460,9 +552,9 @@ export async function renderTab(
     case "logs":
       return await renderLogsTab(guildData);
     case "commands":
-      return await renderCommandsTab();
+      return await renderCommandsTab(guildData);
     case "home":
     default:
-      return await renderHomeTab(guild, client);
+      return await renderHomeTab(guild, client, guildData);
   }
 }

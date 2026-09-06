@@ -47,6 +47,12 @@ export interface IGuild {
     stripeSecretKey?: string;
     stripeWebhookSecret?: string;
   };
+  identity?: {
+    botName?: string;
+    avatarUrl?: string;
+    primaryColor?: string;
+    bannerUrl?: string;
+  };
 }
 
 export interface GuildModel extends Model<IGuild> {
@@ -100,6 +106,12 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
     mpPublicKey: String,
     stripeSecretKey: String,
     stripeWebhookSecret: String,
+  },
+  identity: {
+    botName: String,
+    avatarUrl: String,
+    primaryColor: String,
+    bannerUrl: String,
   },
 });
 

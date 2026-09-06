@@ -48,6 +48,12 @@ export const guildSchema = new Schema({
         stripeSecretKey: String,
         stripeWebhookSecret: String,
     },
+    identity: {
+        botName: String,
+        avatarUrl: String,
+        primaryColor: String,
+        bannerUrl: String,
+    },
 });
 guildSchema.index({ id: 1 }, { unique: true });
 const cache = new Map();

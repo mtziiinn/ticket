@@ -3,7 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { renderTab } from "./panelView.js";
+import { renderTab, formatHexColor, BANNER_URL } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
 import { createContainer, createRow, createSection, Separator, createEmbed, } from "@magicyan/discord";
 async function updatePanelResponse(interaction, container) {
@@ -977,6 +977,252 @@ createResponder({
         guildData.markModified("botLogsChannel");
         await guildData.save();
         const container = await renderTab("logs", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});
+// ==========================================
+// 7. Módulo de Identidade Visual do BOT
+// ==========================================
+// 7.1 Alterar Nome do Bot
+createResponder({
+    customId: "panel/identity/edit_name",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const currentName = guildData.identity?.botName ||
+            interaction.guild.members.me?.displayName ||
+            interaction.client.user?.username ||
+            "";
+        const modal = new ModalBuilder()
+            .setCustomId("panel/identity/modal/name")
+            .setTitle("Editar Nome do Bot");
+        const input = new TextInputBuilder()
+            .setCustomId("bot_name")
+            .setPlaceholder("Ex: One Tickets")
+            .setValue(currentName)
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(1)
+            .setMaxLength(32)
+            .setRequired(true);
+        const label = new LabelBuilder()
+            .setLabel("Nome do Bot no Servidor:")
+            .setTextInputComponent(input);
+        modal.addComponents(label);
+        await interaction.showModal(modal);
+    },
+});
+createResponder({
+    customId: "panel/identity/modal/name",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        const newName = interaction.fields.getTextInputValue("bot_name").trim();
+        if (!newName) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} O nome não pode ser vazio.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        try {
+            await interaction.guild.members.me?.setNickname(newName);
+        }
+        catch (err) {
+            console.error("[Identity] Erro ao alterar apelido no servidor:", err);
+        }
+        try {
+            await interaction.client.user?.setUsername(newName);
+        }
+        catch {
+            // Username global pode atingir rate limit do Discord
+        }
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.identity = guildData.identity || {};
+        guildData.identity.botName = newName;
+        guildData.markModified("identity");
+        await guildData.save();
+        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});
+// 7.2 Alterar Foto de Perfil (Avatar)
+createResponder({
+    customId: "panel/identity/edit_avatar",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const currentAvatar = guildData.identity?.avatarUrl || "";
+        const modal = new ModalBuilder()
+            .setCustomId("panel/identity/modal/avatar")
+            .setTitle("Editar Perfil (Avatar)");
+        const input = new TextInputBuilder()
+            .setCustomId("avatar_url")
+            .setPlaceholder("https://exemplo.com/avatar.png")
+            .setValue(currentAvatar)
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+        const label = new LabelBuilder()
+            .setLabel("URL da Imagem de Perfil (PNG/JPG/WebP):")
+            .setTextInputComponent(input);
+        modal.addComponents(label);
+        await interaction.showModal(modal);
+    },
+});
+createResponder({
+    customId: "panel/identity/modal/avatar",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        const avatarUrl = interaction.fields.getTextInputValue("avatar_url").trim();
+        if (!avatarUrl.startsWith("http://") && !avatarUrl.startsWith("https://")) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} URL inválida! O link deve começar com \`http://\` ou \`https://\`.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        let discordAvatarError = false;
+        try {
+            await interaction.client.user?.setAvatar(avatarUrl);
+        }
+        catch (err) {
+            console.error("[Identity] Erro ao alterar avatar global no Discord:", err);
+            discordAvatarError = true;
+        }
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.identity = guildData.identity || {};
+        guildData.identity.avatarUrl = avatarUrl;
+        guildData.markModified("identity");
+        await guildData.save();
+        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+        if (discordAvatarError) {
+            await interaction.followUp({
+                content: `${getEmojiTag("action_warning")} O avatar foi salvo nas configurações, mas o Discord bloqueou a alteração imediata da foto global por limite de taxa (máximo 2 trocas por hora). Tente novamente em alguns minutos.`,
+                flags: ["Ephemeral"],
+            });
+        }
+    },
+});
+// 7.3 Alterar Cor Principal (Embeds)
+createResponder({
+    customId: "panel/identity/edit_color",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const currentColor = guildData.identity?.primaryColor || "#1900ff";
+        const modal = new ModalBuilder()
+            .setCustomId("panel/identity/modal/color")
+            .setTitle("Editar Cor das Embeds");
+        const input = new TextInputBuilder()
+            .setCustomId("color_hex")
+            .setPlaceholder("#1900ff")
+            .setValue(currentColor)
+            .setStyle(TextInputStyle.Short)
+            .setMinLength(4)
+            .setMaxLength(9)
+            .setRequired(true);
+        const label = new LabelBuilder()
+            .setLabel("Código Hex da Cor (Ex: #1900ff, #22c55e):")
+            .setTextInputComponent(input);
+        modal.addComponents(label);
+        await interaction.showModal(modal);
+    },
+});
+createResponder({
+    customId: "panel/identity/modal/color",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        const colorHex = interaction.fields.getTextInputValue("color_hex").trim();
+        if (!/^#?([0-9a-fA-F]{3,8})$/.test(colorHex)) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} Cor inválida! Forneça um código hexadecimal válido, ex: \`#1900ff\` ou \`#22c55e\`.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const formattedColor = formatHexColor(colorHex);
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.identity = guildData.identity || {};
+        guildData.identity.primaryColor = formattedColor;
+        guildData.markModified("identity");
+        await guildData.save();
+        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});
+// 7.4 Alterar Banner do Painel
+createResponder({
+    customId: "panel/identity/edit_banner",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const currentBanner = guildData.identity?.bannerUrl || BANNER_URL;
+        const modal = new ModalBuilder()
+            .setCustomId("panel/identity/modal/banner")
+            .setTitle("Editar Banner do Sistema");
+        const input = new TextInputBuilder()
+            .setCustomId("banner_url")
+            .setPlaceholder("https://exemplo.com/banner.png")
+            .setValue(currentBanner)
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+        const label = new LabelBuilder()
+            .setLabel("URL da Imagem do Banner (PNG, JPG, GIF):")
+            .setTextInputComponent(input);
+        modal.addComponents(label);
+        await interaction.showModal(modal);
+    },
+});
+createResponder({
+    customId: "panel/identity/modal/banner",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        const bannerUrl = interaction.fields.getTextInputValue("banner_url").trim();
+        if (!bannerUrl.startsWith("http://") && !bannerUrl.startsWith("https://")) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} URL inválida! O link do banner deve começar com \`http://\` ou \`https://\`.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.identity = guildData.identity || {};
+        guildData.identity.bannerUrl = bannerUrl;
+        guildData.markModified("identity");
+        await guildData.save();
+        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});
+// 7.5 Restaurar Padrões de Identidade
+createResponder({
+    customId: "panel/identity/reset",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.identity = {
+            botName: undefined,
+            avatarUrl: undefined,
+            primaryColor: undefined,
+            bannerUrl: undefined,
+        };
+        guildData.markModified("identity");
+        await guildData.save();
+        try {
+            await interaction.guild.members.me?.setNickname(null);
+        }
+        catch {
+            // Ignorar caso sem permissão
+        }
+        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
         await updatePanelResponse(interaction, container);
     },
 });

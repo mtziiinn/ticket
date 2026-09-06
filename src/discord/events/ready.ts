@@ -43,5 +43,22 @@ createEvent({
         console.error("[Giveaway Sweep] Erro:", err);
       }
     }, 30000);
+
+    // Sincronizar apelido configurado nas guilds
+    try {
+      for (const guild of client.guilds.cache.values()) {
+        const guildData = await db.guilds.get(guild.id);
+        if (
+          guildData?.identity?.botName &&
+          guild.members.me?.displayName !== guildData.identity.botName
+        ) {
+          await guild.members.me
+            ?.setNickname(guildData.identity.botName)
+            .catch(() => {});
+        }
+      }
+    } catch (err) {
+      console.error("[Ready] Erro ao sincronizar apelido do bot:", err);
+    }
   },
 });
