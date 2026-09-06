@@ -10,7 +10,7 @@ export function formatHexColor(color) {
     return `#${cleaned}`;
 }
 export const PANEL_COLOR = formatHexColor("#1900ff");
-export const BANNER_URL = "https://media.r2rp.com/v1/files/1788668172740-t9zu7jru.png";
+export const BANNER_URL = "https://media.r2rp.com/v1/files/1788669460790-94f4dn7i.png";
 export function getPanelColor(guildData) {
     if (guildData?.identity?.primaryColor) {
         return formatHexColor(guildData.identity.primaryColor);
