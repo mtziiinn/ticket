@@ -4,6 +4,7 @@ import { createContainer, createSection, Separator, createRow, modalFieldsToReco
 import { ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, } from "discord.js";
 import { db } from "#database";
 import { sendActionLog } from "./logger.js";
+import { getCleanAvatarURL } from "#functions";
 // Função para renderizar o painel de gerenciamento de membros
 export async function renderMembersPanel(interaction, channel, ticket, guild) {
     // 1. Obter membros com permissões personalizadas de leitura/escrita no canal
@@ -40,7 +41,7 @@ export async function renderMembersPanel(interaction, channel, ticket, guild) {
     }
     const container = createContainer(constants.colors.primary, createSection({
         content: `## <:user_add:1502789972909097093> Gerenciar Acessos ao Atendimento\nUse as opções abaixo para adicionar novos usuários ao atendimento ou para remover membros que já possuem acesso ao canal.`,
-        thumbnail: interaction.user.displayAvatarURL(),
+        thumbnail: getCleanAvatarURL(interaction.user),
     }), Separator.Default, membersWithAccess.length > 0
         ? `<:user_check:1502789974276178121> **Membros com acesso atualmente:**\n` +
             membersWithAccess.map((m) => `> • ${m} (\`${m.id}\`)`).join("\n")

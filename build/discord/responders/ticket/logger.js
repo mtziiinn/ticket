@@ -1,5 +1,6 @@
 import { db } from "#database";
 import { createContainer, createSection, Separator } from "@magicyan/discord";
+import { getCleanAvatarURL } from "#functions";
 export async function sendActionLog(guild, ticket, staff, actionName, details) {
     try {
         const guildData = await db.guilds.get(guild.id);
@@ -12,7 +13,7 @@ export async function sendActionLog(guild, ticket, staff, actionName, details) {
         const openedAtTimestamp = Math.floor(ticket.openedAt.getTime() / 1000);
         const logContainer = createContainer(constants.colors.primary, createSection({
             content: `## <:shield:1502789938532450304> Ação Administrativa: Atendimento ${ticket.ticketId}\nAbaixo estão as informações da ação realizada no ticket por um Staff.`,
-            thumbnail: staff.displayAvatarURL(),
+            thumbnail: getCleanAvatarURL(staff),
         }), Separator.Default, `**Informações do Evento**\n` +
             [
                 `<:user_check:1502789974276178121> **Staff Responsável:** ${staff} (\`${staff.id}\`)`,

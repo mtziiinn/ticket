@@ -20,7 +20,7 @@ import {
   MessageType,
 } from "discord.js";
 import { db } from "#database";
-import { formatEmoji } from "#functions";
+import { formatEmoji, getCleanAvatarURL } from "#functions";
 import { formatHexColor } from "../panel/panelView.js";
 
 const cooldowns = new Map<string, number>();
@@ -151,7 +151,7 @@ async function processTicketSubmission(
       panelColor,
       createSection({
         content: `## <:other_ticket:1502789959378145300> Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
-        thumbnail: user.displayAvatarURL() as any,
+        thumbnail: getCleanAvatarURL(user) as any,
       }),
       Separator.Default,
       `<:folder_open:1502789875928400103> **Categoria do atendimento:**\n\`\`\`\n${category.toUpperCase()}\n\`\`\``,
@@ -254,7 +254,7 @@ async function processTicketSubmission(
           constants.colors.primary,
           createSection({
             content: `## <:folder:1502789880214720533> Novo Atendimento ${ticketId}\nVenho registrar a log de abertura do atendimento \`${ticketId}\`, iniciado por ${user}. Abaixo você pode ver todas as informações do ticket.`,
-            thumbnail: user.displayAvatarURL() as any,
+            thumbnail: getCleanAvatarURL(user) as any,
           }),
           Separator.Default,
           `**Identificação**\n` +

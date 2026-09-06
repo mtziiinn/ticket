@@ -1,5 +1,6 @@
 import { db } from "#database";
 import { createContainer, createSection, Separator } from "@magicyan/discord";
+import { getCleanAvatarURL } from "#functions";
 
 export async function sendActionLog(
   guild: any,
@@ -22,7 +23,7 @@ export async function sendActionLog(
       constants.colors.primary,
       createSection({
         content: `## <:shield:1502789938532450304> Ação Administrativa: Atendimento ${ticket.ticketId}\nAbaixo estão as informações da ação realizada no ticket por um Staff.`,
-        thumbnail: staff.displayAvatarURL() as any,
+        thumbnail: getCleanAvatarURL(staff) as any,
       }),
       Separator.Default,
       `**Informações do Evento**\n` +

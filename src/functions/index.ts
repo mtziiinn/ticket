@@ -18,6 +18,28 @@ export function formatEmoji(emojiRaw: string | null | undefined): any {
   return emojiRaw;
 }
 
+export function getCleanAvatarURL(user: any): string {
+  try {
+    if (!user) return emojis.static.other_ticket;
+    if (typeof user.displayAvatarURL === "function") {
+      return user.displayAvatarURL({ extension: "png", forceStatic: true });
+    }
+    if (typeof user.avatarURL === "function") {
+      return (
+        user.avatarURL({ extension: "png", forceStatic: true }) ||
+        user.defaultAvatarURL ||
+        emojis.static.other_ticket
+      );
+    }
+    if (typeof user === "string" && user.startsWith("http")) {
+      return user;
+    }
+    return emojis.static.other_ticket;
+  } catch {
+    return emojis.static.other_ticket;
+  }
+}
+
 export function crc16(data: string): string {
   let crc = 0xffff;
   for (let i = 0; i < data.length; i++) {

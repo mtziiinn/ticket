@@ -13,7 +13,11 @@ import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
 import { sendActionLog } from "./logger.js";
-import { createMercadoPagoCharge, generatePixPayload } from "#functions";
+import {
+  createMercadoPagoCharge,
+  generatePixPayload,
+  getCleanAvatarURL,
+} from "#functions";
 
 // Função compartilhada para renomear
 async function processRename(interaction: any) {
@@ -374,10 +378,10 @@ async function processCloseSubmission(interaction: any) {
 
     const data = modalFieldsToRecord(fields);
     const transcriptChoiceRaw = data.transcript_choice;
-    const wantTranscriptUser =
+    const wantTranscript =
       (Array.isArray(transcriptChoiceRaw)
         ? transcriptChoiceRaw[0]
-        : transcriptChoiceRaw) === "yes";
+        : transcriptChoiceRaw) !== "no";
     const considerations =
       (data.considerations as string) || "Atendimento concluído.";
 
@@ -387,17 +391,20 @@ async function processCloseSubmission(interaction: any) {
     ticket.closedAt = new Date();
     await (ticket as any).save();
 
-    // 3. Transcript OBRIGATÓRIO (Independente da escolha do Staff)
-    const transcriptUrl = await generateTranscript(
-      channel as any,
-      ticket,
-      user,
-    ).catch((err: any) => {
-      console.error("[Ticket] Erro ao gerar transcript:", err);
-      return "";
-    });
+    // 3. Transcript (Gerado apenas se o staff permitiu salvar)
+    let transcriptUrl = "";
+    if (wantTranscript) {
+      transcriptUrl = await generateTranscript(
+        channel as any,
+        ticket,
+        user,
+      ).catch((err: any) => {
+        console.error("[Ticket] Erro ao gerar transcript:", err);
+        return "";
+      });
+    }
 
-    // 4. LOG PARA STAFF (Sempre envia com o link se gerado)
+    // 4. LOG PARA STAFF
     const guildData = await db.guilds.get(guild.id);
     const logChannelId = guildData.channels?.tickets;
 
@@ -418,9 +425,7 @@ async function processCloseSubmission(interaction: any) {
           constants.colors.primary,
           createSection({
             content: `## <:folder:1502789880214720533> Atendimento ${ticket.ticketId}\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
-            thumbnail: (owner?.displayAvatarURL?.() ||
-              interaction.client.user?.displayAvatarURL() ||
-              emojis.static.other_ticket) as any,
+            thumbnail: getCleanAvatarURL(owner?.user || user) as any,
           }),
           Separator.Default,
           `**Identificação**\n` +
@@ -443,7 +448,7 @@ async function processCloseSubmission(interaction: any) {
             ].join("\n"),
           Separator.Default,
           `**<:action_check:1502789797821939752> Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``,
-          transcriptUrl
+          wantTranscript && transcriptUrl
             ? createRow(
                 new ButtonBuilder({
                   label: "Acessar Transcript",
@@ -461,26 +466,27 @@ async function processCloseSubmission(interaction: any) {
       }
     }
 
-    // 5. ENVIAR DM PARA O USUÁRIO (Apenas se ele quiser o link)
-    const ownerMember = await guild.members
-      .fetch(ticket.ownerId)
-      .catch(() => null);
-    if (ownerMember) {
+    // 5. ENVIAR DM PARA O USUÁRIO
+    const targetUser =
+      (await interaction.client.users.fetch(ticket.ownerId).catch(() => null)) ||
+      (await guild.members.fetch(ticket.ownerId).catch(() => null))?.user;
+
+    if (targetUser) {
       const openTime = Math.floor(new Date(ticket.openedAt).getTime() / 1000);
       const closeTime = Math.floor(Date.now() / 1000);
 
       const dmContainer = createContainer(
         constants.colors.danger,
         createSection({
-          content: `### Atendimento Encerrado\nOlá ${ownerMember}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
-          thumbnail: user.displayAvatarURL() as any,
+          content: `### Atendimento Encerrado\nOlá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
+          thumbnail: getCleanAvatarURL(user) as any,
         }),
         Separator.Default,
         `<:calendar:1502789854486986752> **Aberto em:** <t:${openTime}:f>`,
         `<:calendar_check:1502789850649071740> **Encerrado em:** <t:${closeTime}:f>`,
         Separator.Default,
         `<:action_check:1502789797821939752> **Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``,
-        wantTranscriptUser && transcriptUrl
+        wantTranscript && transcriptUrl
           ? createRow(
               new ButtonBuilder({
                 label: "Acessar Transcript",
@@ -492,12 +498,12 @@ async function processCloseSubmission(interaction: any) {
           : [],
       );
 
-      await ownerMember
+      await targetUser
         .send({
           components: [dmContainer],
           flags: ["IsComponentsV2"],
         })
-        .catch((err: any) => console.error("[Admin]", err));
+        .catch((err: any) => console.error("[Admin] Erro ao enviar DM para usuário:", err));
     }
 
     // 6. Deletar canal

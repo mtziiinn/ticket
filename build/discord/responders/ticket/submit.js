@@ -3,7 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
-import { formatEmoji } from "#functions";
+import { formatEmoji, getCleanAvatarURL } from "#functions";
 import { formatHexColor } from "../panel/panelView.js";
 const cooldowns = new Map();
 export function cleanupCooldowns() {
@@ -108,7 +108,7 @@ async function processTicketSubmission(interaction, routeCategory) {
             : constants.colors.azoxo;
         const container = createContainer(panelColor, createSection({
             content: `## <:other_ticket:1502789959378145300> Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
-            thumbnail: user.displayAvatarURL(),
+            thumbnail: getCleanAvatarURL(user),
         }), Separator.Default, `<:folder_open:1502789875928400103> **Categoria do atendimento:**\n\`\`\`\n${category.toUpperCase()}\n\`\`\``, `<:action_info:1502789798983766016> **Motivo do contato:**\n\`\`\`\n${description}\n\`\`\``, Separator.Default, createRow(new ButtonBuilder({
             customId: "ticket/manage/claim",
             label: "Assumir Ticket",
@@ -179,7 +179,7 @@ async function processTicketSubmission(interaction, routeCategory) {
                 const categoryName = selectedCategory?.name || category.toUpperCase();
                 const logContainer = createContainer(constants.colors.primary, createSection({
                     content: `## <:folder:1502789880214720533> Novo Atendimento ${ticketId}\nVenho registrar a log de abertura do atendimento \`${ticketId}\`, iniciado por ${user}. Abaixo você pode ver todas as informações do ticket.`,
-                    thumbnail: user.displayAvatarURL(),
+                    thumbnail: getCleanAvatarURL(user),
                 }), Separator.Default, `**Identificação**\n` +
                     [
                         `<:user:1502789979229913268> **Aberto por:** ${user} (\`${user.id}\`)`,

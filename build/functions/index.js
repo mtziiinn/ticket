@@ -17,6 +17,27 @@ export function formatEmoji(emojiRaw) {
     }
     return emojiRaw;
 }
+export function getCleanAvatarURL(user) {
+    try {
+        if (!user)
+            return emojis.static.other_ticket;
+        if (typeof user.displayAvatarURL === "function") {
+            return user.displayAvatarURL({ extension: "png", forceStatic: true });
+        }
+        if (typeof user.avatarURL === "function") {
+            return (user.avatarURL({ extension: "png", forceStatic: true }) ||
+                user.defaultAvatarURL ||
+                emojis.static.other_ticket);
+        }
+        if (typeof user === "string" && user.startsWith("http")) {
+            return user;
+        }
+        return emojis.static.other_ticket;
+    }
+    catch {
+        return emojis.static.other_ticket;
+    }
+}
 export function crc16(data) {
     let crc = 0xffff;
     for (let i = 0; i < data.length; i++) {

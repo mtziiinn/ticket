@@ -22,7 +22,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { formatEmoji } from "#functions";
+import { formatEmoji, getCleanAvatarURL } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
@@ -96,8 +96,7 @@ async function createMainPanel(ticket: any, owner: any) {
         (isClaimed
           ? `\n\n> <:user_check:1502789974276178121> **Assumido por:** <@${ticket.claimedBy}>`
           : ""),
-      thumbnail: (owner?.displayAvatarURL?.() ||
-        "https://cdn.discordapp.com/embed/avatars/0.png") as any,
+      thumbnail: getCleanAvatarURL(owner?.user || owner) as any,
     }),
     Separator.Default,
     `### ${currentStatus.emojiTag} Status do Pedido: \`${currentStatus.label.toUpperCase()}\` \n> ${currentStatus.description}`,
@@ -188,6 +187,13 @@ createResponder({
           components: [container],
         });
 
+        // Notificar no canal do ticket
+        await channel
+          .send({
+            content: `<:action_check:1502789797821939752> <@${ticket.ownerId}>, seu atendimento foi assumido por ${user}! O staff já está pronto para te ajudar.`,
+          })
+          .catch((err: any) => console.error("[Manage] Erro ao enviar aviso no canal:", err));
+
         // Enviar Log de Ação
         await sendActionLog(
           guild,
@@ -198,12 +204,21 @@ createResponder({
         );
 
         // Notificação Automática por DM
-        if (owner) {
+        const targetOwner =
+          (await interaction.client.users.fetch(ticket.ownerId).catch(() => null)) ||
+          owner?.user;
+
+        if (targetOwner) {
+          const guildData = await db.guilds.get(guild.id);
+          const color = guildData?.identity?.primaryColor
+            ? formatHexColor(guildData.identity.primaryColor)
+            : (constants.colors.azoxo as `#${string}`);
+
           const dmContainer = createContainer(
-            constants.colors.azoxo,
+            color,
             createSection({
-              content: `### Notificação de Atendimento\nOlá ${owner}, seu ticket na categoria \`${ticket.category.toUpperCase()}\` foi assumido por ${user}. Ele agora é o responsável pelo seu atendimento. Vá até o ticket para dar continuidade ao seu atendimento.`,
-              thumbnail: user.displayAvatarURL() as any,
+              content: `### Notificação de Atendimento\nOlá <@${ticket.ownerId}>, seu ticket na categoria \`${ticket.category.toUpperCase()}\` foi assumido por ${user}. Ele agora é o responsável pelo seu atendimento. Vá até o ticket para dar continuidade ao seu atendimento.`,
+              thumbnail: getCleanAvatarURL(user) as any,
             }),
             createRow(
               new ButtonBuilder({
@@ -214,12 +229,12 @@ createResponder({
             ),
           );
 
-          await owner
+          await targetOwner
             .send({
               components: [dmContainer],
               flags: ["IsComponentsV2"],
             })
-            .catch((err: any) => console.error("[Manage]", err));
+            .catch((err: any) => console.error("[Manage] Erro ao enviar DM:", err));
         }
         break;
       }
@@ -231,7 +246,7 @@ createResponder({
           constants.colors.primary,
           createSection({
             content: `## <:shield:1502789938532450304> Painel Administrativo ${ticket.ticketId}\nSeja muito bem-vindo(a) ao Painel Administrativo! Este é o seu ambiente de controle, onde você pode gerenciar o atendimento atual. Caso tenha alguma dúvida sobre o funcionamento, entre em contato com a equipe responsável.`,
-            thumbnail: user.displayAvatarURL() as any,
+            thumbnail: getCleanAvatarURL(user) as any,
           }),
           Separator.Default,
           createSection({
@@ -356,7 +371,7 @@ createResponder({
           createSection({
             content:
               "### <:arrow_right:1502789809142239243> Transferir Ticket\nSelecione a nova categoria para este atendimento abaixo.",
-            thumbnail: user.displayAvatarURL() as any,
+            thumbnail: getCleanAvatarURL(user) as any,
           }),
           createRow(
             new StringSelectMenuBuilder({
@@ -436,7 +451,7 @@ createResponder({
           createSection({
             content:
               "### <:clock_check:1502789856881938502> Atualizar Status do Pedido\nSelecione o novo status para esta encomenda abaixo. O usuário e o painel principal serão atualizados.",
-            thumbnail: user.displayAvatarURL() as any,
+            thumbnail: getCleanAvatarURL(user) as any,
           }),
           createRow(
             new StringSelectMenuBuilder({
@@ -518,18 +533,22 @@ createResponder({
           .setLabel("Transcript:")
           .setDescription("Deseja salvar o histórico deste atendimento?")
           .setRadioGroupComponent(
-            new RadioGroupBuilder().setCustomId("transcript_choice").setOptions(
-              {
-                label: "Salvar Transcript",
-                value: "yes",
-                description: "O log será gerado e enviado para a Staff.",
-              },
-              {
-                label: "Não Salvar Transcript",
-                value: "no",
-                description: "O ticket será fechado sem gerar log público.",
-              },
-            ),
+            new RadioGroupBuilder()
+              .setCustomId("transcript_choice")
+              .setRequired(true)
+              .setOptions(
+                {
+                  label: "Salvar Transcript",
+                  value: "yes",
+                  description: "O log será gerado e enviado para a Staff e para o cliente.",
+                  default: true,
+                },
+                {
+                  label: "Não Salvar Transcript",
+                  value: "no",
+                  description: "O ticket será fechado sem gerar log de transcript.",
+                },
+              ),
           );
 
         const considerationsLabel = new LabelBuilder()
@@ -619,22 +638,33 @@ createResponder({
               }
             }
 
-            const owner = ticket
-              ? await guild.members.fetch(ticket.ownerId).catch(() => null)
+            const targetOwner = ticket
+              ? (await interaction.client.users.fetch(ticket.ownerId).catch(() => null)) ||
+                (await guild.members.fetch(ticket.ownerId).catch(() => null))?.user
               : null;
-            if (owner) {
+            if (targetOwner && ticket) {
               const dmContainer = createContainer(
                 constants.colors.primary,
                 createSection({
-                  content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${owner}, o arquivo final do seu pedido foi entregue!`,
-                  thumbnail: user.displayAvatarURL() as any,
+                  content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá <@${ticket.ownerId}>, o arquivo final do seu pedido foi entregue!`,
+                  thumbnail: getCleanAvatarURL(user) as any,
                 }),
                 Separator.Default,
                 `<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\``,
                 `<:clipboard:1502789887907205293> **Descrição:** ${existing.description}`,
                 `<:cloud_check:1502789867355115690> **Link:** ${existing.url}`,
+                Separator.Default,
+                `<:action_warning:1502789801949265990> O link expira em **7 dias**.`,
+                createRow(
+                  new ButtonBuilder({
+                    label: "Baixar Arquivo",
+                    style: ButtonStyle.Link,
+                    emoji: "1502789906122936431",
+                    url: existing.url,
+                  }),
+                ),
               );
-              await owner
+              await targetOwner
                 .send({ components: [dmContainer], flags: ["IsComponentsV2"] })
                 .catch((err: any) =>
                   console.error("[Admin] Erro ao enviar DM:", err),
@@ -735,9 +765,9 @@ createResponder({
               constants.colors.primary,
               createSection({
                 content: `## <:folder:1502789880214720533> Atendimento Deletado: ${ticket.ticketId}\nO atendimento \`${ticket.ticketId}\` foi deletado por ${user}. O histórico de mensagens foi salvo e pode ser acessado abaixo.`,
-                thumbnail: (owner?.displayAvatarURL?.() ||
-                  interaction.client.user?.displayAvatarURL() ||
-                  emojis.static.other_ticket) as any,
+                thumbnail: getCleanAvatarURL(
+                  owner?.user || interaction.client.user,
+                ) as any,
               }),
               Separator.Default,
               `**Identificação**\n` +
@@ -928,9 +958,10 @@ createResponder({
           constants.colors.azoxo,
           createSection({
             content: `### <:arrow_right:1502789809142239243> Transferência de Categoria\nOlá ${owner}, seu ticket foi transferido para a nova categoria: **${newCategory.toUpperCase()}**.\n\nA equipe responsável por esta categoria dará continuidade ao seu atendimento.`,
-            thumbnail: (guild.iconURL() ||
-              interaction.client.user?.displayAvatarURL() ||
-              emojis.static.other_ticket) as any,
+            thumbnail: getCleanAvatarURL(
+              guild.iconURL({ extension: "png", forceStatic: true }) ||
+                interaction.client.user,
+            ) as any,
           }),
           createRow(
             new ButtonBuilder({
@@ -1229,9 +1260,10 @@ createResponder({
         constants.colors.azoxo,
         createSection({
           content: `### <:bell:1502789830155702333> Atualização no Pedido\nOlá ${owner}, o status do seu pedido na categoria \`${ticket.category.toUpperCase()}\` foi atualizado para **${statusData.label.toUpperCase()}**.\n\n> ${statusData.description}`,
-          thumbnail: (guild.iconURL() ||
-            interaction.client.user?.displayAvatarURL() ||
-            emojis.static.other_ticket) as any,
+          thumbnail: getCleanAvatarURL(
+            guild.iconURL({ extension: "png", forceStatic: true }) ||
+              interaction.client.user,
+          ) as any,
         }),
         createRow(
           new ButtonBuilder({

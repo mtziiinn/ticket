@@ -1,10 +1,10 @@
 import { env } from "#env";
 import { bootstrap } from "@constatic/base";
 import { db } from "#database";
-import { createContainer, createSection, Separator } from "@magicyan/discord";
+import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
 import "./constants.js";
-import { GatewayIntentBits, Options, Partials } from "discord.js";
-import { clearBotCache } from "#functions";
+import { GatewayIntentBits, Options, Partials, ButtonBuilder, ButtonStyle, } from "discord.js";
+import { clearBotCache, getCleanAvatarURL } from "#functions";
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
 console.log("------------------------------------------");
@@ -114,8 +114,13 @@ async function processDmQueue() {
                     : `<:file_add:1502789905112105071> **Arquivo:** \`${item.filename}\``;
                 const dmContainer = createContainer(constants.colors.primary, createSection({
                     content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${user}, o arquivo final do seu pedido foi entregue!`,
-                    thumbnail: staff.displayAvatarURL(),
-                }), Separator.Default, fileLine, `<:clipboard:1502789887907205293> **Descrição:** ${item.description || "Mídia entregue"}`, `<:cloud_check:1502789867355115690> **Link:** ${item.downloadUrl}`, Separator.Default, `<:action_warning:1502789801949265990> O link expira em **7 dias**.`);
+                    thumbnail: getCleanAvatarURL(staff),
+                }), Separator.Default, fileLine, `<:clipboard:1502789887907205293> **Descrição:** ${item.description || "Mídia entregue"}`, `<:cloud_check:1502789867355115690> **Link:** ${item.downloadUrl}`, Separator.Default, `<:action_warning:1502789801949265990> O link expira em **7 dias**.`, createRow(new ButtonBuilder({
+                    label: "Baixar Arquivo",
+                    style: ButtonStyle.Link,
+                    emoji: "1502789906122936431",
+                    url: item.downloadUrl,
+                })));
                 await user.send({
                     components: [dmContainer],
                     flags: ["IsComponentsV2"],

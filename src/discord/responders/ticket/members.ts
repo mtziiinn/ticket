@@ -18,6 +18,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { sendActionLog } from "./logger.js";
+import { getCleanAvatarURL } from "#functions";
 
 // Função para renderizar o painel de gerenciamento de membros
 export async function renderMembersPanel(interaction: any, channel: any, ticket: any, guild: any) {
@@ -70,7 +71,7 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
     constants.colors.primary,
     createSection({
       content: `## <:user_add:1502789972909097093> Gerenciar Acessos ao Atendimento\nUse as opções abaixo para adicionar novos usuários ao atendimento ou para remover membros que já possuem acesso ao canal.`,
-      thumbnail: interaction.user.displayAvatarURL() as any,
+      thumbnail: getCleanAvatarURL(interaction.user) as any,
     }),
     Separator.Default,
     membersWithAccess.length > 0
