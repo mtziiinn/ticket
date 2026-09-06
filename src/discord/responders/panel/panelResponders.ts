@@ -266,6 +266,63 @@ createResponder({
   },
 });
 
+// 2.3.1 Modal Editar Canal do Cofre (Vault)
+createResponder({
+  customId: "panel/ticket/edit_vault_channel",
+  types: [ResponderType.Button],
+  cache: "cached",
+  async run(interaction) {
+    const modal = new ModalBuilder()
+      .setCustomId("panel/ticket/modal/vault_channel")
+      .setTitle("Canal do Cofre (Backup)");
+
+    const label = new LabelBuilder()
+      .setLabel("Selecione o canal do cofre:")
+      .setDescription("Canal onde as imagens dos tickets serão salvas via Webhook.")
+      .setChannelSelectMenuComponent(
+        new ChannelSelectMenuBuilder()
+          .setCustomId("channel")
+          .setPlaceholder("Selecione um canal para o cofre")
+          .setChannelTypes(ChannelType.GuildText),
+      );
+
+    modal.addComponents(label);
+    await interaction.showModal(modal);
+  },
+});
+
+createResponder({
+  customId: "panel/ticket/modal/vault_channel",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction) {
+    const selectedChannel = interaction.fields
+      .getSelectedChannels("channel")
+      ?.first();
+    if (!selectedChannel) {
+      await interaction.reply({
+        content: "Nenhum canal foi selecionado.",
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
+
+    const guildData = await db.guilds.get(interaction.guild.id);
+    if (!guildData.channels) guildData.channels = {} as any;
+    guildData.channels!.vault = selectedChannel.id;
+    guildData.markModified("channels");
+    await (guildData as any).save();
+
+    const container = await renderTab(
+      "ticket",
+      interaction.guild,
+      interaction.client,
+      guildData,
+    );
+    await updatePanelResponse(interaction, container);
+  },
+});
+
 // 2.4 Modal Adicionar Opção de Abertura (5 campos)
 createResponder({
   customId: "panel/ticket/add_category",

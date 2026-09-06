@@ -705,6 +705,45 @@ createResponder({
         }
     },
 });
+// Cache para reutilizar o webhook permanente do cofre e nunca criar múltiplos webhooks
+const vaultWebhookCache = new Map();
+async function getOrCreateVaultWebhook(vaultChannel, clientUser) {
+    if (!vaultChannel || typeof vaultChannel.fetchWebhooks !== "function") {
+        return null;
+    }
+    try {
+        const cached = vaultWebhookCache.get(vaultChannel.id);
+        if (cached) {
+            return cached;
+        }
+        const webhooks = await vaultChannel.fetchWebhooks().catch(() => null);
+        if (webhooks && webhooks.size > 0) {
+            // 1. Reutilizar webhook já criado por este bot ou com nome padrão
+            const existing = webhooks.find((w) => w.owner?.id === clientUser?.id) ||
+                webhooks.find((w) => w.name === "Cofre de Mídia" || w.name === "Ticket Media Vault") ||
+                webhooks.first();
+            if (existing) {
+                vaultWebhookCache.set(vaultChannel.id, existing);
+                return existing;
+            }
+        }
+        // 2. Se não existir, criar exatamente 1 webhook (se houver limite disponível)
+        if (!webhooks || webhooks.size < 10) {
+            const created = await vaultChannel.createWebhook({
+                name: "Cofre de Mídia",
+                avatar: clientUser?.displayAvatarURL?.({ extension: "png" }),
+                reason: "Webhook único para backup de imagens de tickets",
+            });
+            vaultWebhookCache.set(vaultChannel.id, created);
+            return created;
+        }
+        return null;
+    }
+    catch (err) {
+        console.error("[Vault Webhook] Erro ao buscar/criar webhook:", err);
+        return null;
+    }
+}
 export async function generateTranscript(channel, ticket, closer) {
     try {
         const allMessages = [];
@@ -729,10 +768,29 @@ export async function generateTranscript(channel, ticket, closer) {
         const guildData = channel.guild
             ? await db.guilds.get(channel.guild.id).catch(() => null)
             : null;
+        let vaultChannel = null;
         const vaultChannelId = guildData?.channels?.vault || guildData?.channels?.logs;
-        const vaultChannel = vaultChannelId && channel.guild
-            ? await channel.guild.channels.fetch(vaultChannelId).catch(() => null)
-            : null;
+        if (vaultChannelId && channel.guild) {
+            vaultChannel = await channel.guild.channels
+                .fetch(vaultChannelId)
+                .catch(() => null);
+        }
+        // Auto-detectar canal de cofre se ainda não configurado
+        if (!vaultChannel && channel.guild) {
+            vaultChannel = channel.guild.channels.cache.find((c) => c.isTextBased() &&
+                /^(imagens|cofre|vault|backup-midia|fotos|midia|logs-ticket)$/i.test(c.name));
+            if (vaultChannel && guildData) {
+                guildData.channels = guildData.channels || {};
+                guildData.channels.vault = vaultChannel.id;
+                guildData.markModified("channels");
+                await guildData.save().catch(() => { });
+            }
+        }
+        // Obter ou criar webhook único para o cofre (reutilizado para todos os anexos)
+        let vaultWebhook = null;
+        if (vaultChannel?.isTextBased()) {
+            vaultWebhook = await getOrCreateVaultWebhook(vaultChannel, channel.client?.user);
+        }
         const ownerMember = ticket.ownerId && channel.guild
             ? await channel.guild.members.fetch(ticket.ownerId).catch(() => null)
             : null;
@@ -755,13 +813,63 @@ export async function generateTranscript(channel, ticket, closer) {
             if (msg.attachments?.size > 0) {
                 for (const att of msg.attachments.values()) {
                     let permanentUrl = att.url;
-                    if (vaultChannel?.isTextBased()) {
+                    // 1. Enviar via Webhook mudando o nome para o do autor
+                    if (vaultWebhook) {
+                        try {
+                            const authorName = msg.member?.displayName ||
+                                msg.author?.displayName ||
+                                msg.author?.username ||
+                                "Usuário";
+                            const authorAvatar = msg.author?.displayAvatarURL?.({
+                                extension: "png",
+                                forceStatic: true,
+                            }) ||
+                                channel.client?.user?.displayAvatarURL?.({ extension: "png" });
+                            const backup = await vaultWebhook.send({
+                                username: authorName,
+                                avatarURL: authorAvatar,
+                                content: `📁 **Backup de Mídia** • Ticket \`${transcriptId}\``,
+                                files: [
+                                    {
+                                        attachment: att.url,
+                                        name: att.name || "imagem.png",
+                                    },
+                                ],
+                                wait: true,
+                            });
+                            const backupUrl = backup?.attachments?.first?.()?.url ||
+                                backup?.attachments?.[0]?.url;
+                            if (backupUrl) {
+                                permanentUrl = backupUrl;
+                            }
+                        }
+                        catch (err) {
+                            console.error(`[Vault Webhook] Erro ao enviar anexo via webhook:`, err);
+                            // Fallback para envio direto pelo canal se o webhook falhar
+                            if (vaultChannel?.isTextBased()) {
+                                try {
+                                    const backup = await vaultChannel.send({
+                                        content: `📁 **Backup de Mídia** • Ticket \`${transcriptId}\` | Autor: \`${msg.author?.tag || msg.author?.username || "Desconhecido"}\``,
+                                        files: [att.url],
+                                    });
+                                    const backupUrl = backup?.attachments?.first?.()?.url;
+                                    if (backupUrl)
+                                        permanentUrl = backupUrl;
+                                }
+                                catch {
+                                    /* ignore */
+                                }
+                            }
+                        }
+                    }
+                    else if (vaultChannel?.isTextBased()) {
+                        // Fallback se webhook não pôde ser criado (ex: sem permissão)
                         try {
                             const backup = await vaultChannel.send({
-                                content: `<:file_files:1502789907511247010> **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author?.tag || msg.author?.username || "Desconhecido"}\``,
+                                content: `📁 **Backup de Mídia** • Ticket \`${transcriptId}\` | Autor: \`${msg.author?.tag || msg.author?.username || "Desconhecido"}\``,
                                 files: [att.url],
                             });
-                            const backupUrl = backup.attachments.first()?.url;
+                            const backupUrl = backup?.attachments?.first?.()?.url;
                             if (backupUrl) {
                                 permanentUrl = backupUrl;
                             }

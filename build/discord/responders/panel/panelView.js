@@ -110,6 +110,9 @@ export async function renderTicketTab(guildData) {
     const transcriptChannelDisplay = channels.tickets
         ? `<#${channels.tickets}>`
         : "*Não configurado*";
+    const vaultChannelDisplay = channels.vault
+        ? `<#${channels.vault}>`
+        : "*Não configurado*";
     const categories = channels.ticketCategories || [];
     const catLines = categories.length > 0
         ? categories
@@ -135,6 +138,13 @@ export async function renderTicketTab(guildData) {
         content: `| **Canal de Transcript:**\n${transcriptChannelDisplay}`,
         button: new ButtonBuilder()
             .setCustomId("panel/ticket/edit_transcript_channel")
+            .setLabel("Editar Canal")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_add") || "✏️"),
+    }), Separator.Default, createSection({
+        content: `| **Canal do Cofre (Backup de Imagens):**\n${vaultChannelDisplay}`,
+        button: new ButtonBuilder()
+            .setCustomId("panel/ticket/edit_vault_channel")
             .setLabel("Editar Canal")
             .setStyle(ButtonStyle.Secondary)
             .setEmoji(getEmojiId("action_add") || "✏️"),
