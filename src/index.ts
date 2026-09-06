@@ -232,4 +232,4 @@ function runPeriodicCacheCleanup() {
 // Configura intervalos
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
 setInterval(processDmQueue, 10000);
-setInterval(runPeriodicCacheCleanup, 15 * 60 * 1000); // A cada 15 minutos
+setInterval(runPeriodicCacheCleanup, 60 * 60 * 1000); // A cada 1 hora (60 minutos)
