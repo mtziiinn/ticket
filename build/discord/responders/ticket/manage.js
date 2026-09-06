@@ -550,7 +550,9 @@ createResponder({
                         const closedAtTimestamp = Math.floor(new Date().getTime() / 1000);
                         const logContainer = createContainer(constants.colors.primary, createSection({
                             content: `## <:folder:1502789880214720533> Atendimento Deletado: ${ticket.ticketId}\nO atendimento \`${ticket.ticketId}\` foi deletado por ${user}. O histórico de mensagens foi salvo e pode ser acessado abaixo.`,
-                            thumbnail: owner?.displayAvatarURL(),
+                            thumbnail: (owner?.displayAvatarURL?.() ||
+                                interaction.client.user?.displayAvatarURL() ||
+                                emojis.static.other_ticket),
                         }), Separator.Default, `**Identificação**\n` +
                             [
                                 `<:user:1502789979229913268> **Aberto por:** ${owner || "Desconhecido"} (\`${ticket.ownerId}\`)`,
@@ -686,7 +688,9 @@ createResponder({
             if (owner) {
                 const dmContainer = createContainer(constants.colors.azoxo, createSection({
                     content: `### <:arrow_right:1502789809142239243> Transferência de Categoria\nOlá ${owner}, seu ticket foi transferido para a nova categoria: **${newCategory.toUpperCase()}**.\n\nA equipe responsável por esta categoria dará continuidade ao seu atendimento.`,
-                    thumbnail: guild.iconURL(),
+                    thumbnail: (guild.iconURL() ||
+                        interaction.client.user?.displayAvatarURL() ||
+                        emojis.static.other_ticket),
                 }), createRow(new ButtonBuilder({
                     label: "Ir para o atendimento",
                     style: ButtonStyle.Link,
@@ -936,7 +940,9 @@ createResponder({
         if (owner) {
             const dmContainer = createContainer(constants.colors.azoxo, createSection({
                 content: `### <:bell:1502789830155702333> Atualização no Pedido\nOlá ${owner}, o status do seu pedido na categoria \`${ticket.category.toUpperCase()}\` foi atualizado para **${statusData.label.toUpperCase()}**.\n\n> ${statusData.description}`,
-                thumbnail: guild.iconURL(),
+                thumbnail: (guild.iconURL() ||
+                    interaction.client.user?.displayAvatarURL() ||
+                    emojis.static.other_ticket),
             }), createRow(new ButtonBuilder({
                 label: "Ir para o atendimento",
                 style: ButtonStyle.Link,

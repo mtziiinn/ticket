@@ -326,7 +326,9 @@ async function processCloseSubmission(interaction) {
                 const closedAtTimestamp = Math.floor(new Date().getTime() / 1000);
                 const logContainer = createContainer(constants.colors.primary, createSection({
                     content: `## <:folder:1502789880214720533> Atendimento ${ticket.ticketId}\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
-                    thumbnail: owner?.displayAvatarURL(),
+                    thumbnail: (owner?.displayAvatarURL?.() ||
+                        interaction.client.user?.displayAvatarURL() ||
+                        emojis.static.other_ticket),
                 }), Separator.Default, `**Identificação**\n` +
                     [
                         `<:user:1502789979229913268> **Aberto por:** ${owner || "Desconhecido"} (\`${ticket.ownerId}\`)`,

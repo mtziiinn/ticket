@@ -418,7 +418,9 @@ async function processCloseSubmission(interaction: any) {
           constants.colors.primary,
           createSection({
             content: `## <:folder:1502789880214720533> Atendimento ${ticket.ticketId}\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
-            thumbnail: owner?.displayAvatarURL() as any,
+            thumbnail: (owner?.displayAvatarURL?.() ||
+              interaction.client.user?.displayAvatarURL() ||
+              emojis.static.other_ticket) as any,
           }),
           Separator.Default,
           `**Identificação**\n` +

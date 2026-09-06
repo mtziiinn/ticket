@@ -91,13 +91,16 @@ createResponder({
       return;
     }
 
-    const guildIcon = interaction.guild.iconURL({ size: 128 }) ?? undefined;
+    const guildIcon =
+      interaction.guild.iconURL({ size: 128 }) ||
+      interaction.client.user?.displayAvatarURL() ||
+      emojis.static.other_ticket;
 
     const container = createContainer(
       "#22c55e",
       createSection({
         content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-        thumbnail: guildIcon as any,
+        thumbnail: guildIcon,
       }),
       Separator.Default,
       [
