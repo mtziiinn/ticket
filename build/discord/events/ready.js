@@ -54,18 +54,5 @@ createEvent({
         catch (err) {
             console.error("[Ready] Erro ao sincronizar apelido do bot:", err);
         }
-        // Sincronizar bio padrão da aplicação do bot
-        try {
-            const defaultBio = "<:as_bot:1207073701137485845>・Desenvolvido por One Network";
-            await client.application?.fetch();
-            if (client.application && client.application.description !== defaultBio) {
-                await client.application
-                    .edit({ description: defaultBio })
-                    .catch(() => { });
-            }
-        }
-        catch (err) {
-            console.error("[Ready] Erro ao sincronizar bio do bot:", err);
-        }
     },
 });
