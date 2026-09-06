@@ -19,17 +19,10 @@ export function getPanelColor(guildData) {
     return PANEL_COLOR;
 }
 export function getTicketEmbedColor(guildData) {
-    if (guildData?.identity?.ticketEmbedColor) {
-        return formatHexColor(guildData.identity.ticketEmbedColor);
-    }
-    return TICKET_EMBED_COLOR;
+    return getPanelColor(guildData);
 }
-export const VERIFY_EMBED_COLOR = formatHexColor("#22c55e");
 export function getVerifyEmbedColor(guildData) {
-    if (guildData?.identity?.verifyEmbedColor) {
-        return formatHexColor(guildData.identity.verifyEmbedColor);
-    }
-    return VERIFY_EMBED_COLOR;
+    return getPanelColor(guildData);
 }
 export function getBannerUrl(guildData) {
     if (guildData?.identity?.bannerUrl) {
@@ -292,8 +285,6 @@ export async function renderIdentityTab(guild, client, guildData) {
     }
     const identity = guildData.identity || {};
     const currentColor = getPanelColor(guildData);
-    const currentTicketColor = getTicketEmbedColor(guildData);
-    const currentVerifyColor = getVerifyEmbedColor(guildData);
     const currentBanner = getBannerUrl(guildData);
     const botDisplayName = guild.members.me?.displayName || client.user?.username || "Bot";
     const avatarDisplay = identity.avatarUrl
@@ -320,20 +311,6 @@ export async function renderIdentityTab(guild, client, guildData) {
         content: `| ${getEmojiTag("apps_figma")} **Cor Principal das Embeds:**\n\`${currentColor}\``,
         button: new ButtonBuilder()
             .setCustomId("panel/identity/edit_color")
-            .setLabel("Editar Cor")
-            .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("action_add") || "🎨"),
-    }), Separator.Default, createSection({
-        content: `| ${getEmojiTag("other_ticket")} **Cor da Central de Atendimento:**\n\`${currentTicketColor}\``,
-        button: new ButtonBuilder()
-            .setCustomId("panel/identity/edit_ticket_color")
-            .setLabel("Editar Cor")
-            .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("action_add") || "🎨"),
-    }), Separator.Default, createSection({
-        content: `| ${getEmojiTag("shield_check")} **Cor do Painel de Verificação:**\n\`${currentVerifyColor}\``,
-        button: new ButtonBuilder()
-            .setCustomId("panel/identity/edit_verify_color")
             .setLabel("Editar Cor")
             .setStyle(ButtonStyle.Secondary)
             .setEmoji(getEmojiId("action_add") || "🎨"),

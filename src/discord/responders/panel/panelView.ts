@@ -37,19 +37,11 @@ export function getPanelColor(guildData?: any): `#${string}` {
 }
 
 export function getTicketEmbedColor(guildData?: any): `#${string}` {
-  if (guildData?.identity?.ticketEmbedColor) {
-    return formatHexColor(guildData.identity.ticketEmbedColor);
-  }
-  return TICKET_EMBED_COLOR;
+  return getPanelColor(guildData);
 }
 
-export const VERIFY_EMBED_COLOR = formatHexColor("#22c55e");
-
 export function getVerifyEmbedColor(guildData?: any): `#${string}` {
-  if (guildData?.identity?.verifyEmbedColor) {
-    return formatHexColor(guildData.identity.verifyEmbedColor);
-  }
-  return VERIFY_EMBED_COLOR;
+  return getPanelColor(guildData);
 }
 
 export function getBannerUrl(guildData?: any): string {
@@ -423,8 +415,6 @@ export async function renderIdentityTab(
 
   const identity = guildData.identity || {};
   const currentColor = getPanelColor(guildData);
-  const currentTicketColor = getTicketEmbedColor(guildData);
-  const currentVerifyColor = getVerifyEmbedColor(guildData);
   const currentBanner = getBannerUrl(guildData);
   const botDisplayName =
     guild.members.me?.displayName || client.user?.username || "Bot";
@@ -462,24 +452,6 @@ export async function renderIdentityTab(
       content: `| ${getEmojiTag("apps_figma")} **Cor Principal das Embeds:**\n\`${currentColor}\``,
       button: new ButtonBuilder()
         .setCustomId("panel/identity/edit_color")
-        .setLabel("Editar Cor")
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji(getEmojiId("action_add") || "🎨"),
-    }),
-    Separator.Default,
-    createSection({
-      content: `| ${getEmojiTag("other_ticket")} **Cor da Central de Atendimento:**\n\`${currentTicketColor}\``,
-      button: new ButtonBuilder()
-        .setCustomId("panel/identity/edit_ticket_color")
-        .setLabel("Editar Cor")
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji(getEmojiId("action_add") || "🎨"),
-    }),
-    Separator.Default,
-    createSection({
-      content: `| ${getEmojiTag("shield_check")} **Cor do Painel de Verificação:**\n\`${currentVerifyColor}\``,
-      button: new ButtonBuilder()
-        .setCustomId("panel/identity/edit_verify_color")
         .setLabel("Editar Cor")
         .setStyle(ButtonStyle.Secondary)
         .setEmoji(getEmojiId("action_add") || "🎨"),

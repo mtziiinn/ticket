@@ -1185,108 +1185,6 @@ createResponder({
         await updatePanelResponse(interaction, container);
     },
 });
-// 7.3.1 Alterar Cor da Central de Atendimento
-createResponder({
-    customId: "panel/identity/edit_ticket_color",
-    types: [ResponderType.Button],
-    cache: "cached",
-    async run(interaction) {
-        const guildData = await db.guilds.get(interaction.guild.id);
-        const currentTicketColor = getTicketEmbedColor(guildData);
-        const modal = new ModalBuilder()
-            .setCustomId("panel/identity/modal/ticket_color")
-            .setTitle("Cor da Central de Atendimento");
-        const input = new TextInputBuilder()
-            .setCustomId("ticket_color_hex")
-            .setPlaceholder("#22c55e")
-            .setValue(currentTicketColor)
-            .setStyle(TextInputStyle.Short)
-            .setMinLength(4)
-            .setMaxLength(9)
-            .setRequired(true);
-        const label = new LabelBuilder()
-            .setLabel("Código Hex da Cor (Ex: #22c55e, #1900ff):")
-            .setTextInputComponent(input);
-        modal.addComponents(label);
-        await interaction.showModal(modal);
-    },
-});
-createResponder({
-    customId: "panel/identity/modal/ticket_color",
-    types: [ResponderType.Modal, ResponderType.ModalComponent],
-    cache: "cached",
-    async run(interaction) {
-        const colorHex = interaction.fields
-            .getTextInputValue("ticket_color_hex")
-            .trim();
-        if (!/^#?([0-9a-fA-F]{3,8})$/.test(colorHex)) {
-            await interaction.reply({
-                content: `${getEmojiTag("action_x")} Cor inválida! Forneça um código hexadecimal válido, ex: \`#22c55e\` ou \`#1900ff\`.`,
-                flags: ["Ephemeral"],
-            });
-            return;
-        }
-        const formattedColor = formatHexColor(colorHex);
-        const guildData = await db.guilds.get(interaction.guild.id);
-        guildData.identity = guildData.identity || {};
-        guildData.identity.ticketEmbedColor = formattedColor;
-        guildData.markModified("identity");
-        await guildData.save();
-        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
-        await updatePanelResponse(interaction, container);
-    },
-});
-// 7.3.2 Alterar Cor do Painel de Verificação
-createResponder({
-    customId: "panel/identity/edit_verify_color",
-    types: [ResponderType.Button],
-    cache: "cached",
-    async run(interaction) {
-        const guildData = await db.guilds.get(interaction.guild.id);
-        const currentVerifyColor = getVerifyEmbedColor(guildData);
-        const modal = new ModalBuilder()
-            .setCustomId("panel/identity/modal/verify_color")
-            .setTitle("Cor do Painel de Verificação");
-        const input = new TextInputBuilder()
-            .setCustomId("verify_color_hex")
-            .setPlaceholder("#22c55e")
-            .setValue(currentVerifyColor)
-            .setStyle(TextInputStyle.Short)
-            .setMinLength(4)
-            .setMaxLength(9)
-            .setRequired(true);
-        const label = new LabelBuilder()
-            .setLabel("Código Hex da Cor (Ex: #22c55e, #1900ff):")
-            .setTextInputComponent(input);
-        modal.addComponents(label);
-        await interaction.showModal(modal);
-    },
-});
-createResponder({
-    customId: "panel/identity/modal/verify_color",
-    types: [ResponderType.Modal, ResponderType.ModalComponent],
-    cache: "cached",
-    async run(interaction) {
-        const colorHex = interaction.fields
-            .getTextInputValue("verify_color_hex")
-            .trim();
-        if (!/^#?([0-9a-fA-F]{3,8})$/.test(colorHex)) {
-            await interaction.reply({
-                content: `${getEmojiTag("action_x")} Cor inválida! Forneça um código hexadecimal válido, ex: \`#22c55e\` ou \`#1900ff\`.`,
-                flags: ["Ephemeral"],
-            });
-            return;
-        }
-        const formattedColor = formatHexColor(colorHex);
-        const guildData = await db.guilds.get(interaction.guild.id);
-        guildData.identity = guildData.identity || {};
-        guildData.identity.verifyEmbedColor = formattedColor;
-        guildData.markModified("identity");
-        await guildData.save();
-        const container = await renderTab("identity", interaction.guild, interaction.client, guildData);
-        await updatePanelResponse(interaction, container);
-    },
-});
 // 7.4 Alterar Banner do Painel
 createResponder({
     customId: "panel/identity/edit_banner",
@@ -1344,8 +1242,6 @@ createResponder({
             botName: undefined,
             avatarUrl: undefined,
             primaryColor: undefined,
-            ticketEmbedColor: undefined,
-            verifyEmbedColor: undefined,
             bannerUrl: undefined,
         };
         guildData.markModified("identity");
