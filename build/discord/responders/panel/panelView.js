@@ -267,22 +267,27 @@ export async function renderSalesTab() {
     return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_card")} Sistema de Vendas`, buildPanelDropdown("sales"), Separator.Default, `| **Status das Vendas:** Sistema integrado e pronto para cobranças via \`/gerar-pagamento\`.\n| **Gateways:** Suporte a PIX com QR Code, Mercado Pago e Stripe.`, Separator.Default, `*Para emitir cobranças diretas para clientes em um canal de ticket ou chat, use o comando \`/gerar-pagamento\`.*`);
 }
 export async function renderCommandsTab() {
-    return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_terminal")} Comandos do BOT`, buildPanelDropdown("commands"), Separator.Default, [
-        `### ${getEmojiTag("other_bot")} Comandos de Configuração e Gestão`,
-        `• \`/painel\` - Exibe o painel completo e interativo de configuração do BOT (envio de painéis, categorias, gateways).`,
-        `• \`/ticket stats\` - Exibe estatísticas de atendimentos por período e categoria.`,
-        `• \`/ticket limpar-cache\` - Limpa o cache de mensagens e otimiza o uso de memória RAM.`,
+    return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_terminal")} Guia Geral de Comandos`, buildPanelDropdown("commands"), Separator.Default, [
+        `### ${getEmojiTag("other_bot")} Configuração e Gestão`,
+        `• \`/painel\` - Painel central de controle (Tickets, Verificação, Gateways, Autorole e Logs).`,
+        `• \`/ticket stats\` - Exibe métricas de atendimento (hoje, semana, mês, total e por categoria).`,
+        `• \`/ticket limpar-cache\` - Limpa o cache em memória e otimiza o uso de RAM na hospedagem.`,
         ``,
-        `### ${getEmojiTag("lock")} Moderação e Gestão de Chat`,
+        `### ${getEmojiTag("lock")} Moderação e Controle de Chat`,
         `• \`/chat bloquear\` - Bloqueia o canal atual para que apenas administradores enviem mensagens.`,
         `• \`/chat desbloquear\` - Desbloqueia o canal atual para que todos os membros possam digitar.`,
         `• \`/chat limpar [quantidade]\` - Limpa de 1 a 100 mensagens do chat atual em massa.`,
         ``,
-        `### ${getEmojiTag("other_dollar")} Pagamentos e Cobranças`,
-        `• \`/gerar-pagamento\` - Gera uma cobrança interativa (PIX/Mercado Pago/Stripe) em BRL ou USD para um cliente.`,
+        `### ${getEmojiTag("other_dollar")} Vendas e Cobranças`,
+        `• \`/gerar-pagamento\` - Gera cobrança interativa (PIX/Mercado Pago/Stripe) em BRL ou USD.`,
+        `• **Entrega de Mídia:** Botão "Entregar Mídia" no painel admin do ticket gera link seguro de upload para envio de arquivos.`,
         ``,
         `### ${getEmojiTag("other_ticket")} Sorteios e Eventos`,
-        `• \`/criar-sorteio [item] [ganhadores] [tempo]\` - Inicia um sorteio interativo com botões de participação e painel de gerenciamento (reroll, finalizar, ver inscritos).`,
+        `• \`/criar-sorteio [item] [ganhadores] [tempo]\` - Cria sorteio com botão de participação e painel de controle (reroll, finalizar, participantes).`,
+        ``,
+        `### ${getEmojiTag("action_warning")} Organização Automática de Tickets`,
+        `Ao alterar o status do ticket, ele é reposicionado automaticamente por ordem de prioridade:`,
+        `\`Pagamento\` > \`Produção\` > \`Aberto\` > \`Fila\` > \`Concluído\`.`,
     ].join("\n"));
 }
 export async function renderTab(tab, guild, client, guildData) {
