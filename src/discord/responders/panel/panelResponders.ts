@@ -26,16 +26,29 @@ import {
 } from "@magicyan/discord";
 
 async function updatePanelResponse(interaction: any, container: any) {
-  if (interaction.isFromMessage && interaction.isFromMessage()) {
-    await interaction.update({
-      components: [container],
-      flags: ["IsComponentsV2"],
-    });
-  } else {
-    await interaction.reply({
-      components: [container],
-      flags: ["Ephemeral", "IsComponentsV2"],
-    });
+  try {
+    if (interaction.deferred || interaction.replied) {
+      await interaction.editReply({
+        components: [container],
+        flags: ["IsComponentsV2"],
+      });
+    } else if (interaction.isFromMessage && interaction.isFromMessage()) {
+      await interaction.update({
+        components: [container],
+        flags: ["IsComponentsV2"],
+      });
+    } else {
+      await interaction.reply({
+        components: [container],
+        flags: ["Ephemeral", "IsComponentsV2"],
+      });
+    }
+  } catch (err: any) {
+    if (err?.code === 10062) {
+      console.warn("[Panel] Interação expirou antes da resposta (Discord 10062 Unknown Interaction).");
+      return;
+    }
+    console.error("[Panel] Erro ao atualizar painel:", err);
   }
 }
 
@@ -1355,8 +1368,14 @@ createResponder({
       await interaction.reply({
         content: `${getEmojiTag("action_x")} O nome não pode ser vazio.`,
         flags: ["Ephemeral"],
-      });
+      }).catch(() => {});
       return;
+    }
+
+    if (interaction.isFromMessage?.()) {
+      await interaction.deferUpdate().catch(() => {});
+    } else {
+      await interaction.deferReply({ ephemeral: true }).catch(() => {});
     }
 
     try {
@@ -1426,8 +1445,15 @@ createResponder({
       await interaction.reply({
         content: `${getEmojiTag("action_x")} URL inválida! O link deve começar com \`http://\` ou \`https://\`.`,
         flags: ["Ephemeral"],
-      });
+      }).catch(() => {});
       return;
+    }
+
+    // Acknowledge imediato para evitar timeout de 3 segundos do Discord enquanto faz download/upload do avatar
+    if (interaction.isFromMessage?.()) {
+      await interaction.deferUpdate().catch(() => {});
+    } else {
+      await interaction.deferReply({ ephemeral: true }).catch(() => {});
     }
 
     let discordAvatarError = false;
@@ -1456,7 +1482,7 @@ createResponder({
       await interaction.followUp({
         content: `${getEmojiTag("action_warning")} O avatar foi salvo nas configurações, mas o Discord bloqueou a alteração imediata da foto global por limite de taxa (máximo 2 trocas por hora). Tente novamente em alguns minutos.`,
         flags: ["Ephemeral"],
-      });
+      }).catch(() => {});
     }
   },
 });
