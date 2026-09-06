@@ -230,6 +230,18 @@ export function SummaryCard({ transcript }: SummaryCardProps) {
                       <p className="text-[10px] text-muted-foreground/60 mt-2">
                         Entregue em {formatDate(delivery.deliveredAt)}
                       </p>
+                      {/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(delivery.filename || delivery.url || "") && (
+                        <div className="mt-3 overflow-hidden rounded-lg border border-border/50 max-w-xs bg-muted/20">
+                          <a href={delivery.url} target="_blank" rel="noopener noreferrer" className="block">
+                            <img
+                              src={delivery.url}
+                              alt={delivery.filename}
+                              className="max-h-48 w-auto object-contain rounded-lg hover:scale-[1.02] transition-transform cursor-pointer"
+                              loading="lazy"
+                            />
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <a

@@ -12,11 +12,15 @@ export interface TranscriptMessage {
     url: string;
     filename: string;
     contentType?: string;
+    width?: number;
+    height?: number;
   }>;
   embeds?: Array<{
     title?: string;
     description?: string;
     color?: number;
+    image?: string;
+    thumbnail?: string;
   }>;
 }
 
@@ -119,11 +123,15 @@ export interface CreateTranscriptPayload {
       url: string;
       filename: string;
       contentType?: string;
+      width?: number;
+      height?: number;
     }>;
     embeds?: Array<{
       title?: string;
       description?: string;
       color?: number;
+      image?: string;
+      thumbnail?: string;
     }>;
   }>;
 }

@@ -1036,7 +1036,8 @@ export async function generateTranscript(
     const guildData = channel.guild
       ? await db.guilds.get(channel.guild.id).catch(() => null)
       : null;
-    const vaultChannelId = guildData?.channels?.vault;
+    const vaultChannelId =
+      guildData?.channels?.vault || guildData?.channels?.logs;
     const vaultChannel = vaultChannelId && channel.guild
       ? await channel.guild.channels.fetch(vaultChannelId).catch(() => null)
       : null;
@@ -1068,36 +1069,35 @@ export async function generateTranscript(
     for (const msg of sortedMessages) {
       const attachments = [];
 
-      if (msg.attachments?.size > 0 && vaultChannel?.isTextBased()) {
+      if (msg.attachments?.size > 0) {
         for (const att of msg.attachments.values()) {
-          try {
-            const backup = await (vaultChannel as any).send({
-              content: `<:file_files:1502789907511247010> **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author?.tag || msg.author?.username || "Desconhecido"}\``,
-              files: [att.url],
-            });
-            const permanentUrl = backup.attachments.first()?.url;
-            attachments.push({
-              url: permanentUrl || att.url,
-              filename: att.name,
-              contentType: att.contentType,
-            });
-          } catch (err) {
-            console.error(`[Vault] Erro ao fazer backup de ${att.name}:`, err);
-            attachments.push({
-              url: att.url,
-              filename: att.name,
-              contentType: att.contentType,
-            });
+          let permanentUrl = att.url;
+          if (vaultChannel?.isTextBased()) {
+            try {
+              const backup = await (vaultChannel as any).send({
+                content: `<:file_files:1502789907511247010> **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author?.tag || msg.author?.username || "Desconhecido"}\``,
+                files: [att.url],
+              });
+              const backupUrl = backup.attachments.first()?.url;
+              if (backupUrl) {
+                permanentUrl = backupUrl;
+              }
+            } catch (err) {
+              console.error(
+                `[Vault] Erro ao fazer backup de ${att.name}:`,
+                err,
+              );
+            }
           }
-        }
-      } else if (msg.attachments?.size > 0) {
-        attachments.push(
-          ...msg.attachments.map((att: any) => ({
-            url: att.url,
+
+          attachments.push({
+            url: permanentUrl,
             filename: att.name,
-            contentType: att.contentType,
-          })),
-        );
+            contentType: att.contentType || undefined,
+            width: att.width || undefined,
+            height: att.height || undefined,
+          });
+        }
       }
 
       messagesData.push({
@@ -1121,6 +1121,8 @@ export async function generateTranscript(
           title: emb.title || undefined,
           description: emb.description || undefined,
           color: typeof emb.color === "number" ? emb.color : undefined,
+          image: emb.image?.url || undefined,
+          thumbnail: emb.thumbnail?.url || undefined,
         })),
       });
     }

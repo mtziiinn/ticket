@@ -14,6 +14,8 @@ const messageSchema = new Schema({
             url: String,
             filename: String,
             contentType: String,
+            width: Number,
+            height: Number,
         },
     ],
     embeds: [
@@ -21,6 +23,8 @@ const messageSchema = new Schema({
             title: String,
             description: String,
             color: Number,
+            image: String,
+            thumbnail: String,
         },
     ],
 }, { _id: false });
