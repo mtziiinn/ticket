@@ -15,7 +15,15 @@ import {
 } from "discord.js";
 import { db } from "#database";
 
-export const PANEL_COLOR = "#22c55e";
+export function formatHexColor(color: string): `#${string}` {
+  const cleaned = color.trim().replace(/^#/, "");
+  if (cleaned.length === 8) {
+    return `#${cleaned.slice(0, 6)}` as `#${string}`;
+  }
+  return `#${cleaned}` as `#${string}`;
+}
+
+export const PANEL_COLOR = formatHexColor("#1900ff");
 export const BANNER_URL =
   "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 
@@ -127,12 +135,12 @@ export async function renderTicketTab(guildData: any) {
   const catLines =
     categories.length > 0
       ? categories
-          .map((cat: any, idx: number) => {
-            const emoji = cat.emoji || "🎫";
-            const parent = cat.parentId ? `<#${cat.parentId}>` : "Nenhuma";
-            return `\`${idx + 1}.\` ${emoji} **${cat.name}** (Categoria: ${parent})`;
-          })
-          .join("\n")
+        .map((cat: any, idx: number) => {
+          const emoji = cat.emoji || "🎫";
+          const parent = cat.parentId ? `<#${cat.parentId}>` : "Nenhuma";
+          return `\`${idx + 1}.\` ${emoji} **${cat.name}** (Categoria: ${parent})`;
+        })
+        .join("\n")
       : "*Nenhuma opção de categoria cadastrada.*";
 
   return createContainer(

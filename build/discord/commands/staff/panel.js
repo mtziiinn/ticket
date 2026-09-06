@@ -9,7 +9,9 @@ createCommand({
     async run(interaction) {
         if (!interaction.inCachedGuild())
             return;
-        await interaction.deferReply({ flags: ["Ephemeral"] });
+        await interaction.deferReply({
+            flags: ["Ephemeral", "IsComponentsV2"],
+        });
         try {
             const container = await renderHomeTab(interaction.guild, interaction.client);
             await interaction.editReply({

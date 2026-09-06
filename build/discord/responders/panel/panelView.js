@@ -1,7 +1,14 @@
 import { createContainer, createSection, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, } from "discord.js";
 import { db } from "#database";
-export const PANEL_COLOR = "#22c55e";
+export function formatHexColor(color) {
+    const cleaned = color.trim().replace(/^#/, "");
+    if (cleaned.length === 8) {
+        return `#${cleaned.slice(0, 6)}`;
+    }
+    return `#${cleaned}`;
+}
+export const PANEL_COLOR = formatHexColor("#1900ff");
 export const BANNER_URL = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
 export function buildPanelDropdown(currentTab = "home") {
     const options = [
