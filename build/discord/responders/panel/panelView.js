@@ -10,12 +10,19 @@ export function formatHexColor(color) {
     return `#${cleaned}`;
 }
 export const PANEL_COLOR = formatHexColor("#1900ff");
+export const TICKET_EMBED_COLOR = formatHexColor("#22c55e");
 export const BANNER_URL = "https://media.r2rp.com/v1/files/1788669460790-94f4dn7i.png";
 export function getPanelColor(guildData) {
     if (guildData?.identity?.primaryColor) {
         return formatHexColor(guildData.identity.primaryColor);
     }
     return PANEL_COLOR;
+}
+export function getTicketEmbedColor(guildData) {
+    if (guildData?.identity?.ticketEmbedColor) {
+        return formatHexColor(guildData.identity.ticketEmbedColor);
+    }
+    return TICKET_EMBED_COLOR;
 }
 export function getBannerUrl(guildData) {
     if (guildData?.identity?.bannerUrl) {
@@ -278,6 +285,7 @@ export async function renderIdentityTab(guild, client, guildData) {
     }
     const identity = guildData.identity || {};
     const currentColor = getPanelColor(guildData);
+    const currentTicketColor = getTicketEmbedColor(guildData);
     const currentBanner = getBannerUrl(guildData);
     const botDisplayName = guild.members.me?.displayName || client.user?.username || "Bot";
     const avatarDisplay = identity.avatarUrl
@@ -304,6 +312,13 @@ export async function renderIdentityTab(guild, client, guildData) {
         content: `| ${getEmojiTag("apps_figma")} **Cor Principal das Embeds:**\n\`${currentColor}\``,
         button: new ButtonBuilder()
             .setCustomId("panel/identity/edit_color")
+            .setLabel("Editar Cor")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_add") || "🎨"),
+    }), Separator.Default, createSection({
+        content: `| ${getEmojiTag("other_ticket")} **Cor da Central de Atendimento:**\n\`${currentTicketColor}\``,
+        button: new ButtonBuilder()
+            .setCustomId("panel/identity/edit_ticket_color")
             .setLabel("Editar Cor")
             .setStyle(ButtonStyle.Secondary)
             .setEmoji(getEmojiId("action_add") || "🎨"),

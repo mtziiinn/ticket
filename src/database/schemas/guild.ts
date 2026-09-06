@@ -51,6 +51,7 @@ export interface IGuild {
     botName?: string;
     avatarUrl?: string;
     primaryColor?: string;
+    ticketEmbedColor?: string;
     bannerUrl?: string;
   };
 }
@@ -111,6 +112,7 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
     botName: String,
     avatarUrl: String,
     primaryColor: String,
+    ticketEmbedColor: String,
     bannerUrl: String,
   },
 });
