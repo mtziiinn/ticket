@@ -69,12 +69,6 @@ export function buildPanelDropdown(currentTab: string = "home") {
       .setEmoji(getEmojiId("other_dollar") || "💳")
       .setDefault(currentTab === "payments"),
     new StringSelectMenuOptionBuilder()
-      .setValue("sales")
-      .setLabel("Vendas")
-      .setDescription("Gerenciamento de vendas e entregas")
-      .setEmoji(getEmojiId("other_card") || "🛒")
-      .setDefault(currentTab === "sales"),
-    new StringSelectMenuOptionBuilder()
       .setValue("autorole")
       .setLabel("Autorole")
       .setDescription("Boas-vindas, saída e cargo inicial")
@@ -481,19 +475,6 @@ export async function renderIdentityTab(
   );
 }
 
-export async function renderSalesTab(guildData?: any) {
-  const color = getPanelColor(guildData);
-  return createContainer(
-    color,
-    `## ${getEmojiTag("other_card")} Sistema de Vendas`,
-    buildPanelDropdown("sales"),
-    Separator.Default,
-    `| **Status das Vendas:** Sistema integrado e pronto para cobranças via \`/gerar-pagamento\`.\n| **Gateways:** Suporte a PIX com QR Code, Mercado Pago e Stripe.`,
-    Separator.Default,
-    `*Para emitir cobranças diretas para clientes em um canal de ticket ou chat, use o comando \`/gerar-pagamento\`.*`,
-  );
-}
-
 export async function renderCommandsTab(guildData?: any) {
   const color = getPanelColor(guildData);
   return createContainer(
@@ -543,8 +524,6 @@ export async function renderTab(
       return await renderTicketTab(guildData);
     case "payments":
       return await renderPaymentsTab(guildData);
-    case "sales":
-      return await renderSalesTab(guildData);
     case "autorole":
       return await renderAutoroleTab(guildData);
     case "verification":
