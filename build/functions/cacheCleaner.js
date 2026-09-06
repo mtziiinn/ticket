@@ -1,10 +1,13 @@
 import { cleanupGuildCache } from "#database";
 import { cleanupCooldowns } from "../discord/responders/ticket/submit.js";
-export function clearBotCache(client) {
+import { cleanupCaptchaCache } from "../discord/responders/verification/verify.js";
+import { cleanupVaultWebhookCache } from "../discord/responders/ticket/manage.js";
+export function clearBotCache(client, forceGuildPurge = false) {
     const memBefore = process.memoryUsage();
     let messagesSwept = 0;
     let usersSwept = 0;
     let membersSwept = 0;
+    let voiceStatesSwept = 0;
     // 1. Limpar mensagens de todos os canais de texto em cache
     for (const channel of client.channels.cache.values()) {
         if (channel.isTextBased() && "messages" in channel) {
@@ -12,7 +15,7 @@ export function clearBotCache(client) {
             channel.messages.cache.clear();
         }
     }
-    // 2. Limpar membros das guildas mantendo apenas o próprio bot
+    // 2. Limpar membros das guildas mantendo apenas o próprio bot, e limpar estados de voz/presença
     const botId = client.user?.id;
     for (const guild of client.guilds.cache.values()) {
         for (const [memberId] of guild.members.cache.entries()) {
@@ -20,6 +23,13 @@ export function clearBotCache(client) {
                 guild.members.cache.delete(memberId);
                 membersSwept++;
             }
+        }
+        if (guild.voiceStates?.cache) {
+            voiceStatesSwept += guild.voiceStates.cache.size;
+            guild.voiceStates.cache.clear();
+        }
+        if (guild.presences?.cache) {
+            guild.presences.cache.clear();
         }
     }
     // 3. Limpar usuários globais em cache mantendo apenas o bot
@@ -29,10 +39,12 @@ export function clearBotCache(client) {
             usersSwept++;
         }
     }
-    // 4. Limpar caches internos expirados (Guild TTL e Cooldowns)
-    cleanupGuildCache();
-    cleanupCooldowns();
-    // 5. Acionar Garbage Collection do V8 se exposto
+    // 4. Limpar caches internos (Guild TTL, Cooldowns, Captchas e Webhook Vault)
+    const guildConfigsSwept = cleanupGuildCache(forceGuildPurge);
+    const cooldownsSwept = cleanupCooldowns();
+    const captchasSwept = cleanupCaptchaCache();
+    cleanupVaultWebhookCache();
+    // 5. Acionar Garbage Collection do V8 se exposto (--expose-gc)
     const globalAny = global;
     if (typeof globalAny.gc === "function") {
         try {
@@ -60,5 +72,9 @@ export function clearBotCache(client) {
         messagesSwept,
         usersSwept,
         membersSwept,
+        voiceStatesSwept,
+        captchasSwept,
+        guildConfigsSwept,
+        cooldownsSwept,
     };
 }

@@ -25,13 +25,16 @@ import { formatHexColor } from "../panel/panelView.js";
 
 const cooldowns = new Map<string, number>();
 
-export function cleanupCooldowns() {
+export function cleanupCooldowns(force = false): number {
   const now = Date.now();
+  let count = 0;
   for (const [key, expires] of cooldowns.entries()) {
-    if (expires <= now) {
+    if (force || expires <= now) {
       cooldowns.delete(key);
+      count++;
     }
   }
+  return count;
 }
 
 // Função compartilhada para criar o ticket

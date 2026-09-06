@@ -202,7 +202,29 @@ createCommand({
     if (subcommand === "limpar-cache") {
       await interaction.deferReply({ flags: ["Ephemeral"] });
 
-      const result = clearBotCache(interaction.client);
+      const result = clearBotCache(interaction.client, true);
+
+      const resourcesList = [
+        `${getEmojiTag("file_check")} **Mensagens liberadas:** \`${result.messagesSwept}\``,
+        `${getEmojiTag("user_check")} **Usuários limpos do cache:** \`${result.usersSwept}\``,
+        `${getEmojiTag("user_users")} **Membros limpos do cache:** \`${result.membersSwept}\``,
+      ];
+
+      if (result.voiceStatesSwept > 0) {
+        resourcesList.push(
+          `${getEmojiTag("action_info")} **Estados de voz liberados:** \`${result.voiceStatesSwept}\``,
+        );
+      }
+      if (result.captchasSwept > 0) {
+        resourcesList.push(
+          `${getEmojiTag("clock_check")} **Captchas expirados eliminados:** \`${result.captchasSwept}\``,
+        );
+      }
+      if (result.guildConfigsSwept > 0) {
+        resourcesList.push(
+          `${getEmojiTag("database_check")} **Configurações de servidores recicladas:** \`${result.guildConfigsSwept}\``,
+        );
+      }
 
       const container = createContainer(
         constants.colors.azoxo,
@@ -212,11 +234,7 @@ createCommand({
         }),
         Separator.Default,
         `### ${getEmojiTag("clock_check")} Recursos Liberados`,
-        [
-          `${getEmojiTag("file_check")} **Mensagens liberadas:** \`${result.messagesSwept}\``,
-          `${getEmojiTag("user_check")} **Usuários limpos do cache:** \`${result.usersSwept}\``,
-          `${getEmojiTag("user_users")} **Membros limpos do cache:** \`${result.membersSwept}\``,
-        ].join("\n"),
+        resourcesList.join("\n"),
         Separator.Default,
         `### ${getEmojiTag("database_check")} Consumo de Memória`,
         [
@@ -225,7 +243,7 @@ createCommand({
           `${getEmojiTag("cloud_check")} **Processo RSS Total:** \`${result.rssAfterMB} MB\``,
         ].join("\n"),
         Separator.Default,
-        `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 15 minutos e varreduras contínuas.*`,
+        `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 1 hora e varreduras contínuas.*`,
       );
 
       await interaction.editReply({

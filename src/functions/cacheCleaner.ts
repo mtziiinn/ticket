@@ -1,6 +1,8 @@
 import { Client } from "discord.js";
 import { cleanupGuildCache } from "#database";
 import { cleanupCooldowns } from "../discord/responders/ticket/submit.js";
+import { cleanupCaptchaCache } from "../discord/responders/verification/verify.js";
+import { cleanupVaultWebhookCache } from "../discord/responders/ticket/manage.js";
 
 export interface CacheCleanupResult {
   heapUsedBeforeMB: number;
@@ -12,14 +14,22 @@ export interface CacheCleanupResult {
   messagesSwept: number;
   usersSwept: number;
   membersSwept: number;
+  voiceStatesSwept: number;
+  captchasSwept: number;
+  guildConfigsSwept: number;
+  cooldownsSwept: number;
 }
 
-export function clearBotCache(client: Client): CacheCleanupResult {
+export function clearBotCache(
+  client: Client,
+  forceGuildPurge = false,
+): CacheCleanupResult {
   const memBefore = process.memoryUsage();
 
   let messagesSwept = 0;
   let usersSwept = 0;
   let membersSwept = 0;
+  let voiceStatesSwept = 0;
 
   // 1. Limpar mensagens de todos os canais de texto em cache
   for (const channel of client.channels.cache.values()) {
@@ -29,7 +39,7 @@ export function clearBotCache(client: Client): CacheCleanupResult {
     }
   }
 
-  // 2. Limpar membros das guildas mantendo apenas o próprio bot
+  // 2. Limpar membros das guildas mantendo apenas o próprio bot, e limpar estados de voz/presença
   const botId = client.user?.id;
   for (const guild of client.guilds.cache.values()) {
     for (const [memberId] of guild.members.cache.entries()) {
@@ -37,6 +47,15 @@ export function clearBotCache(client: Client): CacheCleanupResult {
         guild.members.cache.delete(memberId);
         membersSwept++;
       }
+    }
+
+    if (guild.voiceStates?.cache) {
+      voiceStatesSwept += guild.voiceStates.cache.size;
+      guild.voiceStates.cache.clear();
+    }
+
+    if ((guild as any).presences?.cache) {
+      (guild as any).presences.cache.clear();
     }
   }
 
@@ -48,11 +67,13 @@ export function clearBotCache(client: Client): CacheCleanupResult {
     }
   }
 
-  // 4. Limpar caches internos expirados (Guild TTL e Cooldowns)
-  cleanupGuildCache();
-  cleanupCooldowns();
+  // 4. Limpar caches internos (Guild TTL, Cooldowns, Captchas e Webhook Vault)
+  const guildConfigsSwept = cleanupGuildCache(forceGuildPurge);
+  const cooldownsSwept = cleanupCooldowns();
+  const captchasSwept = cleanupCaptchaCache();
+  cleanupVaultWebhookCache();
 
-  // 5. Acionar Garbage Collection do V8 se exposto
+  // 5. Acionar Garbage Collection do V8 se exposto (--expose-gc)
   const globalAny = global as any;
   if (typeof globalAny.gc === "function") {
     try {
@@ -84,5 +105,9 @@ export function clearBotCache(client: Client): CacheCleanupResult {
     messagesSwept,
     usersSwept,
     membersSwept,
+    voiceStatesSwept,
+    captchasSwept,
+    guildConfigsSwept,
+    cooldownsSwept,
   };
 }

@@ -9,6 +9,17 @@ import { getVerifyEmbedColor } from "../panel/panelView.js";
 // Map temporário para armazenar códigos de captcha por usuário
 // userId -> { code: string, expires: number }
 const userCaptchas = new Map();
+export function cleanupCaptchaCache(force = false) {
+    const now = Date.now();
+    let swept = 0;
+    for (const [userId, session] of userCaptchas.entries()) {
+        if (force || session.expires <= now) {
+            userCaptchas.delete(userId);
+            swept++;
+        }
+    }
+    return swept;
+}
 function generateCaptchaCode(length = 6) {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Sem O, 0, I, 1 para evitar ambiguidades
     let result = "";

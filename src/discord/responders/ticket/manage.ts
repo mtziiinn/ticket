@@ -1005,6 +1005,12 @@ createResponder({
 // Cache para reutilizar o webhook permanente do cofre e nunca criar múltiplos webhooks
 const vaultWebhookCache = new Map<string, any>();
 
+export function cleanupVaultWebhookCache(): number {
+  const size = vaultWebhookCache.size;
+  vaultWebhookCache.clear();
+  return size;
+}
+
 async function getOrCreateVaultWebhook(vaultChannel: any, clientUser?: any) {
   if (!vaultChannel || typeof vaultChannel.fetchWebhooks !== "function") {
     return null;

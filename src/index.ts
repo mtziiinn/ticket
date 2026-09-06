@@ -222,7 +222,7 @@ function runPeriodicCacheCleanup() {
   try {
     const res = clearBotCache(client);
     console.log(
-      `[Cache] Limpeza periódica concluída | Msgs: ${res.messagesSwept}, Users: ${res.usersSwept}, Membros: ${res.membersSwept} | Heap: ${res.heapUsedAfterMB}MB (-${res.heapDiffMB}MB) | RSS: ${res.rssAfterMB}MB`,
+      `[Cache] Limpeza periódica concluída | Msgs: ${res.messagesSwept}, Users: ${res.usersSwept}, Membros: ${res.membersSwept}, Voice: ${res.voiceStatesSwept}, Captchas: ${res.captchasSwept} | Heap: ${res.heapUsedAfterMB}MB (-${res.heapDiffMB}MB) | RSS: ${res.rssAfterMB}MB`,
     );
   } catch (error) {
     console.error("[Cache] Erro na limpeza periódica:", error);

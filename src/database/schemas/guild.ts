@@ -134,11 +134,14 @@ guildSchema.statics.get = async function (id: string) {
   return doc;
 };
 
-export function cleanupGuildCache() {
+export function cleanupGuildCache(force = false): number {
   const now = Date.now();
+  let count = 0;
   for (const [key, val] of cache.entries()) {
-    if (val.expires <= now) {
+    if (force || val.expires <= now) {
       cache.delete(key);
+      count++;
     }
   }
+  return count;
 }

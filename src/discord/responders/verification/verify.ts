@@ -20,6 +20,18 @@ import { getVerifyEmbedColor } from "../panel/panelView.js";
 // userId -> { code: string, expires: number }
 const userCaptchas = new Map<string, { code: string; expires: number }>();
 
+export function cleanupCaptchaCache(force = false): number {
+  const now = Date.now();
+  let swept = 0;
+  for (const [userId, session] of userCaptchas.entries()) {
+    if (force || session.expires <= now) {
+      userCaptchas.delete(userId);
+      swept++;
+    }
+  }
+  return swept;
+}
+
 function generateCaptchaCode(length: number = 6): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Sem O, 0, I, 1 para evitar ambiguidades
   let result = "";

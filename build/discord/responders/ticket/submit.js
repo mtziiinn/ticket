@@ -6,13 +6,16 @@ import { db } from "#database";
 import { formatEmoji, getCleanAvatarURL } from "#functions";
 import { formatHexColor } from "../panel/panelView.js";
 const cooldowns = new Map();
-export function cleanupCooldowns() {
+export function cleanupCooldowns(force = false) {
     const now = Date.now();
+    let count = 0;
     for (const [key, expires] of cooldowns.entries()) {
-        if (expires <= now) {
+        if (force || expires <= now) {
             cooldowns.delete(key);
+            count++;
         }
     }
+    return count;
 }
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(interaction, routeCategory) {
