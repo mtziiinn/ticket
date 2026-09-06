@@ -281,7 +281,7 @@ async function processChargeSubmission(interaction: any) {
 
       if (!pixKey) {
         await interaction.followUp({
-          content: `<:action_x:1502789802918150206> Falha ao gerar cobrança pelo Mercado Pago: \`${mpResult.error}\`\nE nenhuma chave PIX estática está configurada em \`/ticket configurar\`.`,
+          content: `<:action_x:1502789802918150206> Falha ao gerar cobrança pelo Mercado Pago: \`${mpResult.error}\`\nE nenhuma chave PIX estática está configurada no \`/painel\`.`,
           flags: ["Ephemeral"],
         });
         return;

@@ -1,9 +1,8 @@
 import { createCommand } from "#base";
-import { createContainer, createSection, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
-import { ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, } from "discord.js";
+import { createContainer, createSection, Separator, } from "@magicyan/discord";
+import { ApplicationCommandOptionType, ApplicationCommandType, } from "discord.js";
 import { db } from "#database";
-import { renderTab } from "../../responders/panel/panelView.js";
-import { clearBotCache, getEmojiId, getEmojiTag } from "#functions";
+import { clearBotCache, getEmojiTag } from "#functions";
 function startOfDay() {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -112,38 +111,6 @@ createCommand({
     defaultMemberPermissions: ["Administrator"],
     options: [
         {
-            name: "painel",
-            description: "Enviar o painel de abertura de tickets",
-            type: ApplicationCommandOptionType.Subcommand,
-            options: [
-                {
-                    name: "canal",
-                    description: "Canal onde o painel será enviado",
-                    type: ApplicationCommandOptionType.Channel,
-                    required: true,
-                },
-            ],
-        },
-        {
-            name: "configurar",
-            description: "Acessar o painel interativo de configuração do sistema",
-            type: ApplicationCommandOptionType.Subcommand,
-            options: [
-                {
-                    name: "logs",
-                    description: "Canal de logs (Opcional - pode configurar no painel)",
-                    type: ApplicationCommandOptionType.Channel,
-                    required: false,
-                },
-                {
-                    name: "vault",
-                    description: "Canal cofre (Opcional - pode configurar no painel)",
-                    type: ApplicationCommandOptionType.Channel,
-                    required: false,
-                },
-            ],
-        },
-        {
             name: "stats",
             description: "Exibir estatísticas de tickets",
             type: ApplicationCommandOptionType.Subcommand,
@@ -169,100 +136,24 @@ createCommand({
             });
             return;
         }
-        if (subcommand === "painel") {
-            const channel = options.getChannel("canal", true);
-            if (!channel.isTextBased()) {
-                await interaction.reply({
-                    content: "O canal precisa ser de texto!",
-                    flags: ["Ephemeral"],
-                });
-                return;
-            }
-            const bannerUrl = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
-            const guildIcon = interaction.guild?.iconURL({ size: 128 }) ?? undefined;
-            const container = createContainer("#22c55e", createSection({
-                content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
-                thumbnail: guildIcon,
-            }), Separator.Default, [
-                `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
-                `● Não chame membros da equipe no privado.`,
-                `● Iniciar um atendimento sem um motivo coerente poderá resultar em punições.`,
-            ].join("\n"), Separator.Default, bannerUrl ? [createMediaGallery(bannerUrl), Separator.Default] : [], "Clique no botão abaixo para iniciar o seu atendimento.", createRow(new ButtonBuilder({
-                customId: "ticket/form/open",
-                label: "Abrir Ticket",
-                style: ButtonStyle.Success,
-                emoji: getEmojiId("other_ticket") || "🎫",
-            })));
-            await channel.send({
-                components: [container],
-                flags: ["IsComponentsV2"],
-            });
-            await interaction.reply({
-                content: "Painel de tickets enviado com sucesso!",
-                flags: ["Ephemeral"],
-            });
-        }
-        if (subcommand === "configurar") {
-            const logsChannel = options.getChannel("logs");
-            const vaultChannel = options.getChannel("vault");
-            await interaction.deferReply({ flags: ["Ephemeral"] });
-            try {
-                const guildData = await db.guilds.get(guildId);
-                // Se forneceu opções no comando, já salva elas
-                if (logsChannel || vaultChannel) {
-                    if (!guildData.channels) {
-                        guildData.channels = {
-                            tickets: "",
-                            vault: "",
-                            categories: {
-                                suporte: "",
-                                denuncia: "",
-                                financeiro: "",
-                                bugs: "",
-                            },
-                            ticketCategories: [],
-                        };
-                    }
-                    if (guildData.channels) {
-                        if (logsChannel)
-                            guildData.channels.tickets = logsChannel.id;
-                        if (vaultChannel)
-                            guildData.channels.vault = vaultChannel.id;
-                    }
-                    guildData.markModified("channels");
-                    await guildData.save();
-                }
-                const panel = await renderTab("ticket", interaction.guild, interaction.client, guildData);
-                await interaction.editReply({
-                    components: [panel],
-                    flags: ["IsComponentsV2"],
-                });
-            }
-            catch (error) {
-                console.error("Erro na configuração:", error);
-                await interaction.editReply({
-                    content: "Ocorreu um erro ao abrir o painel de configuração.",
-                });
-            }
-        }
         if (subcommand === "stats") {
             await interaction.deferReply({ flags: ["Ephemeral"] });
             const { stats, totalToday, totalWeek, totalMonth, totalAll } = await getCategoryStats(guildId);
             const categoryLines = Object.entries(stats)
                 .sort(([, a], [, b]) => b.total - a.total)
                 .map(([cat, s]) => {
-                return `> <:folder_open:1502789875928400103> **${cat.toUpperCase()}**\n> <:clock_add:1502789855548276836> Hoje: \`${s.today}\` | <:calendar_check:1502789850649071740> Semana: \`${s.week}\` | <:calendar:1502789854486986752> Mês: \`${s.month}\` | <:database:1502789865023209512> Total: \`${s.total}\``;
+                return `> ${getEmojiTag("folder_open")} **${cat.toUpperCase()}**\n> ${getEmojiTag("clock_add")} Hoje: \`${s.today}\` | ${getEmojiTag("calendar_check")} Semana: \`${s.week}\` | ${getEmojiTag("calendar")} Mês: \`${s.month}\` | ${getEmojiTag("database")} Total: \`${s.total}\``;
             })
                 .join("\n\n");
             const container = createContainer(constants.colors.azoxo, createSection({
-                content: `## <:other_ticket:1502789959378145300> Estatísticas de Tickets\nConfira abaixo o resumo completo dos atendimentos do servidor.`,
+                content: `## ${getEmojiTag("other_ticket")} Estatísticas de Tickets\nConfira abaixo o resumo completo dos atendimentos do servidor.`,
                 thumbnail: emojis.static.other_ticket,
-            }), Separator.Default, "### <:clock:1502789859960422502> Períodos", [
-                `<:clock_add:1502789855548276836> **Hoje:** \`${totalToday}\` tickets`,
-                `<:calendar_check:1502789850649071740> **Semana:** \`${totalWeek}\` tickets`,
-                `<:calendar:1502789854486986752> **Mês:** \`${totalMonth}\` tickets`,
-                `<:database:1502789865023209512> **Total:** \`${totalAll}\` tickets`,
-            ].join("\n"), Separator.Default, "### <:folder_open:1502789875928400103> Por Categoria", categoryLines || "*Nenhum ticket encontrado.*");
+            }), Separator.Default, `### ${getEmojiTag("clock")} Períodos`, [
+                `${getEmojiTag("clock_add")} **Hoje:** \`${totalToday}\` tickets`,
+                `${getEmojiTag("calendar_check")} **Semana:** \`${totalWeek}\` tickets`,
+                `${getEmojiTag("calendar")} **Mês:** \`${totalMonth}\` tickets`,
+                `${getEmojiTag("database")} **Total:** \`${totalAll}\` tickets`,
+            ].join("\n"), Separator.Default, `### ${getEmojiTag("folder_open")} Por Categoria`, categoryLines || "*Nenhum ticket encontrado.*");
             await interaction.editReply({
                 components: [container],
                 flags: ["IsComponentsV2"],
@@ -272,17 +163,17 @@ createCommand({
             await interaction.deferReply({ flags: ["Ephemeral"] });
             const result = clearBotCache(interaction.client);
             const container = createContainer(constants.colors.azoxo, createSection({
-                content: `## <:database:1502789865023209512> Limpeza de Cache Concluída\nO cache temporário e a memória RAM foram limpos com sucesso para otimizar o consumo na hospedagem.`,
+                content: `## ${getEmojiTag("database")} Limpeza de Cache Concluída\nO cache temporário e a memória RAM foram limpos com sucesso para otimizar o consumo na hospedagem.`,
                 thumbnail: interaction.client.user?.displayAvatarURL(),
-            }), Separator.Default, "### <:clock_check:1502789856881938502> Recursos Liberados", [
-                `<:file_check:1502789906122936431> **Mensagens liberadas:** \`${result.messagesSwept}\``,
-                `<:user_check:1502789974276178121> **Usuários limpos do cache:** \`${result.usersSwept}\``,
-                `<:user_users:1502789976327327801> **Membros limpos do cache:** \`${result.membersSwept}\``,
-            ].join("\n"), Separator.Default, "### <:database_check:1502789861869097072> Consumo de Memória", [
-                `<:database:1502789865023209512> **Heap Utilizado:** \`${result.heapUsedAfterMB} MB\` *(era \`${result.heapUsedBeforeMB} MB\`)*`,
-                `<:action_check:1502789797821939752> **Memória Liberada:** \`${result.heapDiffMB} MB\``,
-                `<:cloud_check:1502789867355115690> **Processo RSS Total:** \`${result.rssAfterMB} MB\``,
-            ].join("\n"), Separator.Default, `<:action_info:1502789798983766016> *O sistema também executa limpezas automáticas de cache a cada 15 minutos e varreduras contínuas.*`);
+            }), Separator.Default, `### ${getEmojiTag("clock_check")} Recursos Liberados`, [
+                `${getEmojiTag("file_check")} **Mensagens liberadas:** \`${result.messagesSwept}\``,
+                `${getEmojiTag("user_check")} **Usuários limpos do cache:** \`${result.usersSwept}\``,
+                `${getEmojiTag("user_users")} **Membros limpos do cache:** \`${result.membersSwept}\``,
+            ].join("\n"), Separator.Default, `### ${getEmojiTag("database_check")} Consumo de Memória`, [
+                `${getEmojiTag("database")} **Heap Utilizado:** \`${result.heapUsedAfterMB} MB\` *(era \`${result.heapUsedBeforeMB} MB\`)*`,
+                `${getEmojiTag("action_check")} **Memória Liberada:** \`${result.heapDiffMB} MB\``,
+                `${getEmojiTag("cloud_check")} **Processo RSS Total:** \`${result.rssAfterMB} MB\``,
+            ].join("\n"), Separator.Default, `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 15 minutos e varreduras contínuas.*`);
             await interaction.editReply({
                 components: [container],
                 flags: ["IsComponentsV2"],

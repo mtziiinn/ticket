@@ -269,10 +269,9 @@ export async function renderSalesTab() {
 export async function renderCommandsTab() {
     return createContainer(PANEL_COLOR, `## ${getEmojiTag("other_terminal")} Comandos do BOT`, buildPanelDropdown("commands"), Separator.Default, [
         `### ${getEmojiTag("other_bot")} Comandos de Configuração e Gestão`,
-        `• \`/painel\` - Exibe o painel completo e interativo de configuração do BOT.`,
-        `• \`/ticket painel\` - Envia a mensagem pública para abertura de tickets no canal escolhido.`,
-        `• \`/ticket limpar-cache\` - Limpa o cache de mensagens e otimiza o uso de memória RAM.`,
+        `• \`/painel\` - Exibe o painel completo e interativo de configuração do BOT (envio de painéis, categorias, gateways).`,
         `• \`/ticket stats\` - Exibe estatísticas de atendimentos por período e categoria.`,
+        `• \`/ticket limpar-cache\` - Limpa o cache de mensagens e otimiza o uso de memória RAM.`,
         ``,
         `### ${getEmojiTag("lock")} Moderação e Gestão de Chat`,
         `• \`/bloquear-chat\` - Bloqueia o canal atual para que apenas administradores enviem mensagens.`,

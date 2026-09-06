@@ -150,7 +150,7 @@ createResponder({
         "Crie setores de atendimento personalizados com IDs de categorias do Discord específicos. Cada categoria possui seu próprio emoji que aparece no nome do canal do ticket.",
         Separator.Default,
         "### <:other_ticket:1502789959378145300> 4. Painel de Abertura",
-        "Após configurar tudo, use o comando abaixo no canal desejado:\n` /ticket painel canal: #seu-canal `",
+        "Após configurar tudo, use a aba **Ticket** no `/painel` e clique no botão **Enviar Painel do Ticket** para enviá-lo ao canal desejado.",
       );
 
       await interaction.reply({
