@@ -92,11 +92,7 @@ export async function renderHomeTab(guild, client, guildData) {
         closed: false,
     });
     const memberCount = guild.memberCount;
-    return createContainer(color, "## PAINEL DE CONFIGURAÇÕES", buildPanelDropdown("home"), Separator.Default, `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``, Separator.Default, `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``, Separator.Default, `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``, Separator.Default, [
-        `### ${getEmojiTag("bell")} Avisos Importantes`,
-        `• **Emojis da Aplicação:** O bot gerencia e sincroniza os emojis personalizados diretamente pelo Discord Developer Portal.`,
-        `• **Não Remova os Emojis:** Evite excluir ou alterar manualmente os emojis cadastrados no portal do desenvolvedor, pois isso pode causar erros visuais e mau funcionamento dos botões e menus do bot.`,
-    ].join("\n"), Separator.Default, createMediaGallery(banner));
+    return createContainer(color, "## PAINEL DE CONFIGURAÇÕES", buildPanelDropdown("home"), Separator.Default, `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``, Separator.Default, `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``, Separator.Default, `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``, Separator.Default, createMediaGallery(banner));
 }
 export async function renderTicketTab(guildData) {
     const color = getPanelColor(guildData);

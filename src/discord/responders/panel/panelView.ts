@@ -131,12 +131,6 @@ export async function renderHomeTab(
     Separator.Default,
     `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``,
     Separator.Default,
-    [
-      `### ${getEmojiTag("bell")} Avisos Importantes`,
-      `• **Emojis da Aplicação:** O bot gerencia e sincroniza os emojis personalizados diretamente pelo Discord Developer Portal.`,
-      `• **Não Remova os Emojis:** Evite excluir ou alterar manualmente os emojis cadastrados no portal do desenvolvedor, pois isso pode causar erros visuais e mau funcionamento dos botões e menus do bot.`,
-    ].join("\n"),
-    Separator.Default,
     createMediaGallery(banner),
   );
 }
