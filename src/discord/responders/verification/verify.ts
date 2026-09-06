@@ -4,11 +4,14 @@ import {
   createContainer,
   createRow,
   Separator,
+  createMediaGallery,
 } from "@magicyan/discord";
 import {
+  AttachmentBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
+import { createCanvas } from "@napi-rs/canvas";
 import { db } from "#database";
 import { getEmojiTag } from "#functions";
 
@@ -33,6 +36,64 @@ function generateDecoyCode(correct: string): string {
   arr[posToChange] = newChar;
   const decoy = arr.join("");
   return decoy === correct ? generateDecoyCode(correct) : decoy;
+}
+
+function generateCaptchaImage(code: string): Buffer {
+  const width = 420;
+  const height = 150;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+
+  // Background escuro (#0e1013)
+  ctx.fillStyle = "#0e1013";
+  ctx.fillRect(0, 0, width, height);
+
+  // Borda sutil (#1a1d24)
+  ctx.strokeStyle = "#1a1d24";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, width - 2, height - 2);
+
+  // Efeito de linhas cibernéticas sutis de fundo
+  ctx.strokeStyle = "rgba(34, 197, 94, 0.05)";
+  ctx.lineWidth = 1;
+  for (let x = 20; x < width; x += 35) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+    ctx.stroke();
+  }
+  for (let y = 20; y < height; y += 30) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+    ctx.stroke();
+  }
+
+  // Texto com brilho verde neon (igual ao print de referência)
+  ctx.font = "bold 50px monospace";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  // Camada 1: Glow difuso amplo
+  ctx.shadowColor = "#00ff66";
+  ctx.shadowBlur = 28;
+  ctx.fillStyle = "#00e676";
+  ctx.fillText(code, centerX, centerY);
+
+  // Camada 2: Glow médio intenso
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = "#22c55e";
+  ctx.fillText(code, centerX, centerY);
+
+  // Camada 3: Núcleo do texto nítido
+  ctx.shadowBlur = 2;
+  ctx.fillStyle = "#4ade80";
+  ctx.fillText(code, centerX, centerY);
+
+  return canvas.toBuffer("image/png");
 }
 
 // 1. Informações de segurança
@@ -85,33 +146,32 @@ createResponder({
       () => Math.random() - 0.5,
     );
 
+    const imageBuffer = generateCaptchaImage(code);
+    const attachment = new AttachmentBuilder(imageBuffer, { name: "captcha.png" });
+
     const select = new StringSelectMenuBuilder()
       .setCustomId("verify/captcha/select")
-      .setPlaceholder("Selecione o código correto...")
+      .setPlaceholder("Selecione o texto que é exibido na imagem...")
       .addOptions(
         allOptions.map((opt) =>
           new StringSelectMenuOptionBuilder()
             .setLabel(opt)
             .setValue(opt)
-            .setDescription(`Código: ${opt}`),
+            .setDescription("Clique para selecionar este texto.")
+            .setEmoji("1502789932727668788"),
         ),
       );
 
-    const spacedCode = code.split("").join(" ");
-
     const container = createContainer(
       "#22c55e",
-      `## ${getEmojiTag("shield_check")} Verificação de Segurança (Captcha)`,
-      Separator.Default,
-      `Para provar que você é humano, identifique o código exibido abaixo e selecione a alternativa correta no menu:`,
-      Separator.Default,
-      `# \` ${spacedCode} \``,
+      createMediaGallery("attachment://captcha.png"),
       Separator.Default,
       createRow(select),
     );
 
     await interaction.reply({
       components: [container],
+      files: [attachment],
       flags: ["Ephemeral", "IsComponentsV2"] as any,
     });
   },

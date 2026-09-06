@@ -16,6 +16,7 @@
   "dependencies": {
     "@constatic/base": "0.0.10",
     "@magicyan/discord": "1.7.3",
+    "@napi-rs/canvas": "^1.0.8",
     "chalk": "5.6.2",
     "discord.js": "14.26.2",
     "mongodb": "^7.2.0",
