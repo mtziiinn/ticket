@@ -16,7 +16,7 @@ createCommand({
             `${getEmojiTag("clock_check")} \`/ticket limpar-cache\` — Limpa a memória RAM e cache temporário`,
             `${getEmojiTag("other_dollar")} \`/gerar-pagamento\` — Gera uma cobrança avulsa via Pix/Cartão`,
             `${getEmojiTag("other_ticket")} \`/criar-sorteio\` — Cria um sorteio interativo`,
-            `${getEmojiTag("lock")} \`/bloquear-chat\` / \`/desbloquear-chat\` — Tranca ou destranca o canal atual`,
+            `${getEmojiTag("lock")} \`/chat [bloquear|desbloquear|limpar]\` — Moderação e gerenciamento do chat`,
         ].join("\n"), Separator.Default, `### ${getEmojiTag("other_terminal")} Comandos Públicos`, [
             `${getEmojiTag("action_question")} \`/help\` — Exibe este menu informativo`,
         ].join("\n"), Separator.Default, `### ${getEmojiTag("action_warning")} Status e Prioridade`, "Ao alterar o status do pedido, o ticket é reposicionado automaticamente na categoria por ordem de prioridade (Pagamento > Produção > Aberto > Fila > Concluído).", Separator.Default, `### ${getEmojiTag("other_megaphone")} Dúvidas?`, "Caso precise de suporte, contate um membro da equipe.");

@@ -26,7 +26,7 @@ createCommand({
         `${getEmojiTag("clock_check")} \`/ticket limpar-cache\` — Limpa a memória RAM e cache temporário`,
         `${getEmojiTag("other_dollar")} \`/gerar-pagamento\` — Gera uma cobrança avulsa via Pix/Cartão`,
         `${getEmojiTag("other_ticket")} \`/criar-sorteio\` — Cria um sorteio interativo`,
-        `${getEmojiTag("lock")} \`/bloquear-chat\` / \`/desbloquear-chat\` — Tranca ou destranca o canal atual`,
+        `${getEmojiTag("lock")} \`/chat [bloquear|desbloquear|limpar]\` — Moderação e gerenciamento do chat`,
       ].join("\n"),
       Separator.Default,
       `### ${getEmojiTag("other_terminal")} Comandos Públicos`,
