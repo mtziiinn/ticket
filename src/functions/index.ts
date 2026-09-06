@@ -40,6 +40,27 @@ export function getCleanAvatarURL(user: any): string {
   }
 }
 
+export async function safeSendDM(
+  target: any,
+  options: any,
+  contextLabel: string = "DM",
+): Promise<boolean> {
+  if (!target || typeof target.send !== "function") return false;
+  try {
+    await target.send(options);
+    return true;
+  } catch (err: any) {
+    if (err?.code === 50278 || err?.code === 50007 || err?.code === 50001) {
+      console.warn(
+        `[${contextLabel}] Mensagem não pôde ser enviada para a DM do usuário (DMs desativadas ou sem servidor mútuo - código ${err.code}).`,
+      );
+    } else {
+      console.error(`[${contextLabel}] Erro ao enviar DM:`, err);
+    }
+    return false;
+  }
+}
+
 export function crc16(data: string): string {
   let crc = 0xffff;
   for (let i = 0; i < data.length; i++) {

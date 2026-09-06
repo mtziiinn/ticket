@@ -17,6 +17,7 @@ import {
   createMercadoPagoCharge,
   generatePixPayload,
   getCleanAvatarURL,
+  safeSendDM,
 } from "#functions";
 
 // Função compartilhada para renomear
@@ -498,12 +499,14 @@ async function processCloseSubmission(interaction: any) {
           : [],
       );
 
-      await targetUser
-        .send({
+      await safeSendDM(
+        targetUser,
+        {
           components: [dmContainer],
           flags: ["IsComponentsV2"],
-        })
-        .catch((err: any) => console.error("[Admin] Erro ao enviar DM para usuário:", err));
+        },
+        "Ticket Close",
+      );
     }
 
     // 6. Deletar canal

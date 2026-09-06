@@ -4,7 +4,7 @@ import { db } from "#database";
 import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
 import "./constants.js";
 import { GatewayIntentBits, Options, Partials, ButtonBuilder, ButtonStyle, } from "discord.js";
-import { clearBotCache, getCleanAvatarURL } from "#functions";
+import { clearBotCache, getCleanAvatarURL, safeSendDM } from "#functions";
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
 console.log("------------------------------------------");
@@ -121,23 +121,27 @@ async function processDmQueue() {
                     emoji: "1502789906122936431",
                     url: item.downloadUrl,
                 })));
-                await user.send({
+                const sent = await safeSendDM(user, {
                     components: [dmContainer],
                     flags: ["IsComponentsV2"],
-                });
-                console.log(`[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`);
-            }
-            catch (err) {
-                console.error(`[DM Queue] Erro ao enviar DM para ${item.ownerId}:`, err);
-                try {
-                    const channel = await client.channels.fetch(item.channelId);
-                    if (channel?.isTextBased() && "send" in channel) {
-                        await channel.send(`<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`);
+                }, "DM Queue");
+                if (sent) {
+                    console.log(`[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`);
+                }
+                else {
+                    try {
+                        const channel = await client.channels.fetch(item.channelId);
+                        if (channel?.isTextBased() && "send" in channel) {
+                            await channel.send(`<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`);
+                        }
+                    }
+                    catch {
+                        /* ignora */
                     }
                 }
-                catch {
-                    /* ignora */
-                }
+            }
+            catch (err) {
+                console.error(`[DM Queue] Erro ao processar item para ${item.ownerId}:`, err);
             }
             await db.dmQueue.deleteOne({ _id: item._id });
         }

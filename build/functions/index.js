@@ -38,6 +38,23 @@ export function getCleanAvatarURL(user) {
         return emojis.static.other_ticket;
     }
 }
+export async function safeSendDM(target, options, contextLabel = "DM") {
+    if (!target || typeof target.send !== "function")
+        return false;
+    try {
+        await target.send(options);
+        return true;
+    }
+    catch (err) {
+        if (err?.code === 50278 || err?.code === 50007 || err?.code === 50001) {
+            console.warn(`[${contextLabel}] Mensagem não pôde ser enviada para a DM do usuário (DMs desativadas ou sem servidor mútuo - código ${err.code}).`);
+        }
+        else {
+            console.error(`[${contextLabel}] Erro ao enviar DM:`, err);
+        }
+        return false;
+    }
+}
 export function crc16(data) {
     let crc = 0xffff;
     for (let i = 0; i < data.length; i++) {

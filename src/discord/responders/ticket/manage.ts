@@ -22,7 +22,7 @@ import {
 } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { formatEmoji, getCleanAvatarURL } from "#functions";
+import { formatEmoji, getCleanAvatarURL, safeSendDM } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
@@ -229,12 +229,14 @@ createResponder({
             ),
           );
 
-          await targetOwner
-            .send({
+          await safeSendDM(
+            targetOwner,
+            {
               components: [dmContainer],
               flags: ["IsComponentsV2"],
-            })
-            .catch((err: any) => console.error("[Manage] Erro ao enviar DM:", err));
+            },
+            "Claim DM",
+          );
         }
         break;
       }
@@ -664,11 +666,11 @@ createResponder({
                   }),
                 ),
               );
-              await targetOwner
-                .send({ components: [dmContainer], flags: ["IsComponentsV2"] })
-                .catch((err: any) =>
-                  console.error("[Admin] Erro ao enviar DM:", err),
-                );
+              await safeSendDM(
+                targetOwner,
+                { components: [dmContainer], flags: ["IsComponentsV2"] },
+                "Media Delivery DM",
+              );
             }
 
             await db.pendingDeliveries.deleteOne({ _id: existing._id });
@@ -972,12 +974,14 @@ createResponder({
           ),
         );
 
-        await owner
-          .send({
+        await safeSendDM(
+          owner,
+          {
             components: [dmContainer],
             flags: ["IsComponentsV2"],
-          })
-          .catch((err: any) => console.error("[Transfer DM]", err));
+          },
+          "Transfer DM",
+        );
       }
 
       // Enviar Log de Ação
@@ -1274,12 +1278,14 @@ createResponder({
         ),
       );
 
-      await owner
-        .send({
+      await safeSendDM(
+        owner,
+        {
           components: [dmContainer],
           flags: ["IsComponentsV2"],
-        })
-        .catch((err: any) => console.error("[Status DM]", err));
+        },
+        "Status DM",
+      );
     }
 
     // Enviar Log de Ação

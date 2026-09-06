@@ -15,7 +15,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
-import { clearBotCache, getCleanAvatarURL } from "#functions";
+import { clearBotCache, getCleanAvatarURL, safeSendDM } from "#functions";
 
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
@@ -166,28 +166,35 @@ async function processDmQueue() {
           ),
         );
 
-        await user.send({
-          components: [dmContainer],
-          flags: ["IsComponentsV2"],
-        });
-        console.log(
-          `[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`,
+        const sent = await safeSendDM(
+          user,
+          {
+            components: [dmContainer],
+            flags: ["IsComponentsV2"],
+          },
+          "DM Queue",
         );
+        if (sent) {
+          console.log(
+            `[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`,
+          );
+        } else {
+          try {
+            const channel = await client.channels.fetch(item.channelId);
+            if (channel?.isTextBased() && "send" in channel) {
+              await (channel as any).send(
+                `<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`,
+              );
+            }
+          } catch {
+            /* ignora */
+          }
+        }
       } catch (err) {
         console.error(
-          `[DM Queue] Erro ao enviar DM para ${item.ownerId}:`,
+          `[DM Queue] Erro ao processar item para ${item.ownerId}:`,
           err,
         );
-        try {
-          const channel = await client.channels.fetch(item.channelId);
-          if (channel?.isTextBased() && "send" in channel) {
-            await (channel as any).send(
-              `<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`,
-            );
-          }
-        } catch {
-          /* ignora */
-        }
       }
       await db.dmQueue.deleteOne({ _id: item._id });
     }

@@ -6,7 +6,7 @@ import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
 import { sendActionLog } from "./logger.js";
-import { createMercadoPagoCharge, generatePixPayload, getCleanAvatarURL, } from "#functions";
+import { createMercadoPagoCharge, generatePixPayload, getCleanAvatarURL, safeSendDM, } from "#functions";
 // Função compartilhada para renomear
 async function processRename(interaction) {
     const { channel, fields } = interaction;
@@ -373,12 +373,10 @@ async function processCloseSubmission(interaction) {
                     url: transcriptUrl,
                 }))
                 : []);
-            await targetUser
-                .send({
+            await safeSendDM(targetUser, {
                 components: [dmContainer],
                 flags: ["IsComponentsV2"],
-            })
-                .catch((err) => console.error("[Admin] Erro ao enviar DM para usuário:", err));
+            }, "Ticket Close");
         }
         // 6. Deletar canal
         setTimeout(() => {
