@@ -13,7 +13,7 @@ import {
   ButtonStyle,
 } from "discord.js";
 import { db } from "#database";
-import { createConfigPanel } from "../../responders/ticket/config.js";
+import { renderTab } from "../../responders/panel/panelView.js";
 import { clearBotCache } from "#functions";
 
 function startOfDay() {
@@ -214,9 +214,9 @@ createCommand({
       const guildIcon = interaction.guild?.iconURL({ size: 128 }) ?? undefined;
 
       const container = createContainer(
-        constants.colors.azoxo,
+        "#22c55e",
         createSection({
-          content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+          content: `## 🎫 Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
           thumbnail: guildIcon as any,
         }),
         Separator.Default,
@@ -232,8 +232,8 @@ createCommand({
           new ButtonBuilder({
             customId: "ticket/form/open",
             label: "Abrir Ticket",
-            style: ButtonStyle.Primary,
-            emoji: "1502789959378145300",
+            style: ButtonStyle.Success,
+            emoji: "🎫",
           }),
         ),
       );
@@ -282,7 +282,12 @@ createCommand({
           await (guildData as any).save();
         }
 
-        const panel = await createConfigPanel(guildId!);
+        const panel = await renderTab(
+          "ticket",
+          interaction.guild,
+          interaction.client,
+          guildData,
+        );
 
         await interaction.editReply({
           components: [panel],

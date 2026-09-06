@@ -1,7 +1,7 @@
 import { Model, Schema, HydratedDocument } from "mongoose";
 import { t } from "../utils.js";
 
-interface IGuild {
+export interface IGuild {
   id: string;
   channels?: {
     logs?: string;
@@ -26,9 +26,30 @@ interface IGuild {
       parentId?: string;
     }>;
   };
+  welcome?: {
+    channelEntry?: string;
+    channelExit?: string;
+    autoRole?: string;
+    minAccountAgeDays?: number;
+  };
+  verification?: {
+    channel?: string;
+    logsChannel?: string;
+    verifiedRole?: string;
+    unverifiedRole?: string;
+  };
+  botLogsChannel?: string;
+  payments?: {
+    pixKey?: string;
+    pixType?: string;
+    mpAccessToken?: string;
+    mpPublicKey?: string;
+    stripeSecretKey?: string;
+    stripeWebhookSecret?: string;
+  };
 }
 
-interface GuildModel extends Model<IGuild> {
+export interface GuildModel extends Model<IGuild> {
   get(id: string): Promise<HydratedDocument<IGuild>>;
 }
 
@@ -58,6 +79,27 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
         parentId: String,
       },
     ],
+  },
+  welcome: {
+    channelEntry: String,
+    channelExit: String,
+    autoRole: String,
+    minAccountAgeDays: { type: Number, default: 0 },
+  },
+  verification: {
+    channel: String,
+    logsChannel: String,
+    verifiedRole: String,
+    unverifiedRole: String,
+  },
+  botLogsChannel: String,
+  payments: {
+    pixKey: String,
+    pixType: String,
+    mpAccessToken: String,
+    mpPublicKey: String,
+    stripeSecretKey: String,
+    stripeWebhookSecret: String,
   },
 });
 

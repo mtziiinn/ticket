@@ -2,14 +2,13 @@ import mongoose, {
   InferSchemaType,
   model,
   Schema,
-  Model,
-  HydratedDocument,
 } from "mongoose";
-import { guildSchema } from "./schemas/guild.js";
+import { guildSchema, IGuild, GuildModel } from "./schemas/guild.js";
 import { memberSchema } from "./schemas/member.js";
 import { ticketSchema } from "./schemas/ticket.js";
 import { transcriptSchema } from "./schemas/transcript.js";
 import { pendingDeliverySchema } from "./schemas/pendingDelivery.js";
+import { giveawaySchema } from "./schemas/giveaway.js";
 import { env } from "#env";
 import chalk from "chalk";
 
@@ -38,37 +37,6 @@ const dmQueueSchema = new Schema({
 
 dmQueueSchema.index({ createdAt: 1 });
 
-interface IGuild {
-  id: string;
-  channels?: {
-    logs?: string;
-    vault?: string;
-    general?: string;
-    tickets?: string;
-    staffRole?: string;
-    pixKey?: string;
-    closed?: boolean;
-    categories?: {
-      suporte?: string;
-      denuncia?: string;
-      financeiro?: string;
-      bugs?: string;
-    };
-    ticketCategories?: Array<{
-      name?: string;
-      value?: string;
-      description?: string;
-      emoji?: string;
-      channelEmoji?: string;
-      parentId?: string;
-    }>;
-  };
-}
-
-interface GuildModel extends Model<IGuild> {
-  get(id: string): Promise<HydratedDocument<IGuild>>;
-}
-
 export const db = {
   guilds: model<IGuild, GuildModel>("guild", guildSchema, "guilds"),
   members: model("member", memberSchema, "members"),
@@ -79,6 +47,7 @@ export const db = {
     pendingDeliverySchema,
     "pending_deliveries",
   ),
+  giveaways: model("giveaway", giveawaySchema, "giveaways"),
   dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
 };
 
@@ -86,5 +55,6 @@ export type GuildSchema = InferSchemaType<typeof guildSchema>;
 export type MemberSchema = InferSchemaType<typeof memberSchema>;
 export type TicketSchema = InferSchemaType<typeof ticketSchema>;
 export type TranscriptSchema = InferSchemaType<typeof transcriptSchema>;
+export type GiveawaySchema = InferSchemaType<typeof giveawaySchema>;
 
 export { cleanupGuildCache } from "./schemas/guild.js";

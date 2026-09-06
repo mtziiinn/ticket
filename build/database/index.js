@@ -4,6 +4,7 @@ import { memberSchema } from "./schemas/member.js";
 import { ticketSchema } from "./schemas/ticket.js";
 import { transcriptSchema } from "./schemas/transcript.js";
 import { pendingDeliverySchema } from "./schemas/pendingDelivery.js";
+import { giveawaySchema } from "./schemas/giveaway.js";
 import { env } from "#env";
 import chalk from "chalk";
 try {
@@ -35,6 +36,7 @@ export const db = {
     tickets: model("ticket", ticketSchema, "tickets"),
     transcripts: model("transcript", transcriptSchema, "transcripts"),
     pendingDeliveries: model("pendingDelivery", pendingDeliverySchema, "pending_deliveries"),
+    giveaways: model("giveaway", giveawaySchema, "giveaways"),
     dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
 };
 export { cleanupGuildCache } from "./schemas/guild.js";

@@ -27,6 +27,27 @@ export const guildSchema = new Schema({
             },
         ],
     },
+    welcome: {
+        channelEntry: String,
+        channelExit: String,
+        autoRole: String,
+        minAccountAgeDays: { type: Number, default: 0 },
+    },
+    verification: {
+        channel: String,
+        logsChannel: String,
+        verifiedRole: String,
+        unverifiedRole: String,
+    },
+    botLogsChannel: String,
+    payments: {
+        pixKey: String,
+        pixType: String,
+        mpAccessToken: String,
+        mpPublicKey: String,
+        stripeSecretKey: String,
+        stripeWebhookSecret: String,
+    },
 });
 guildSchema.index({ id: 1 }, { unique: true });
 const cache = new Map();

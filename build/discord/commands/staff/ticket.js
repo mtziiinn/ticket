@@ -2,7 +2,7 @@ import { createCommand } from "#base";
 import { createContainer, createSection, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
 import { ApplicationCommandOptionType, ApplicationCommandType, ButtonBuilder, ButtonStyle, } from "discord.js";
 import { db } from "#database";
-import { createConfigPanel } from "../../responders/ticket/config.js";
+import { renderTab } from "../../responders/panel/panelView.js";
 import { clearBotCache } from "#functions";
 function startOfDay() {
     const d = new Date();
@@ -180,8 +180,8 @@ createCommand({
             }
             const bannerUrl = "https://media.r2rp.com/v1/files/1780269148770-zwwjg93n.png";
             const guildIcon = interaction.guild?.iconURL({ size: 128 }) ?? undefined;
-            const container = createContainer(constants.colors.azoxo, createSection({
-                content: `## <:other_ticket:1502789959378145300> Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de atendimento. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+            const container = createContainer("#22c55e", createSection({
+                content: `## 🎫 Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
                 thumbnail: guildIcon,
             }), Separator.Default, [
                 `● Forneça o motivo e o máximo de informações possível para agilizar seu atendimento.`,
@@ -190,8 +190,8 @@ createCommand({
             ].join("\n"), Separator.Default, bannerUrl ? [createMediaGallery(bannerUrl), Separator.Default] : [], "Clique no botão abaixo para iniciar o seu atendimento.", createRow(new ButtonBuilder({
                 customId: "ticket/form/open",
                 label: "Abrir Ticket",
-                style: ButtonStyle.Primary,
-                emoji: "1502789959378145300",
+                style: ButtonStyle.Success,
+                emoji: "🎫",
             })));
             await channel.send({
                 components: [container],
@@ -232,7 +232,7 @@ createCommand({
                     guildData.markModified("channels");
                     await guildData.save();
                 }
-                const panel = await createConfigPanel(guildId);
+                const panel = await renderTab("ticket", interaction.guild, interaction.client, guildData);
                 await interaction.editReply({
                     components: [panel],
                     flags: ["IsComponentsV2"],

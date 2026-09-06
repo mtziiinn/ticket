@@ -34,15 +34,20 @@ Sistema completo e profissional de atendimento e vendas para Discord, desenvolvi
 
 ---
 
-## 📋 Comandos da Staff
+## 📋 Comandos do Sistema
 
 | Comando | Descrição |
 | :--- | :--- |
+| `/painel` | Abre o painel completo e interativo de configuração do BOT (Tickets, Pagamentos, Autorole, Verificação, Logs e Comandos). |
 | `/ticket painel [canal]` | Envia o painel interativo de abertura de tickets no canal selecionado. |
-| `/ticket configurar` | Abre o dashboard visual de configurações (canais de logs, vault, chave PIX, cargo staff, status da loja e categorias). |
+| `/ticket configurar` | Abre as configurações de canais e categorias do sistema de suporte. |
 | `/ticket stats` | Exibe as estatísticas de atendimentos (hoje, semana, mês, total e por categoria). |
 | `/ticket limpar-cache` | Executa a limpeza da memória RAM e cache temporário, exibindo relatório de MBs liberados. |
-| `/ajuda` | Exibe a central de ajuda e informações gerais do bot. |
+| `/bloquear-chat` | Bloqueia o chat atual para que apenas administradores possam enviar mensagens. |
+| `/desbloquear-chat` | Desbloqueia o chat atual para que todos os membros possam enviar mensagens. |
+| `/limpar-chat [quantidade]` | Limpa uma quantidade de mensagens (1 a 100) do chat atual em massa. |
+| `/gerar-pagamento [cliente]` | Gera uma cobrança automática interativa (PIX, Mercado Pago, Stripe) em BRL ou USD. |
+| `/criar-sorteio [item] [ganhadores] [tempo]` | Inicia um sorteio no canal com botões de participação e painel administrativo (reroll, finalizar, participantes). |
 
 ---
 
