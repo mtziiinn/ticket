@@ -378,13 +378,21 @@ async function processCloseSubmission(interaction: any) {
     if (!ticket) return;
 
     const data = modalFieldsToRecord(fields);
-    const transcriptChoiceRaw = data.transcript_choice;
+    const transcriptChoiceRaw =
+      data.transcript_choice ??
+      (typeof fields.getRadioGroup === "function"
+        ? fields.getRadioGroup("transcript_choice")
+        : undefined);
     const wantTranscript =
       (Array.isArray(transcriptChoiceRaw)
         ? transcriptChoiceRaw[0]
         : transcriptChoiceRaw) !== "no";
     const considerations =
-      (data.considerations as string) || "Atendimento concluído.";
+      (data.considerations as string) ||
+      (typeof fields.getTextInputValue === "function"
+        ? fields.getTextInputValue("considerations")
+        : undefined) ||
+      "Atendimento concluído.";
 
     // 2. Atualizar Banco
     ticket.closed = true;
@@ -512,7 +520,7 @@ async function processCloseSubmission(interaction: any) {
     // 6. Deletar canal
     setTimeout(() => {
       channel.delete().catch((err: any) => console.error("[Admin]", err));
-    }, 3000);
+    }, 5000);
   } catch (err) {
     console.error("[Ticket] Erro no encerramento:", err);
   }

@@ -1015,8 +1015,12 @@ export async function generateTranscript(
       const options: any = { limit: 100, cache: false };
       if (lastId) options.before = lastId;
 
-      const fetched = (await channel.messages.fetch(options)) as any;
-      if (fetched.size === 0) break;
+      const fetched = (await channel.messages.fetch(options).catch((err: any) => {
+        console.error("[Transcript] Erro ao buscar mensagens do canal:", err);
+        return null;
+      })) as any;
+
+      if (!fetched || fetched.size === 0) break;
 
       allMessages.push(...fetched.values());
       lastId = fetched.lastKey();
@@ -1029,19 +1033,31 @@ export async function generateTranscript(
       (a, b) => a.createdTimestamp - b.createdTimestamp,
     );
 
-    const guildData = await db.guilds.get(channel.guild.id);
-    const vaultChannelId = guildData.channels?.vault;
-    const vaultChannel = vaultChannelId
+    const guildData = channel.guild
+      ? await db.guilds.get(channel.guild.id).catch(() => null)
+      : null;
+    const vaultChannelId = guildData?.channels?.vault;
+    const vaultChannel = vaultChannelId && channel.guild
       ? await channel.guild.channels.fetch(vaultChannelId).catch(() => null)
       : null;
 
-    const ownerMember = await channel.guild.members
-      .fetch(ticket.ownerId)
-      .catch(() => null);
+    const ownerMember = ticket.ownerId && channel.guild
+      ? await channel.guild.members.fetch(ticket.ownerId).catch(() => null)
+      : null;
+    const ownerUser =
+      ownerMember?.user ||
+      (ticket.ownerId
+        ? await channel.client.users.fetch(ticket.ownerId).catch(() => null)
+        : null);
 
-    const claimerMember = ticket.claimedBy
+    const claimerMember = ticket.claimedBy && channel.guild
       ? await channel.guild.members.fetch(ticket.claimedBy).catch(() => null)
       : null;
+    const claimerUser =
+      claimerMember?.user ||
+      (ticket.claimedBy
+        ? await channel.client.users.fetch(ticket.claimedBy).catch(() => null)
+        : null);
 
     const transcriptId =
       ticket.ticketId ||
@@ -1052,11 +1068,11 @@ export async function generateTranscript(
     for (const msg of sortedMessages) {
       const attachments = [];
 
-      if (msg.attachments.size > 0 && vaultChannel?.isTextBased()) {
+      if (msg.attachments?.size > 0 && vaultChannel?.isTextBased()) {
         for (const att of msg.attachments.values()) {
           try {
             const backup = await (vaultChannel as any).send({
-              content: `<:file_files:1502789907511247010> **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author.tag}\``,
+              content: `<:file_files:1502789907511247010> **Backup de Mídia**\nTicket: \`${transcriptId}\` | Autor: \`${msg.author?.tag || msg.author?.username || "Desconhecido"}\``,
               files: [att.url],
             });
             const permanentUrl = backup.attachments.first()?.url;
@@ -1074,7 +1090,7 @@ export async function generateTranscript(
             });
           }
         }
-      } else {
+      } else if (msg.attachments?.size > 0) {
         attachments.push(
           ...msg.attachments.map((att: any) => ({
             url: att.url,
@@ -1087,28 +1103,32 @@ export async function generateTranscript(
       messagesData.push({
         id: `${transcriptId}-${messagesData.length}`,
         messageId: msg.id,
-        authorId: msg.author.id,
-        authorUsername: msg.author.username,
-        authorAvatar: msg.author.displayAvatarURL(),
-        authorBot: msg.author.bot,
-        isStaff:
-          msg.member?.permissions.has(PermissionFlagsBits.ManageChannels) ||
-          false,
-        content: msg.content,
-        timestamp: msg.createdAt.toISOString(),
+        authorId: msg.author?.id || "0",
+        authorUsername: msg.author?.username || "Desconhecido",
+        authorAvatar:
+          msg.author?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
+          "https://cdn.discordapp.com/embed/avatars/0.png",
+        authorBot: Boolean(msg.author?.bot),
+        isStaff: Boolean(
+          msg.member?.permissions?.has?.(PermissionFlagsBits.ManageChannels),
+        ),
+        content: msg.content || "",
+        timestamp: msg.createdAt
+          ? msg.createdAt.toISOString()
+          : new Date().toISOString(),
         attachments,
-        embeds: msg.embeds.map((emb: any) => ({
+        embeds: (msg.embeds || []).map((emb: any) => ({
           title: emb.title || undefined,
           description: emb.description || undefined,
-          color: emb.color || undefined,
+          color: typeof emb.color === "number" ? emb.color : undefined,
         })),
       });
     }
 
     const transcriptData = {
       id: transcriptId,
-      guildId: channel.guild.id,
-      guildName: channel.guild.name,
+      guildId: channel.guild?.id || ticket.guildId || "0",
+      guildName: channel.guild?.name || "Servidor",
       channelId: channel.id,
       channelName: channel.name,
       category: ticket.category || "Suporte",
@@ -1118,30 +1138,40 @@ export async function generateTranscript(
         : new Date().toISOString(),
       closedAt: new Date().toISOString(),
       openedBy: {
-        id: ticket.ownerId,
-        username: ownerMember?.user.username || "Desconhecido",
+        id: ticket.ownerId || "0",
+        username: ownerUser?.username || "Desconhecido",
         avatar:
-          ownerMember?.displayAvatarURL() ||
+          ownerUser?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
+          ownerMember?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
           "https://cdn.discordapp.com/embed/avatars/0.png",
       },
       closedBy: {
-        id: closer.id,
-        username: closer.username,
-        avatar: closer.displayAvatarURL(),
+        id: closer?.id || "0",
+        username: closer?.username || "Staff",
+        avatar:
+          closer?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
+          "https://cdn.discordapp.com/embed/avatars/0.png",
       },
-      claimedBy: claimerMember
+      claimedBy: claimerUser
         ? {
-            id: claimerMember.id,
-            username: claimerMember.user.username,
-            avatar: claimerMember.displayAvatarURL(),
+            id: claimerUser.id,
+            username: claimerUser.username || "Staff",
+            avatar:
+              claimerUser.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
+              "https://cdn.discordapp.com/embed/avatars/0.png",
           }
         : undefined,
-      deliveries: ticket.deliveries?.map((d: any) => ({
+      deliveries: (ticket.deliveries || []).map((d: any) => ({
         url: d.url,
         filename: d.filename,
-        description: d.description,
+        description: d.description || "",
         deliveredBy: d.deliveredBy,
-        deliveredAt: d.deliveredAt.toISOString(),
+        deliveredAt:
+          d.deliveredAt instanceof Date
+            ? d.deliveredAt.toISOString()
+            : d.deliveredAt
+              ? new Date(d.deliveredAt).toISOString()
+              : new Date().toISOString(),
       })),
       messageCount: sortedMessages.length,
       messages: messagesData,
@@ -1152,6 +1182,10 @@ export async function generateTranscript(
       { id: transcriptId },
       { $set: transcriptData },
       { upsert: true },
+    );
+
+    console.log(
+      `[Transcript] Salvo com sucesso no banco: ID ${transcriptId} (${sortedMessages.length} mensagens)`,
     );
 
     return `${env.WEB_URL}/transcripts/${transcriptId}`;
