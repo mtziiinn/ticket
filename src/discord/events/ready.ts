@@ -9,7 +9,7 @@ createEvent({
   once: true,
   async run(client) {
     const statuses = [
-      "💻 Desenvolvido por One Network",
+      "💻 Desenvolvido por Mts",
       "💫 Transformando comunidades",
       "🚨 Desenvolvendo soluções profissionais",
     ];
