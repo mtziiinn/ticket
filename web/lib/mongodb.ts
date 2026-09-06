@@ -1,7 +1,13 @@
 import { MongoClient, Db } from "mongodb";
 
+function cleanUri(val?: string): string | null {
+  if (!val) return null;
+  const cleaned = val.trim().replace(/^["']|["']$/g, "").trim();
+  return cleaned || null;
+}
+
 function getUri(): string {
-  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  const uri = cleanUri(process.env.MONGODB_URI) || cleanUri(process.env.MONGO_URI);
   if (!uri) {
     throw new Error(
       "Please add your MongoDB URI (MONGODB_URI or MONGO_URI) to environment variables",
