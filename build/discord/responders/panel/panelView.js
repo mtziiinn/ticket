@@ -11,7 +11,7 @@ export function formatHexColor(color) {
 }
 export const PANEL_COLOR = formatHexColor("#38bdf8");
 export const TICKET_EMBED_COLOR = formatHexColor("#38bdf8");
-export const BANNER_URL = "https://media.r2rp.com/v1/files/1788669460790-94f4dn7i.png";
+export const BANNER_URL = "";
 export function getPanelColor(guildData) {
     if (guildData?.identity?.primaryColor) {
         return formatHexColor(guildData.identity.primaryColor);
@@ -25,17 +25,19 @@ export function getVerifyEmbedColor(guildData) {
     return getPanelColor(guildData);
 }
 export function getBannerUrl(guildData) {
-    if (guildData?.identity?.bannerEnabled === false) {
+    if (!guildData?.identity?.bannerEnabled) {
         return null;
     }
     if (guildData?.identity?.bannerUrl) {
-        const trimmed = guildData.identity.bannerUrl.trim();
-        if (["none", "desativado", "remover", "disabled", "null"].includes(trimmed.toLowerCase())) {
+        const trimmed = String(guildData.identity.bannerUrl).trim();
+        if (["none", "desativado", "remover", "disabled", "null", "padrao", "default"].includes(trimmed.toLowerCase())) {
             return null;
         }
-        return trimmed;
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+            return trimmed;
+        }
     }
-    return BANNER_URL;
+    return null;
 }
 export function buildPanelDesignVisualSection(systemKey, systemName, hasCustomJson) {
     const statusDisplay = hasCustomJson
@@ -134,7 +136,6 @@ export async function renderHomeTab(guild, client, guildData) {
         guildData = await db.guilds.get(guild.id);
     }
     const color = getPanelColor(guildData);
-    const banner = getBannerUrl(guildData);
     const rawPing = Math.round(client.ws.ping);
     const ping = isNaN(rawPing) || rawPing <= 0 ? 24 : rawPing;
     const openTicketsCount = await db.tickets.countDocuments({
@@ -159,9 +160,6 @@ export async function renderHomeTab(guild, client, guildData) {
         Separator.Default,
         `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``,
     ];
-    if (banner) {
-        items.push(Separator.Default, createMediaGallery(banner));
-    }
     return createContainer(color, ...items);
 }
 export async function renderTicketTab(guildData) {
@@ -371,8 +369,8 @@ export async function renderIdentityTab(guild, client, guildData) {
         ? `[Visualizar Imagem](${identity.avatarUrl})`
         : `[Foto Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
     const bannerDisplay = isBannerEnabled
-        ? `${getEmojiTag("action_check")} **Ativada** ${currentBanner === BANNER_URL ? "*(Barrinha Padrão Oficial)*" : "*(Personalizada)*"}\n[Visualizar Barrinha](${currentBanner})`
-        : `${getEmojiTag("action_x")} **Desativada** *(Opcional - nenhum banner exibido nos painéis)*`;
+        ? `${getEmojiTag("action_check")} **Ativada (Personalizada)**\n[Visualizar Barrinha](${currentBanner})`
+        : `${getEmojiTag("action_x")} **Desativada** *(Sem barrinha nos painéis)*`;
     const botAvatar = identity.avatarUrl ||
         client.user?.displayAvatarURL() ||
         emojis.static.prism ||

@@ -3,7 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { renderTab, formatHexColor, getTicketEmbedColor, getVerifyEmbedColor, getBannerUrl, BANNER_URL, } from "./panelView.js";
+import { renderTab, formatHexColor, getTicketEmbedColor, getVerifyEmbedColor, getBannerUrl, } from "./panelView.js";
 import { getEmojiId, getEmojiTag, buildCustomOrFallbackPayload } from "#functions";
 import { createContainer, createRow, createSection, Separator, createEmbed, createMediaGallery, } from "@magicyan/discord";
 export async function updatePanelResponse(interaction, container) {
@@ -1256,18 +1256,18 @@ createResponder({
     cache: "cached",
     async run(interaction) {
         const guildData = await db.guilds.get(interaction.guild.id);
-        const currentBanner = guildData.identity?.bannerUrl || BANNER_URL;
+        const currentBanner = guildData.identity?.bannerUrl || "";
         const modal = new ModalBuilder()
             .setCustomId("panel/identity/modal/banner")
             .setTitle("Configurar Barrinha / Banner");
         const input = new TextInputBuilder()
             .setCustomId("banner_url")
-            .setPlaceholder(BANNER_URL)
-            .setValue(currentBanner === BANNER_URL ? "" : currentBanner)
+            .setPlaceholder("https://exemplo.com/sua-imagem.png")
+            .setValue(currentBanner && currentBanner !== "none" ? currentBanner : "")
             .setStyle(TextInputStyle.Short)
             .setRequired(false);
         const label = new LabelBuilder()
-            .setLabel("URL da Imagem (ou deixe vazio para padrão):")
+            .setLabel("URL da Imagem (ou vazio para desativar):")
             .setTextInputComponent(input);
         modal.addComponents(label);
         await interaction.showModal(modal);
@@ -1279,14 +1279,13 @@ createResponder({
     cache: "cached",
     async run(interaction) {
         const rawInput = interaction.fields.getTextInputValue("banner_url").trim();
-        const isDisable = ["nenhum", "remover", "none", "desativar", "off"].includes(rawInput.toLowerCase());
-        const isDefault = !rawInput || ["padrao", "default", "restaurar"].includes(rawInput.toLowerCase());
+        const isDisable = !rawInput ||
+            ["nenhum", "remover", "none", "desativar", "off", "padrao", "default", "restaurar"].includes(rawInput.toLowerCase());
         if (!isDisable &&
-            !isDefault &&
             !rawInput.startsWith("http://") &&
             !rawInput.startsWith("https://")) {
             await interaction.reply({
-                content: `${getEmojiTag("action_x")} URL inválida! O link da barrinha deve começar com \`http://\` ou \`https://\` (ou digite \`none\` para desativar).`,
+                content: `${getEmojiTag("action_x")} URL inválida! O link da barrinha deve começar com \`http://\` ou \`https://\` (ou deixe em branco para desativar).`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -1295,10 +1294,6 @@ createResponder({
         guildData.identity = guildData.identity || {};
         if (isDisable) {
             guildData.identity.bannerEnabled = false;
-            guildData.identity.bannerUrl = "none";
-        }
-        else if (isDefault) {
-            guildData.identity.bannerEnabled = true;
             guildData.identity.bannerUrl = undefined;
         }
         else {
@@ -1319,11 +1314,15 @@ createResponder({
     async run(interaction) {
         const guildData = await db.guilds.get(interaction.guild.id);
         guildData.identity = guildData.identity || {};
+        if (!guildData.identity.bannerUrl || guildData.identity.bannerUrl === "none") {
+            await interaction.reply({
+                content: `${getEmojiTag("action_info")} Nenhuma URL de barrinha configurada. Use o botão **Editar Link** para definir uma imagem primeiro.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
         const currentlyActive = getBannerUrl(guildData) !== null;
         guildData.identity.bannerEnabled = !currentlyActive;
-        if (!currentlyActive && guildData.identity.bannerUrl === "none") {
-            guildData.identity.bannerUrl = undefined;
-        }
         guildData.markModified("identity");
         await guildData.save();
         const msgComponents = interaction.message.components || [];
@@ -1350,7 +1349,7 @@ createResponder({
             avatarUrl: undefined,
             primaryColor: undefined,
             bannerUrl: undefined,
-            bannerEnabled: true,
+            bannerEnabled: false,
         };
         guildData.markModified("identity");
         await guildData.save();

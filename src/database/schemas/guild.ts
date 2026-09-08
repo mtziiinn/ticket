@@ -124,7 +124,7 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
     avatarUrl: String,
     primaryColor: String,
     bannerUrl: String,
-    bannerEnabled: { type: Boolean, default: true },
+    bannerEnabled: { type: Boolean, default: false },
   },
   antiflood: {
     enabled: { type: Boolean, default: false },
