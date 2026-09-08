@@ -33,6 +33,9 @@ export function getBannerUrl(guildData) {
         if (["none", "desativado", "remover", "disabled", "null", "padrao", "default"].includes(trimmed.toLowerCase())) {
             return null;
         }
+        if (trimmed.includes("1788669460790-94f4dn7i") || trimmed.toLowerCase().includes("dusk")) {
+            return null;
+        }
         if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
             return trimmed;
         }
