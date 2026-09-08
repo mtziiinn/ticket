@@ -40,7 +40,7 @@ export async function finishGiveaway(giveawayDoc, client) {
             const winnersText = winners.length > 0
                 ? winners.map((id) => `<@${id}>`).join(", ")
                 : "*Nenhum participante válido.*";
-            const updatedContainer = createContainer("#22c55e", `## ${getEmojiTag("other_ticket")} Sorteio Finalizado: ${giveawayDoc.item}`, Separator.Default, `| **Ganhadores (${winners.length}):**\n${winnersText}`, Separator.Default, `*Sorteio encerrado em <t:${Math.floor(Date.now() / 1000)}:R>*`);
+            const updatedContainer = createContainer("#38bdf8", `## ${getEmojiTag("other_ticket")} Sorteio Finalizado: ${giveawayDoc.item}`, Separator.Default, `| **Ganhadores (${winners.length}):**\n${winnersText}`, Separator.Default, `*Sorteio encerrado em <t:${Math.floor(Date.now() / 1000)}:R>*`);
             if (msg) {
                 await msg.edit({
                     components: [updatedContainer],
@@ -48,7 +48,7 @@ export async function finishGiveaway(giveawayDoc, client) {
                 });
             }
             if (winners.length > 0) {
-                const announceContainer = createContainer("#22c55e", `| ${getEmojiTag("action_check")} **Parabéns ${winnersText}!**\nVocê(s) ganhou/ganharam **${giveawayDoc.item}** no sorteio!`);
+                const announceContainer = createContainer("#38bdf8", `| ${getEmojiTag("action_check")} **Parabéns ${winnersText}!**\nVocê(s) ganhou/ganharam **${giveawayDoc.item}** no sorteio!`);
                 await channel.send({
                     components: [announceContainer],
                     flags: ["IsComponentsV2"],
@@ -105,10 +105,10 @@ createCommand({
         const endsAt = new Date(Date.now() + durationMs);
         const endTimestamp = Math.floor(endsAt.getTime() / 1000);
         await interaction.deferReply({ flags: ["Ephemeral"] });
-        const tempContainer = createContainer("#22c55e", `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
+        const tempContainer = createContainer("#38bdf8", `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
             .setCustomId("giveaway/join/pending")
             .setLabel("Participar")
-            .setStyle(ButtonStyle.Success)
+            .setStyle(ButtonStyle.Primary)
             .setEmoji(getEmojiId("user") || "👤"), new ButtonBuilder()
             .setCustomId("giveaway/manage/pending")
             .setStyle(ButtonStyle.Secondary)
@@ -124,10 +124,10 @@ createCommand({
             components: [tempContainer],
             flags: ["IsComponentsV2"],
         });
-        const finalContainer = createContainer("#22c55e", `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
+        const finalContainer = createContainer("#38bdf8", `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
             .setCustomId(`giveaway/join/${message.id}`)
             .setLabel("Participar")
-            .setStyle(ButtonStyle.Success)
+            .setStyle(ButtonStyle.Primary)
             .setEmoji(getEmojiId("user") || "👤"), new ButtonBuilder()
             .setCustomId(`giveaway/manage/${message.id}`)
             .setStyle(ButtonStyle.Secondary)
@@ -231,7 +231,7 @@ createResponder({
             .setLabel("Excluir Sorteio")
             .setDescription("Cancela e deleta o sorteio.")
             .setEmoji(getEmojiId("action_remove") || "📁"));
-        const container = createContainer("#22c55e", `## ${getEmojiTag("other_bot")} Gerenciar Sorteio`, `Escolha uma ação abaixo:`, Separator.Default, createRow(select));
+        const container = createContainer("#38bdf8", `## ${getEmojiTag("other_bot")} Gerenciar Sorteio`, `Escolha uma ação abaixo:`, Separator.Default, createRow(select));
         await interaction.reply({
             components: [container],
             flags: ["Ephemeral", "IsComponentsV2"],
@@ -264,7 +264,7 @@ createResponder({
                         ? ` e mais ${participants.length - 50}...`
                         : "")
                 : "*Nenhum participante até o momento.*";
-            const container = createContainer("#22c55e", `## ${getEmojiTag("user")} Participantes do Sorteio (${participants.length})`, Separator.Default, list);
+            const container = createContainer("#38bdf8", `## ${getEmojiTag("user")} Participantes do Sorteio (${participants.length})`, Separator.Default, list);
             await interaction.update({
                 components: [container],
                 flags: ["IsComponentsV2"],
@@ -282,7 +282,7 @@ createResponder({
             await finishGiveaway(giveaway, interaction.client);
             await interaction.update({
                 components: [
-                    createContainer("#22c55e", `| ${getEmojiTag("action_check")} **Sorteio encerrado com sucesso.**`),
+                    createContainer("#38bdf8", `| ${getEmojiTag("action_check")} **Sorteio encerrado com sucesso.**`),
                 ],
                 flags: ["IsComponentsV2"],
             });
@@ -302,7 +302,7 @@ createResponder({
             const winnersText = winners.map((id) => `<@${id}>`).join(", ");
             const channel = interaction.guild.channels.cache.get(giveaway.channelId);
             if (channel && channel.isTextBased()) {
-                const announceContainer = createContainer("#22c55e", `| ${getEmojiTag("clock")} **Novo Sorteio (Reroll):**\nParabéns ${winnersText}! Você(s) foi(ram) sorteado(s) para **${giveaway.item}**!`);
+                const announceContainer = createContainer("#38bdf8", `| ${getEmojiTag("clock")} **Novo Sorteio (Reroll):**\nParabéns ${winnersText}! Você(s) foi(ram) sorteado(s) para **${giveaway.item}**!`);
                 await channel.send({
                     components: [announceContainer],
                     flags: ["IsComponentsV2"],
@@ -310,7 +310,7 @@ createResponder({
             }
             await interaction.update({
                 components: [
-                    createContainer("#22c55e", `| ${getEmojiTag("action_check")} **Reroll realizado com sucesso:** ${winnersText}`),
+                    createContainer("#38bdf8", `| ${getEmojiTag("action_check")} **Reroll realizado com sucesso:** ${winnersText}`),
                 ],
                 flags: ["IsComponentsV2"],
             });

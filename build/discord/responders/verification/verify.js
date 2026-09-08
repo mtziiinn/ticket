@@ -64,24 +64,24 @@ function generateCaptchaImage(code) {
         ctx.lineTo(width, y);
         ctx.stroke();
     }
-    // Texto com brilho verde neon (igual ao print de referência)
+    // Texto com brilho azul claro neon
     ctx.font = "bold 50px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     const centerX = width / 2;
     const centerY = height / 2;
     // Camada 1: Glow difuso amplo
-    ctx.shadowColor = "#00ff66";
+    ctx.shadowColor = "#38bdf8";
     ctx.shadowBlur = 28;
-    ctx.fillStyle = "#00e676";
+    ctx.fillStyle = "#0284c7";
     ctx.fillText(code, centerX, centerY);
     // Camada 2: Glow médio intenso
     ctx.shadowBlur = 12;
-    ctx.fillStyle = "#22c55e";
+    ctx.fillStyle = "#38bdf8";
     ctx.fillText(code, centerX, centerY);
     // Camada 3: Núcleo do texto nítido
     ctx.shadowBlur = 2;
-    ctx.fillStyle = "#4ade80";
+    ctx.fillStyle = "#bae6fd";
     ctx.fillText(code, centerX, centerY);
     return canvas.toBuffer("image/png");
 }

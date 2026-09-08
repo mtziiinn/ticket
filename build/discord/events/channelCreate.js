@@ -21,7 +21,7 @@ createEvent({
             const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
             const parentName = channel.parent ? channel.parent.name : "Nenhuma";
             const timestamp = Math.floor(Date.now() / 1000);
-            const container = createContainer("#22c55e", `## ${getEmojiTag("action_check")} Canal Criado`, Separator.Default, [
+            const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Canal Criado`, Separator.Default, [
                 `| ${getEmojiTag("folder")} **Canal:** <#${channel.id}> (\`${channel.name}\`)`,
                 `| ${getEmojiTag("action_info")} **Tipo:** \`${typeName}\``,
                 `| ${getEmojiTag("folder_open")} **Categoria:** \`${parentName}\``,

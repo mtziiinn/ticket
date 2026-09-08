@@ -24,7 +24,7 @@ createEvent({
             let color = "#3b82f6";
             if (!oldState.channelId && newState.channelId) {
                 // Entrou na sala
-                color = "#22c55e";
+                color = "#38bdf8";
                 actionTitle = `## ${getEmojiTag("action_check")} Entrou em Canal de Voz`;
                 actionDetails = `| ${getEmojiTag("folder")} **Canal Conectado:** <#${newState.channelId}> (\`${newState.channel?.name}\`)`;
             }

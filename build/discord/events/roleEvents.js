@@ -10,7 +10,7 @@ createEvent({
         try {
             const executor = await getAuditLogExecutor(role.guild, AuditLogEvent.RoleCreate, role.id);
             const timestamp = Math.floor(Date.now() / 1000);
-            const container = createContainer("#22c55e", `## ${getEmojiTag("action_check")} Cargo Criado`, Separator.Default, [
+            const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Cargo Criado`, Separator.Default, [
                 `| ${getEmojiTag("user_users")} **Cargo:** <@&${role.id}> (\`${role.name}\`)`,
                 `| ${getEmojiTag("apps_figma")} **Cor:** \`${role.hexColor}\``,
                 `| ${getEmojiTag("user_check")} **Criado por:** ${executor ? `<@${executor.id}> (\`${executor.tag}\`)` : "*Não identificado*"}`,

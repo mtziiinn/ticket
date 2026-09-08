@@ -207,7 +207,7 @@ createResponder({
         : `*Loja Oficial (Padrão)*`;
 
       const container = createContainer(
-        "#22c55e",
+        "#38bdf8",
         `## ${getEmojiTag("other_dollar")} Cobrança Gerada`,
         Separator.Default,
         [
@@ -333,7 +333,7 @@ createResponder({
       }
 
       const container = createContainer(
-        "#22c55e",
+        "#38bdf8",
         `## ${getEmojiTag("other_dollar")} Cobrança Gerada (Mercado Pago)`,
         Separator.Default,
         sections.join("\n"),
@@ -440,7 +440,7 @@ createResponder({
       : `*Loja Oficial (Padrão)*`;
 
     const container = createContainer(
-      "#22c55e",
+      "#38bdf8",
       `## ${getEmojiTag("other_card")} Cobrança Gerada (Stripe)`,
       Separator.Default,
       [

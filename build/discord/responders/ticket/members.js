@@ -24,7 +24,7 @@ export async function renderMembersPanel(interaction, channel, ticket, guild) {
     componentsList.push(createRow(new ButtonBuilder({
         customId: "ticket/manage/members/add_btn",
         label: "Adicionar Membro",
-        style: ButtonStyle.Success,
+        style: ButtonStyle.Primary,
         emoji: "1502789972909097093",
     })));
     // Dropdown 2: Remover Membro (Dropdown de string com os membros adicionados)

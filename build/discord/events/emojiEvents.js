@@ -13,7 +13,7 @@ createEvent({
             const emojiDisplay = emoji.animated
                 ? `<a:${emoji.name}:${emoji.id}>`
                 : `<:${emoji.name}:${emoji.id}>`;
-            const container = createContainer("#22c55e", `## ${getEmojiTag("action_check")} Emoji Adicionado`, Separator.Default, [
+            const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Emoji Adicionado`, Separator.Default, [
                 `| ${getEmojiTag("apps_figma")} **Emoji:** ${emojiDisplay} \`:${emoji.name}:\` (\`${emoji.id}\`)`,
                 `| ${getEmojiTag("action_info")} **Tipo:** \`${emoji.animated ? "Animado (GIF)" : "Estático (PNG)"}\``,
                 `| ${getEmojiTag("user_check")} **Criado por:** ${executor ? `<@${executor.id}> (\`${executor.tag}\`)` : "*Não identificado*"}`,

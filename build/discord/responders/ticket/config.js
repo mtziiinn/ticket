@@ -61,7 +61,7 @@ export async function createConfigPanel(guildId) {
             ? "ticket/config/open_store"
             : "ticket/config/close_store",
         label: isClosed ? "Abrir Loja" : "Fechar Loja",
-        style: isClosed ? ButtonStyle.Success : ButtonStyle.Danger,
+        style: isClosed ? ButtonStyle.Primary : ButtonStyle.Danger,
         emoji: isClosed ? "1502789797821939752" : "1502789802918150206",
     }), new ButtonBuilder({
         customId: "ticket/config/refresh",

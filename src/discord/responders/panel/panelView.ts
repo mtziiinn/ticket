@@ -24,8 +24,8 @@ export function formatHexColor(color: string): `#${string}` {
   return `#${cleaned}` as `#${string}`;
 }
 
-export const PANEL_COLOR = formatHexColor("#1900ff");
-export const TICKET_EMBED_COLOR = formatHexColor("#22c55e");
+export const PANEL_COLOR = formatHexColor("#38bdf8");
+export const TICKET_EMBED_COLOR = formatHexColor("#38bdf8");
 export const BANNER_URL =
   "https://media.r2rp.com/v1/files/1788669460790-94f4dn7i.png";
 
@@ -195,7 +195,7 @@ export async function renderTicketTab(guildData: any) {
       new ButtonBuilder()
         .setCustomId("panel/ticket/send_panel")
         .setLabel("Enviar Painel do Ticket")
-        .setStyle(ButtonStyle.Success)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji(getEmojiId("mail") || "📨"),
     ),
     Separator.Default,
@@ -367,7 +367,7 @@ export async function renderVerificationTab(guildData: any) {
       new ButtonBuilder()
         .setCustomId("panel/verification/send_panel")
         .setLabel("Enviar Painel de Verificação")
-        .setStyle(ButtonStyle.Success)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji(getEmojiId("mail") || "📨"),
     ),
     Separator.Default,
@@ -564,8 +564,8 @@ export async function renderAntifloodTab(guildData: any) {
       button: new ButtonBuilder()
         .setCustomId("panel/antiflood/toggle")
         .setLabel(isEnabled ? "Desativar Proteção" : "Ativar Proteção")
-        .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Success)
-        .setEmoji(isEnabled ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🟢")),
+        .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Primary)
+        .setEmoji(isEnabled ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🔵")),
     }),
     Separator.Default,
     createSection({

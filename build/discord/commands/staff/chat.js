@@ -71,7 +71,7 @@ createCommand({
                 await channel.permissionOverwrites.edit(interaction.guild.roles.everyone, {
                     SendMessages: null,
                 });
-                const container = createContainer("#22c55e", `| ${getEmojiTag("unlock")} **Chat Desbloqueado:**\nEste canal foi liberado por <@${interaction.user.id}>. Todos os membros podem digitar novamente.`);
+                const container = createContainer("#38bdf8", `| ${getEmojiTag("unlock")} **Chat Desbloqueado:**\nEste canal foi liberado por <@${interaction.user.id}>. Todos os membros podem digitar novamente.`);
                 await interaction.reply({
                     components: [container],
                     flags: ["IsComponentsV2"],
@@ -91,7 +91,7 @@ createCommand({
             await interaction.deferReply({ flags: ["Ephemeral", "IsComponentsV2"] });
             try {
                 const deleted = await channel.bulkDelete(amount, true);
-                const container = createContainer("#22c55e", `| ${getEmojiTag("file_remove")} **Limpeza Concluída:**\nForam apagadas com sucesso \`${deleted.size}\` mensagens deste canal.`);
+                const container = createContainer("#38bdf8", `| ${getEmojiTag("file_remove")} **Limpeza Concluída:**\nForam apagadas com sucesso \`${deleted.size}\` mensagens deste canal.`);
                 await interaction.editReply({
                     components: [container],
                     flags: ["IsComponentsV2"],

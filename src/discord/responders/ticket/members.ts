@@ -44,7 +44,7 @@ export async function renderMembersPanel(interaction: any, channel: any, ticket:
       new ButtonBuilder({
         customId: "ticket/manage/members/add_btn",
         label: "Adicionar Membro",
-        style: ButtonStyle.Success,
+        style: ButtonStyle.Primary,
         emoji: "1502789972909097093",
       })
     )

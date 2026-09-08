@@ -92,7 +92,7 @@ createCommand({
         );
 
         const container = createContainer(
-          "#22c55e",
+          "#38bdf8",
           `| ${getEmojiTag("unlock")} **Chat Desbloqueado:**\nEste canal foi liberado por <@${interaction.user.id}>. Todos os membros podem digitar novamente.`,
         );
 
@@ -119,7 +119,7 @@ createCommand({
         const deleted = await channel.bulkDelete(amount, true);
 
         const container = createContainer(
-          "#22c55e",
+          "#38bdf8",
           `| ${getEmojiTag("file_remove")} **Limpeza Concluída:**\nForam apagadas com sucesso \`${deleted.size}\` mensagens deste canal.`,
         );
 

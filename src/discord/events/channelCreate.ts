@@ -30,7 +30,7 @@ createEvent({
       const timestamp = Math.floor(Date.now() / 1000);
 
       const container = createContainer(
-        "#22c55e",
+        "#38bdf8",
         `## ${getEmojiTag("action_check")} Canal Criado`,
         Separator.Default,
         [

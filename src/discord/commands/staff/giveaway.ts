@@ -69,7 +69,7 @@ export async function finishGiveaway(
           : "*Nenhum participante válido.*";
 
       const updatedContainer = createContainer(
-        "#22c55e",
+        "#38bdf8",
         `## ${getEmojiTag("other_ticket")} Sorteio Finalizado: ${giveawayDoc.item}`,
         Separator.Default,
         `| **Ganhadores (${winners.length}):**\n${winnersText}`,
@@ -86,7 +86,7 @@ export async function finishGiveaway(
 
       if (winners.length > 0) {
         const announceContainer = createContainer(
-          "#22c55e",
+          "#38bdf8",
           `| ${getEmojiTag("action_check")} **Parabéns ${winnersText}!**\nVocê(s) ganhou/ganharam **${giveawayDoc.item}** no sorteio!`,
         );
 
@@ -153,7 +153,7 @@ createCommand({
     await interaction.deferReply({ flags: ["Ephemeral"] });
 
     const tempContainer = createContainer(
-      "#22c55e",
+      "#38bdf8",
       `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`,
       Separator.Default,
       `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`,
@@ -164,7 +164,7 @@ createCommand({
         new ButtonBuilder()
           .setCustomId("giveaway/join/pending")
           .setLabel("Participar")
-          .setStyle(ButtonStyle.Success)
+          .setStyle(ButtonStyle.Primary)
           .setEmoji(getEmojiId("user") || "👤"),
         new ButtonBuilder()
           .setCustomId("giveaway/manage/pending")
@@ -187,7 +187,7 @@ createCommand({
     });
 
     const finalContainer = createContainer(
-      "#22c55e",
+      "#38bdf8",
       `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`,
       Separator.Default,
       `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`,
@@ -198,7 +198,7 @@ createCommand({
         new ButtonBuilder()
           .setCustomId(`giveaway/join/${message.id}`)
           .setLabel("Participar")
-          .setStyle(ButtonStyle.Success)
+          .setStyle(ButtonStyle.Primary)
           .setEmoji(getEmojiId("user") || "👤"),
         new ButtonBuilder()
           .setCustomId(`giveaway/manage/${message.id}`)
@@ -329,7 +329,7 @@ createResponder({
       );
 
     const container = createContainer(
-      "#22c55e",
+      "#38bdf8",
       `## ${getEmojiTag("other_bot")} Gerenciar Sorteio`,
       `Escolha uma ação abaixo:`,
       Separator.Default,
@@ -374,7 +374,7 @@ createResponder({
           : "*Nenhum participante até o momento.*";
 
       const container = createContainer(
-        "#22c55e",
+        "#38bdf8",
         `## ${getEmojiTag("user")} Participantes do Sorteio (${participants.length})`,
         Separator.Default,
         list,
@@ -401,7 +401,7 @@ createResponder({
       await interaction.update({
         components: [
           createContainer(
-            "#22c55e",
+            "#38bdf8",
             `| ${getEmojiTag("action_check")} **Sorteio encerrado com sucesso.**`,
           ),
         ],
@@ -432,7 +432,7 @@ createResponder({
       const channel = interaction.guild.channels.cache.get(giveaway.channelId);
       if (channel && channel.isTextBased()) {
         const announceContainer = createContainer(
-          "#22c55e",
+          "#38bdf8",
           `| ${getEmojiTag("clock")} **Novo Sorteio (Reroll):**\nParabéns ${winnersText}! Você(s) foi(ram) sorteado(s) para **${giveaway.item}**!`,
         );
         await (channel as any).send({
@@ -444,7 +444,7 @@ createResponder({
       await interaction.update({
         components: [
           createContainer(
-            "#22c55e",
+            "#38bdf8",
             `| ${getEmojiTag("action_check")} **Reroll realizado com sucesso:** ${winnersText}`,
           ),
         ],

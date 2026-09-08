@@ -21,7 +21,7 @@ createEvent({
         : `<:${emoji.name}:${emoji.id}>`;
 
       const container = createContainer(
-        "#22c55e",
+        "#38bdf8",
         `## ${getEmojiTag("action_check")} Emoji Adicionado`,
         Separator.Default,
         [

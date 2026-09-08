@@ -9,8 +9,8 @@ export function formatHexColor(color) {
     }
     return `#${cleaned}`;
 }
-export const PANEL_COLOR = formatHexColor("#1900ff");
-export const TICKET_EMBED_COLOR = formatHexColor("#22c55e");
+export const PANEL_COLOR = formatHexColor("#38bdf8");
+export const TICKET_EMBED_COLOR = formatHexColor("#38bdf8");
 export const BANNER_URL = "https://media.r2rp.com/v1/files/1788669460790-94f4dn7i.png";
 export function getPanelColor(guildData) {
     if (guildData?.identity?.primaryColor) {
@@ -151,7 +151,7 @@ export async function renderTicketTab(guildData) {
     return createContainer(color, `## ${getEmojiTag("other_ticket")} Sistema de Ticket`, buildPanelDropdown("ticket"), Separator.Default, createRow(new ButtonBuilder()
         .setCustomId("panel/ticket/send_panel")
         .setLabel("Enviar Painel do Ticket")
-        .setStyle(ButtonStyle.Success)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji(getEmojiId("mail") || "📨")), Separator.Default, createSection({
         content: `| **Canal de Abertura:**\n${openChannelDisplay}`,
         button: new ButtonBuilder()
@@ -269,7 +269,7 @@ export async function renderVerificationTab(guildData) {
     return createContainer(color, `## ${getEmojiTag("shield_check")} Sistema de Verificação (Captcha)`, buildPanelDropdown("verification"), Separator.Default, createRow(new ButtonBuilder()
         .setCustomId("panel/verification/send_panel")
         .setLabel("Enviar Painel de Verificação")
-        .setStyle(ButtonStyle.Success)
+        .setStyle(ButtonStyle.Primary)
         .setEmoji(getEmojiId("mail") || "📨")), Separator.Default, createSection({
         content: `| **Canal de Verificação:**\n${vChannel}`,
         button: new ButtonBuilder()
@@ -418,8 +418,8 @@ export async function renderAntifloodTab(guildData) {
         button: new ButtonBuilder()
             .setCustomId("panel/antiflood/toggle")
             .setLabel(isEnabled ? "Desativar Proteção" : "Ativar Proteção")
-            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Success)
-            .setEmoji(isEnabled ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🟢")),
+            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Primary)
+            .setEmoji(isEnabled ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🔵")),
     }), Separator.Default, createSection({
         content: [
             `| **Sensibilidade:** Máximo de \`${maxMentions} menções\` em \`${windowSeconds} segundos\``,

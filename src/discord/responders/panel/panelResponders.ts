@@ -135,7 +135,7 @@ createResponder({
         new ButtonBuilder({
           customId: "ticket/form/open",
           label: "Abrir Ticket",
-          style: ButtonStyle.Success,
+          style: ButtonStyle.Primary,
           emoji: getEmojiId("other_ticket") || "🎫",
         }),
       ),
@@ -762,7 +762,7 @@ createResponder({
         `• Na seção **Eventos**, é obrigatório marcar a opção \`Pagamentos\`.`,
         `• Clique em **Salvar** no final da página para finalizar a integração.`,
       ].join("\n"),
-      color: "#22c55e",
+      color: "#38bdf8",
     });
 
     const row = createRow(
@@ -810,7 +810,7 @@ createResponder({
         `• Na seção **Eventos para enviar**, selecione \`checkout.session.completed\`.`,
         `• Copie o **Segredo de assinatura** (começa com \`whsec_\`) e salve nas configurações.`,
       ].join("\n"),
-      color: "#22c55e",
+      color: "#38bdf8",
     });
 
     const row = createRow(
@@ -1098,7 +1098,7 @@ createResponder({
         new ButtonBuilder()
           .setCustomId("verify/captcha/start")
           .setLabel("Verificar-se")
-          .setStyle(ButtonStyle.Success)
+          .setStyle(ButtonStyle.Primary)
           .setEmoji(getEmojiId("action_check") || "✅"),
         new ButtonBuilder()
           .setCustomId("verify/captcha/info")
@@ -1500,7 +1500,7 @@ createResponder({
   cache: "cached",
   async run(interaction) {
     const guildData = await db.guilds.get(interaction.guild.id);
-    const currentColor = guildData.identity?.primaryColor || "#1900ff";
+    const currentColor = guildData.identity?.primaryColor || "#38bdf8";
 
     const modal = new ModalBuilder()
       .setCustomId("panel/identity/modal/color")
@@ -1508,7 +1508,7 @@ createResponder({
 
     const input = new TextInputBuilder()
       .setCustomId("color_hex")
-      .setPlaceholder("#1900ff")
+      .setPlaceholder("#38bdf8")
       .setValue(currentColor)
       .setStyle(TextInputStyle.Short)
       .setMinLength(4)
@@ -1516,7 +1516,7 @@ createResponder({
       .setRequired(true);
 
     const label = new LabelBuilder()
-      .setLabel("Código Hex da Cor (Ex: #1900ff, #22c55e):")
+      .setLabel("Código Hex da Cor (Ex: #38bdf8, #0ea5e9):")
       .setTextInputComponent(input);
 
     modal.addComponents(label);
@@ -1532,7 +1532,7 @@ createResponder({
     const colorHex = interaction.fields.getTextInputValue("color_hex").trim();
     if (!/^#?([0-9a-fA-F]{3,8})$/.test(colorHex)) {
       await interaction.reply({
-        content: `${getEmojiTag("action_x")} Cor inválida! Forneça um código hexadecimal válido, ex: \`#1900ff\` ou \`#22c55e\`.`,
+        content: `${getEmojiTag("action_x")} Cor inválida! Forneça um código hexadecimal válido, ex: \`#38bdf8\` ou \`#0ea5e9\`.`,
         flags: ["Ephemeral"],
       });
       return;

@@ -41,7 +41,7 @@ createEvent({
             const user = ban.user;
             const avatar = user.displayAvatarURL() ||
                 "https://cdn.discordapp.com/embed/avatars/0.png";
-            const container = createContainer("#22c55e", createSection({
+            const container = createContainer("#38bdf8", createSection({
                 content: `## ${getEmojiTag("action_check")} Membro Desbanido\nO banimento de <@${user.id}> foi revogado.`,
                 thumbnail: avatar,
             }), Separator.Default, [
