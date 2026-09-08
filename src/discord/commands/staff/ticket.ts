@@ -282,7 +282,7 @@ createCommand({
         Separator.Default,
         `### ${getEmojiTag("database_check")} Alocação de Memória (RAM)`,
         [
-          `${getEmojiTag("cloud_check")} **RSS Total do Processo:** \`${toMB(mem.rss)} MB\` *(limite container: 512 MB)*`,
+          `${getEmojiTag("cloud_check")} **RSS Total do Processo:** \`${toMB(mem.rss)} MB\` *(limite container: 200 MB)*`,
           `${getEmojiTag("database")} **Heap Utilizado:** \`${toMB(mem.heapUsed)} MB\` / \`${toMB(mem.heapTotal)} MB\` (\`${heapPercent}%\`)`,
           `${getEmojiTag("action_info")} **Memória Externa (C++/Buffers):** \`${toMB(mem.external)} MB\``,
           `${getEmojiTag("file_check")} **ArrayBuffers:** \`${toMB(mem.arrayBuffers || 0)} MB\``,

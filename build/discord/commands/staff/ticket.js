@@ -208,7 +208,7 @@ createCommand({
                 content: `## ${getEmojiTag("database")} Diagnóstico de Memória & Saúde\nMonitoramento de telemetria do processo Node.js na hospedagem.`,
                 thumbnail: interaction.client.user?.displayAvatarURL(),
             }), Separator.Default, `### ${getEmojiTag("clock")} Tempo de Atividade (Uptime)`, `| ${getEmojiTag("clock_add")} **Uptime do Processo:** \`${uptimeStr}\`\n| ${getEmojiTag("other_bot")} **Node.js:** \`${process.version}\` (\`${process.platform}\`)`, Separator.Default, `### ${getEmojiTag("database_check")} Alocação de Memória (RAM)`, [
-                `${getEmojiTag("cloud_check")} **RSS Total do Processo:** \`${toMB(mem.rss)} MB\` *(limite container: 512 MB)*`,
+                `${getEmojiTag("cloud_check")} **RSS Total do Processo:** \`${toMB(mem.rss)} MB\` *(limite container: 200 MB)*`,
                 `${getEmojiTag("database")} **Heap Utilizado:** \`${toMB(mem.heapUsed)} MB\` / \`${toMB(mem.heapTotal)} MB\` (\`${heapPercent}%\`)`,
                 `${getEmojiTag("action_info")} **Memória Externa (C++/Buffers):** \`${toMB(mem.external)} MB\``,
                 `${getEmojiTag("file_check")} **ArrayBuffers:** \`${toMB(mem.arrayBuffers || 0)} MB\``,
