@@ -155,16 +155,17 @@ export async function renderHomeTab(
   const botAvatar =
     guildData.identity?.avatarUrl ||
     client.user?.displayAvatarURL() ||
+    emojis.static.prism ||
     emojis.static.other_bot;
 
   const items: any[] = [
     createSection({
-      content: `## PAINEL DE CONFIGURAÇÕES\nGerencie tickets, moderação, gateways e identidades com facilidade.`,
+      content: `## ${getEmojiTag("prism")} PAINEL DE CONTROLE • PRISM\nGerencie tickets, moderação, gateways e identidades com facilidade.`,
       thumbnail: botAvatar as any,
     }),
     buildPanelDropdown("home"),
     Separator.Default,
-    `| ${getEmojiTag("other_bot")} **Status do BOT:** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
+    `| ${getEmojiTag("prism")} **Status do BOT (Prism):** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
     Separator.Default,
     `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``,
     Separator.Default,
@@ -483,6 +484,7 @@ export async function renderIdentityTab(
   const botAvatar =
     identity.avatarUrl ||
     client.user?.displayAvatarURL() ||
+    emojis.static.prism ||
     emojis.static.other_bot;
 
   const items: any[] = [
@@ -551,7 +553,7 @@ export async function renderCommandsTab(guildData?: any) {
     buildPanelDropdown("commands"),
     Separator.Default,
     [
-      `### ${getEmojiTag("other_bot")} Configuração e Gestão`,
+      `### ${getEmojiTag("prism")} Configuração e Gestão (Prism)`,
       `• \`/painel\` - Painel central de controle (Tickets, Anúncios, Verificação, Gateways, Autorole e Logs).`,
       `• \`/anunciar\` - Abre o formulário interativo de comunicado oficial (envio em canal e/ou disparo por DM).`,
       `• \`/ticket stats\` - Exibe métricas de atendimento (hoje, semana, mês, total e por categoria).`,

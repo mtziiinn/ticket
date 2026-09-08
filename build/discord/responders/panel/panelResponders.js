@@ -82,7 +82,7 @@ createResponder({
         const banner = getBannerUrl(guildData);
         const items = [
             createSection({
-                content: `## ${getEmojiTag("other_ticket")} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+                content: `## ${getEmojiTag("prism")} Central de Atendimento • Prism\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
                 thumbnail: guildIcon,
             }),
             Separator.Default,

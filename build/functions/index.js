@@ -20,22 +20,23 @@ export function formatEmoji(emojiRaw) {
 export function getCleanAvatarURL(user) {
     try {
         if (!user)
-            return emojis.static.other_ticket;
+            return emojis.static.prism || emojis.static.other_ticket;
         if (typeof user.displayAvatarURL === "function") {
             return user.displayAvatarURL({ extension: "png", forceStatic: true });
         }
         if (typeof user.avatarURL === "function") {
             return (user.avatarURL({ extension: "png", forceStatic: true }) ||
                 user.defaultAvatarURL ||
+                emojis.static.prism ||
                 emojis.static.other_ticket);
         }
         if (typeof user === "string" && user.startsWith("http")) {
             return user;
         }
-        return emojis.static.other_ticket;
+        return emojis.static.prism || emojis.static.other_ticket;
     }
     catch {
-        return emojis.static.other_ticket;
+        return emojis.static.prism || emojis.static.other_ticket;
     }
 }
 export async function safeSendDM(target, options, contextLabel = "DM") {

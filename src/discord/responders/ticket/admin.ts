@@ -17,6 +17,7 @@ import {
   createMercadoPagoCharge,
   generatePixPayload,
   getCleanAvatarURL,
+  getEmojiTag,
   safeSendDM,
 } from "#functions";
 
@@ -433,7 +434,7 @@ async function processCloseSubmission(interaction: any) {
         const logContainer = createContainer(
           constants.colors.primary,
           createSection({
-            content: `## <:folder:1502789880214720533> Atendimento ${ticket.ticketId}\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
+            content: `## ${getEmojiTag("prism")} Atendimento ${ticket.ticketId} • Prism\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
             thumbnail: getCleanAvatarURL(owner?.user || user) as any,
           }),
           Separator.Default,
@@ -487,7 +488,7 @@ async function processCloseSubmission(interaction: any) {
       const dmContainer = createContainer(
         constants.colors.danger,
         createSection({
-          content: `### Atendimento Encerrado\nOlá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
+          content: `### ${getEmojiTag("prism")} Atendimento Encerrado • Prism\nOlá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
           thumbnail: getCleanAvatarURL(user) as any,
         }),
         Separator.Default,

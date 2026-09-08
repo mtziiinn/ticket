@@ -278,7 +278,7 @@ createCommand({
         }),
         Separator.Default,
         `### ${getEmojiTag("clock")} Tempo de Atividade (Uptime)`,
-        `| ${getEmojiTag("clock_add")} **Uptime do Processo:** \`${uptimeStr}\`\n| ${getEmojiTag("other_bot")} **Node.js:** \`${process.version}\` (\`${process.platform}\`)`,
+        `| ${getEmojiTag("clock_add")} **Uptime do Processo:** \`${uptimeStr}\`\n| ${getEmojiTag("prism")} **Bot:** \`Prism Tickets\` | **Node.js:** \`${process.version}\` (\`${process.platform}\`)`,
         Separator.Default,
         `### ${getEmojiTag("database_check")} Alocação de Memória (RAM)`,
         [

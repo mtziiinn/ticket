@@ -21,7 +21,7 @@ import {
   MessageType,
 } from "discord.js";
 import { db } from "#database";
-import { formatEmoji, getCleanAvatarURL } from "#functions";
+import { formatEmoji, getCleanAvatarURL, getEmojiTag } from "#functions";
 import { formatHexColor, getBannerUrl } from "../panel/panelView.js";
 
 const cooldowns = new Map<string, number>();
@@ -170,7 +170,7 @@ async function processTicketSubmission(
     const banner = getBannerUrl(guildData);
     const ticketItems: any[] = [
       createSection({
-        content: `## <:other_ticket:1502789959378145300> Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
+        content: `## ${getEmojiTag("prism")} Atendimento • Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
         thumbnail: getCleanAvatarURL(user) as any,
       }),
       Separator.Default,

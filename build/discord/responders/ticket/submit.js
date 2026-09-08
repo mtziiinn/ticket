@@ -3,7 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
-import { formatEmoji, getCleanAvatarURL } from "#functions";
+import { formatEmoji, getCleanAvatarURL, getEmojiTag } from "#functions";
 import { formatHexColor, getBannerUrl } from "../panel/panelView.js";
 const cooldowns = new Map();
 export function cleanupCooldowns(force = false) {
@@ -127,7 +127,7 @@ async function processTicketSubmission(interaction, routeCategory) {
         const banner = getBannerUrl(guildData);
         const ticketItems = [
             createSection({
-                content: `## <:other_ticket:1502789959378145300> Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
+                content: `## ${getEmojiTag("prism")} Atendimento • Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
                 thumbnail: getCleanAvatarURL(user),
             }),
             Separator.Default,

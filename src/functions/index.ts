@@ -20,7 +20,7 @@ export function formatEmoji(emojiRaw: string | null | undefined): any {
 
 export function getCleanAvatarURL(user: any): string {
   try {
-    if (!user) return emojis.static.other_ticket;
+    if (!user) return emojis.static.prism || emojis.static.other_ticket;
     if (typeof user.displayAvatarURL === "function") {
       return user.displayAvatarURL({ extension: "png", forceStatic: true });
     }
@@ -28,15 +28,16 @@ export function getCleanAvatarURL(user: any): string {
       return (
         user.avatarURL({ extension: "png", forceStatic: true }) ||
         user.defaultAvatarURL ||
+        emojis.static.prism ||
         emojis.static.other_ticket
       );
     }
     if (typeof user === "string" && user.startsWith("http")) {
       return user;
     }
-    return emojis.static.other_ticket;
+    return emojis.static.prism || emojis.static.other_ticket;
   } catch {
-    return emojis.static.other_ticket;
+    return emojis.static.prism || emojis.static.other_ticket;
   }
 }
 
