@@ -6,10 +6,14 @@ import {
   createMediaGallery,
 } from "@magicyan/discord";
 import {
+  ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelSelectMenuBuilder,
+  ChannelType,
   Client,
   Guild,
+  RoleSelectMenuBuilder,
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
@@ -108,6 +112,12 @@ export function buildPanelDropdown(currentTab: string = "home") {
       .setDescription("Proteção contra menções excessivas à equipe")
       .setEmoji(getEmojiId("shield") || "🛡️")
       .setDefault(currentTab === "antiflood"),
+    new StringSelectMenuOptionBuilder()
+      .setValue("anuncios")
+      .setLabel("Anúncios")
+      .setDescription("Comunicados oficiais em canal e disparo por DM")
+      .setEmoji(getEmojiId("prism") || "📢")
+      .setDefault(currentTab === "anuncios"),
     new StringSelectMenuOptionBuilder()
       .setValue("commands")
       .setLabel("Comandos")
@@ -542,7 +552,8 @@ export async function renderCommandsTab(guildData?: any) {
     Separator.Default,
     [
       `### ${getEmojiTag("other_bot")} Configuração e Gestão`,
-      `• \`/painel\` - Painel central de controle (Tickets, Verificação, Gateways, Autorole e Logs).`,
+      `• \`/painel\` - Painel central de controle (Tickets, Anúncios, Verificação, Gateways, Autorole e Logs).`,
+      `• \`/anunciar\` - Abre o formulário interativo de comunicado oficial (envio em canal e/ou disparo por DM).`,
       `• \`/ticket stats\` - Exibe métricas de atendimento (hoje, semana, mês, total e por categoria).`,
       `• \`/ticket limpar-cache\` - Limpa o cache em memória e otimiza o uso de RAM na hospedagem.`,
       ``,
@@ -611,6 +622,73 @@ export async function renderAntifloodTab(guildData: any) {
   );
 }
 
+export function renderAnunciosTab(guildData: any) {
+  const color = getPanelColor(guildData);
+  const targetChannel = guildData?.announcements?.channelId
+    ? `<#${guildData.announcements.channelId}>`
+    : `${getEmojiTag("action_info")} *Não configurado (usa canal atual)*`;
+  const dmRoles = guildData?.announcements?.dmRoleIds?.length
+    ? guildData.announcements.dmRoleIds
+        .map((id: string) => `<@&${id}>`)
+        .join(", ")
+    : `${getEmojiTag("action_x")} *Não configurado*`;
+
+  const banner = getBannerUrl(guildData);
+  const bannerStatus = banner
+    ? `${getEmojiTag("action_check")} Ativada ([Ver Imagem](${banner}))`
+    : `${getEmojiTag("action_x")} Desativada (Opcional)`;
+
+  return (createContainer as any)(
+    color,
+    `## ${getEmojiTag("prism")} Sistema de Disparo de Anúncios & Comunicados`,
+    buildPanelDropdown("anuncios"),
+    Separator.Default,
+    `> ${getEmojiTag("prism")} **Canal Padrão:** ${targetChannel}\n` +
+      `> ${getEmojiTag("user_check")} **Cargos da DM:** ${dmRoles}\n` +
+      `> ${getEmojiTag("apps_figma")} **Barrinha dos Comunicados:** ${bannerStatus}\n\n` +
+      `● **Anúncio em Canal:** Publica um comunicado oficial formatado com a identidade **Prism** em azul claro (#38bdf8), anexos e menção @everyone opcional.\n\n` +
+      `● **Anúncio na DM:** Dispara individualmente para a DM de todos os membros dos cargos selecionados com proteção contra rate-limit e limpeza de memória.`,
+    Separator.Default,
+    new ActionRowBuilder<ChannelSelectMenuBuilder>().addComponents(
+      new ChannelSelectMenuBuilder()
+        .setCustomId("panel/anuncios/select_channel")
+        .setPlaceholder("Canal padrão para envio de comunicados...")
+        .setChannelTypes(ChannelType.GuildText),
+    ),
+    new ActionRowBuilder<RoleSelectMenuBuilder>().addComponents(
+      new RoleSelectMenuBuilder()
+        .setCustomId("panel/anuncios/select_role")
+        .setPlaceholder("Cargos dos membros que receberão comunicados na DM...")
+        .setMinValues(1)
+        .setMaxValues(25),
+    ),
+    createRow(
+      new ButtonBuilder()
+        .setCustomId("panel/anuncios/modal_canal")
+        .setLabel("Enviar Anúncio em Canal")
+        .setEmoji(getEmojiId("prism") || "📢")
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId("panel/anuncios/modal_dm")
+        .setLabel("Disparar Anúncio na DM")
+        .setEmoji(getEmojiId("user") || "👤")
+        .setStyle(ButtonStyle.Primary),
+    ),
+    createRow(
+      new ButtonBuilder()
+        .setCustomId("panel/anuncios/json_canal")
+        .setLabel("Anúncio em Canal (JSON)")
+        .setEmoji(getEmojiId("other_terminal") || "📄")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId("panel/anuncios/json_dm")
+        .setLabel("Anúncio na DM (JSON)")
+        .setEmoji(getEmojiId("other_terminal") || "📄")
+        .setStyle(ButtonStyle.Secondary),
+    ),
+  );
+}
+
 export async function renderTab(
   tab: string,
   guild: Guild,
@@ -636,10 +714,12 @@ export async function renderTab(
       return await renderLogsTab(guildData);
     case "antiflood":
       return await renderAntifloodTab(guildData);
+    case "anuncios":
+      return renderAnunciosTab(guildData);
     case "commands":
       return await renderCommandsTab(guildData);
     case "home":
-    default:
-      return await renderHomeTab(guild, client, guildData);
+      default:
+        return await renderHomeTab(guild, client, guildData);
   }
 }

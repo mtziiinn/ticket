@@ -33,7 +33,7 @@ import {
   createMediaGallery,
 } from "@magicyan/discord";
 
-async function updatePanelResponse(interaction: any, container: any) {
+export async function updatePanelResponse(interaction: any, container: any) {
   try {
     if (interaction.deferred || interaction.replied) {
       await interaction.editReply({

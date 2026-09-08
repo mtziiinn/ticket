@@ -6,7 +6,7 @@ import { env } from "#env";
 import { renderTab, formatHexColor, getTicketEmbedColor, getVerifyEmbedColor, getBannerUrl, BANNER_URL, } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
 import { createContainer, createRow, createSection, Separator, createEmbed, createMediaGallery, } from "@magicyan/discord";
-async function updatePanelResponse(interaction, container) {
+export async function updatePanelResponse(interaction, container) {
     try {
         if (interaction.deferred || interaction.replied) {
             await interaction.editReply({

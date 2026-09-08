@@ -60,6 +60,10 @@ export interface IGuild {
     windowSeconds?: number;
     timeoutMinutes?: number;
   };
+  announcements?: {
+    channelId?: string;
+    dmRoleIds?: string[];
+  };
 }
 
 export interface GuildModel extends Model<IGuild> {
@@ -126,6 +130,10 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
     maxMentions: { type: Number, default: 3 },
     windowSeconds: { type: Number, default: 10 },
     timeoutMinutes: { type: Number, default: 5 },
+  },
+  announcements: {
+    channelId: String,
+    dmRoleIds: [String],
   },
 });
 

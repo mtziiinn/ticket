@@ -113,3 +113,5 @@ export function generatePixPayload(
 export * from "./cacheCleaner.js";
 export * from "./mercadopago.js";
 export * from "./botLogs.js";
+export * from "./announcements.js";
+export * from "./panelJson.js";

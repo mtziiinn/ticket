@@ -61,6 +61,10 @@ export const guildSchema = new Schema({
         windowSeconds: { type: Number, default: 10 },
         timeoutMinutes: { type: Number, default: 5 },
     },
+    announcements: {
+        channelId: String,
+        dmRoleIds: [String],
+    },
 });
 guildSchema.index({ id: 1 }, { unique: true });
 const cache = new Map();
