@@ -33,7 +33,7 @@ export async function createMercadoPagoCharge(params) {
                 description: `${sanitizedDescription} (Ticket #${params.ticketId})`,
                 payment_method_id: "pix",
                 payer: {
-                    email: params.customerEmail || "cliente.discord@ticket-mts.com",
+                    email: params.customerEmail || "cliente.discord@tickets.com",
                 },
                 external_reference: params.ticketId,
                 notification_url: webhookUrl,

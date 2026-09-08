@@ -153,7 +153,7 @@ export default function HomePage() {
             variant="secondary"
             className="px-4 py-1 text-xs font-mono opacity-60"
           >
-            Powered by Mts
+            Transcripts
           </Badge>
         </footer>
       </div>

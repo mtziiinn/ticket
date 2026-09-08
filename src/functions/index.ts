@@ -79,7 +79,7 @@ export function crc16(data: string): string {
 
 export function generatePixPayload(
   key: string,
-  name: string = "MTS TICKETS",
+  name: string = "TICKETS",
   city: string = "SAO PAULO",
 ) {
   // Limpar a chave (remover espaços, traços, etc)

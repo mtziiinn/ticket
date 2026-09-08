@@ -76,7 +76,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `Entregas #${data.ticketId} - Mts`,
+    title: `Entregas #${data.ticketId}`,
     description: `${data.deliveries.length} arquivo(s) entregue(s) - ${data.category}`,
   };
 }
@@ -99,7 +99,7 @@ export default async function DeliveriesPage({ params }: PageProps) {
                 <Package className="h-5 w-5 text-primary" />
               </div>
               <span className="text-lg font-semibold text-foreground tracking-tight">
-                Mts Entregas
+                Entregas
               </span>
             </div>
             <Button asChild variant="ghost" size="sm">

@@ -71,7 +71,7 @@ export function crc16(data) {
     }
     return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
 }
-export function generatePixPayload(key, name = "MTS TICKETS", city = "SAO PAULO") {
+export function generatePixPayload(key, name = "TICKETS", city = "SAO PAULO") {
     // Limpar a chave (remover espaços, traços, etc)
     const cleanKey = key
         .replace(/\s+/g, "")

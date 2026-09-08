@@ -10,7 +10,7 @@ export default function NotFound() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
             <span className="text-lg font-semibold text-foreground tracking-tight">
-              Mts Entregas
+              Entregas
             </span>
           </div>
         </div>

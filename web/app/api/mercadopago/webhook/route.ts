@@ -179,7 +179,7 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: "online",
-    service: "Mercado Pago Webhook - Tickets MTS",
+    service: "Mercado Pago Webhook - Tickets",
     timestamp: new Date().toISOString(),
   });
 }

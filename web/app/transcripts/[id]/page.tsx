@@ -40,7 +40,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `Transcript #${transcript.id} - Mts`,
+    title: `Transcript #${transcript.id}`,
     description: `Transcript de ${transcript.openedBy.username} - ${transcript.messageCount} mensagens`,
   };
 }
