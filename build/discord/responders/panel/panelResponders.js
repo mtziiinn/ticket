@@ -4,7 +4,7 @@ import { ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, Labe
 import { db } from "#database";
 import { env } from "#env";
 import { renderTab, formatHexColor, getTicketEmbedColor, getVerifyEmbedColor, getBannerUrl, BANNER_URL, } from "./panelView.js";
-import { getEmojiId, getEmojiTag } from "#functions";
+import { getEmojiId, getEmojiTag, buildCustomOrFallbackPayload } from "#functions";
 import { createContainer, createRow, createSection, Separator, createEmbed, createMediaGallery, } from "@magicyan/discord";
 export async function updatePanelResponse(interaction, container) {
     try {
@@ -80,6 +80,12 @@ createResponder({
             emojis.static.other_ticket;
         const ticketColor = getTicketEmbedColor(guildData);
         const banner = getBannerUrl(guildData);
+        const actionRow = createRow(new ButtonBuilder({
+            customId: "ticket/form/open",
+            label: "Abrir Ticket",
+            style: ButtonStyle.Primary,
+            emoji: getEmojiId("other_ticket") || "🎫",
+        }));
         const items = [
             createSection({
                 content: `## ${getEmojiTag("prism")} Central de Atendimento • Prism\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
@@ -93,21 +99,14 @@ createResponder({
             ].join("\n"),
             Separator.Default,
             "> Caso ocorra algum problema, contate a administração.",
-            createRow(new ButtonBuilder({
-                customId: "ticket/form/open",
-                label: "Abrir Ticket",
-                style: ButtonStyle.Primary,
-                emoji: getEmojiId("other_ticket") || "🎫",
-            })),
+            actionRow,
         ];
         if (banner) {
             items.push(Separator.Default, createMediaGallery(banner));
         }
         const container = createContainer(ticketColor, ...items);
-        await channel.send({
-            components: [container],
-            flags: ["IsComponentsV2"],
-        });
+        const payload = buildCustomOrFallbackPayload(guildData?.customPanels?.ticket, container, [actionRow]);
+        await channel.send(payload);
         await interaction.reply({
             content: `${getEmojiTag("action_check")} Painel de tickets enviado com sucesso em <#${targetChannelId}>!`,
             flags: ["Ephemeral"],
@@ -827,30 +826,29 @@ createResponder({
         }
         const verifyColor = getVerifyEmbedColor(guildData);
         const banner = getBannerUrl(guildData);
+        const verifyRow = createRow(new ButtonBuilder()
+            .setCustomId("verify/captcha/start")
+            .setLabel("Verificar-se")
+            .setStyle(ButtonStyle.Primary)
+            .setEmoji(getEmojiId("action_check") || "✅"), new ButtonBuilder()
+            .setCustomId("verify/captcha/info")
+            .setLabel("Por que a verificação é necessária?")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_info") || "❓"));
         const verifyItems = [
             `## ${getEmojiTag("shield_check")} VERIFICAÇÃO`,
             `Para ter acesso completo aos canais do servidor, realize a sua verificação de segurança abaixo.`,
             Separator.Default,
             `> Este sistema protege a nossa comunidade contra bots maliciosos, raids e invasões automáticas.`,
             Separator.Default,
-            createRow(new ButtonBuilder()
-                .setCustomId("verify/captcha/start")
-                .setLabel("Verificar-se")
-                .setStyle(ButtonStyle.Primary)
-                .setEmoji(getEmojiId("action_check") || "✅"), new ButtonBuilder()
-                .setCustomId("verify/captcha/info")
-                .setLabel("Por que a verificação é necessária?")
-                .setStyle(ButtonStyle.Secondary)
-                .setEmoji(getEmojiId("action_info") || "❓")),
+            verifyRow,
         ];
         if (banner) {
             verifyItems.push(Separator.Default, createMediaGallery(banner));
         }
         const container = createContainer(verifyColor, ...verifyItems);
-        await channel.send({
-            components: [container],
-            flags: ["IsComponentsV2"],
-        });
+        const payload = buildCustomOrFallbackPayload(guildData?.customPanels?.verification, container, [verifyRow]);
+        await channel.send(payload);
         await interaction.reply({
             content: `${getEmojiTag("action_check")} Painel de verificação enviado com sucesso em <#${targetChannelId}>!`,
             flags: ["Ephemeral"],

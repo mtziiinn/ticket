@@ -1,4 +1,9 @@
 import { ComponentType } from "discord.js";
+export const SYSTEM_NAMES = {
+    ticket: "Tickets (Central de Atendimento)",
+    verification: "Verificação de Segurança",
+    anuncios: "Anúncios e Comunicados",
+};
 export function parsePanelJson(rawInput) {
     if (!rawInput || typeof rawInput !== "string") {
         return { success: false, error: "Nenhum código JSON foi fornecido." };

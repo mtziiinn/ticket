@@ -1,5 +1,11 @@
 import { ComponentType } from "discord.js";
 
+export const SYSTEM_NAMES: Record<string, string> = {
+  ticket: "Tickets (Central de Atendimento)",
+  verification: "Verificação de Segurança",
+  anuncios: "Anúncios e Comunicados",
+};
+
 interface ParsedPanelData {
   content?: string;
   embeds?: any[];

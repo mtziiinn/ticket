@@ -64,6 +64,7 @@ export interface IGuild {
     channelId?: string;
     dmRoleIds?: string[];
   };
+  customPanels?: Record<string, any>;
 }
 
 export interface GuildModel extends Model<IGuild> {
@@ -135,6 +136,7 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
     channelId: String,
     dmRoleIds: [String],
   },
+  customPanels: { type: Schema.Types.Mixed, default: {} },
 });
 
 guildSchema.index({ id: 1 }, { unique: true });

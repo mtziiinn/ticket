@@ -65,6 +65,7 @@ export const guildSchema = new Schema({
         channelId: String,
         dmRoleIds: [String],
     },
+    customPanels: { type: Schema.Types.Mixed, default: {} },
 });
 guildSchema.index({ id: 1 }, { unique: true });
 const cache = new Map();

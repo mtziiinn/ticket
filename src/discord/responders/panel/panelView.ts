@@ -62,6 +62,33 @@ export function getBannerUrl(guildData?: any): string | null {
   return BANNER_URL;
 }
 
+export function buildPanelDesignVisualSection(
+  systemKey: string,
+  systemName: string,
+  hasCustomJson: boolean,
+) {
+  const statusDisplay = hasCustomJson
+    ? `${getEmojiTag("action_check")} **Personalizado via JSON**`
+    : `${getEmojiTag("action_info")} **Padrão do Sistema**`;
+
+  return [
+    `| **Design Visual do Painel de ${systemName}:**\n${statusDisplay}`,
+    createRow(
+      new ButtonBuilder()
+        .setCustomId(`panel/${systemKey}/custom_json/open`)
+        .setLabel("Personalizar Painel (JSON)")
+        .setEmoji(getEmojiId("action_add") || "⚙️")
+        .setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder()
+        .setCustomId(`panel/${systemKey}/custom_json/reset`)
+        .setLabel("Resetar Padrão")
+        .setEmoji(getEmojiId("action_remove") || "🗑️")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(!hasCustomJson),
+    ),
+  ];
+}
+
 export function buildPanelDropdown(currentTab: string = "home") {
   const options = [
     new StringSelectMenuOptionBuilder()
@@ -118,6 +145,12 @@ export function buildPanelDropdown(currentTab: string = "home") {
       .setDescription("Comunicados oficiais em canal e disparo por DM")
       .setEmoji(getEmojiId("prism") || "📢")
       .setDefault(currentTab === "anuncios"),
+    new StringSelectMenuOptionBuilder()
+      .setValue("json")
+      .setLabel("Painel JSON")
+      .setDescription("Personalize o visual de painéis via código ou arquivo JSON")
+      .setEmoji(getEmojiId("other_save") || "📄")
+      .setDefault(currentTab === "json"),
     new StringSelectMenuOptionBuilder()
       .setValue("commands")
       .setLabel("Comandos")
@@ -253,6 +286,8 @@ export async function renderTicketTab(guildData: any) {
         .setStyle(getBannerUrl(guildData) ? ButtonStyle.Danger : ButtonStyle.Primary)
         .setEmoji(getBannerUrl(guildData) ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🔵")),
     }),
+    Separator.Default,
+    ...buildPanelDesignVisualSection("ticket", "Tickets", !!guildData?.customPanels?.ticket),
     Separator.Default,
     `| **Opções de Abertura:**\n${catLines}`,
     Separator.Default,
@@ -434,6 +469,8 @@ export async function renderVerificationTab(guildData: any) {
         .setStyle(ButtonStyle.Secondary)
         .setEmoji(getEmojiId("action_add") || "✏️"),
     }),
+    Separator.Default,
+    ...buildPanelDesignVisualSection("verification", "Verificação", !!guildData?.customPanels?.verification),
   );
 }
 
@@ -691,6 +728,60 @@ export function renderAnunciosTab(guildData: any) {
   );
 }
 
+export function renderJsonTab(guildData: any) {
+  const color = getPanelColor(guildData);
+  const ticketCustom = Boolean(guildData?.customPanels?.ticket);
+  const verifyCustom = Boolean(guildData?.customPanels?.verification);
+
+  const ticketStatus = ticketCustom
+    ? `${getEmojiTag("action_check")} **Personalizado via JSON**`
+    : `${getEmojiTag("action_info")} **Padrão do Sistema**`;
+
+  const verifyStatus = verifyCustom
+    ? `${getEmojiTag("action_check")} **Personalizado via JSON**`
+    : `${getEmojiTag("action_info")} **Padrão do Sistema**`;
+
+  return createContainer(
+    color,
+    `## ${getEmojiTag("other_save")} Central de Personalização JSON`,
+    buildPanelDropdown("json"),
+    Separator.Default,
+    `> Personalize o layout visual dos painéis enviados nos canais utilizando código JSON exportado de sites como **embed.insidebots.com.br**, Discohook ou **Components V2**.\n> Os botões oficiais de ação (**Abrir Ticket**, **Verificar-se**, etc.) são preservados automaticamente!`,
+    Separator.Default,
+    `### ${getEmojiTag("other_ticket")} Painel de Tickets (Atendimento)\n| **Status:** ${ticketStatus}\n*Ao enviar o painel no canal, o layout JSON configurado será enviado junto com o botão oficial "Abrir Ticket".*`,
+    createRow(
+      new ButtonBuilder()
+        .setCustomId("panel/ticket/custom_json/open")
+        .setLabel("Personalizar Tickets (JSON)")
+        .setEmoji(getEmojiId("action_add") || "⚙️")
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId("panel/ticket/custom_json/reset")
+        .setLabel("Resetar Padrão")
+        .setEmoji(getEmojiId("action_remove") || "🗑️")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(!ticketCustom),
+    ),
+    Separator.Default,
+    `### ${getEmojiTag("shield_check")} Painel de Verificação (Captcha)\n| **Status:** ${verifyStatus}\n*Ao enviar o painel no canal, o layout JSON configurado será enviado junto com os botões oficiais de verificação.*`,
+    createRow(
+      new ButtonBuilder()
+        .setCustomId("panel/verification/custom_json/open")
+        .setLabel("Personalizar Verificação (JSON)")
+        .setEmoji(getEmojiId("action_add") || "⚙️")
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId("panel/verification/custom_json/reset")
+        .setLabel("Resetar Padrão")
+        .setEmoji(getEmojiId("action_remove") || "🗑️")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(!verifyCustom),
+    ),
+    Separator.Default,
+    `### ${getEmojiTag("prism")} Anúncios & Comunicados\n*Você também pode enviar comunicados oficiais em canal ou DM formatados via JSON direto na aba **Anúncios**.*`,
+  );
+}
+
 export async function renderTab(
   tab: string,
   guild: Guild,
@@ -718,6 +809,8 @@ export async function renderTab(
       return await renderAntifloodTab(guildData);
     case "anuncios":
       return renderAnunciosTab(guildData);
+    case "json":
+      return renderJsonTab(guildData);
     case "commands":
       return await renderCommandsTab(guildData);
     case "home":
