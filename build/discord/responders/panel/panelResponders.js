@@ -128,7 +128,7 @@ createResponder({
             .setChannelSelectMenuComponent(new ChannelSelectMenuBuilder()
             .setCustomId("channel")
             .setPlaceholder("Selecione um canal")
-            .setChannelTypes(ChannelType.GuildText));
+            .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement));
         modal.addComponents(label);
         await interaction.showModal(modal);
     },
@@ -138,12 +138,26 @@ createResponder({
     types: [ResponderType.Modal, ResponderType.ModalComponent],
     cache: "cached",
     async run(interaction) {
-        const selectedChannel = interaction.fields
-            .getSelectedChannels("channel")
-            ?.first();
-        if (!selectedChannel) {
+        let channelId = "";
+        try {
+            const selectedChannel = interaction.fields
+                .getSelectedChannels("channel")
+                ?.first();
+            if (selectedChannel)
+                channelId = selectedChannel.id;
+        }
+        catch { }
+        if (!channelId) {
+            try {
+                const raw = interaction.data?.components?.[0]?.components?.[0]?.values?.[0];
+                if (raw)
+                    channelId = raw;
+            }
+            catch { }
+        }
+        if (!channelId) {
             await interaction.reply({
-                content: "Nenhum canal foi selecionado.",
+                content: `${getEmojiTag("action_warning")} Nenhum canal foi selecionado.`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -151,11 +165,15 @@ createResponder({
         const guildData = await db.guilds.get(interaction.guild.id);
         if (!guildData.channels)
             guildData.channels = {};
-        guildData.channels.general = selectedChannel.id;
+        guildData.channels.general = channelId;
         guildData.markModified("channels");
         await guildData.save();
         const container = await renderTab("ticket", interaction.guild, interaction.client, guildData);
         await updatePanelResponse(interaction, container);
+        await interaction.followUp({
+            content: `${getEmojiTag("action_check")} Canal de Abertura configurado para <#${channelId}>!`,
+            flags: ["Ephemeral"],
+        }).catch(() => { });
     },
 });
 // 2.3 Modal Editar Canal de Transcript
@@ -173,7 +191,7 @@ createResponder({
             .setChannelSelectMenuComponent(new ChannelSelectMenuBuilder()
             .setCustomId("channel")
             .setPlaceholder("Selecione um canal")
-            .setChannelTypes(ChannelType.GuildText));
+            .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement));
         modal.addComponents(label);
         await interaction.showModal(modal);
     },
@@ -183,12 +201,26 @@ createResponder({
     types: [ResponderType.Modal, ResponderType.ModalComponent],
     cache: "cached",
     async run(interaction) {
-        const selectedChannel = interaction.fields
-            .getSelectedChannels("channel")
-            ?.first();
-        if (!selectedChannel) {
+        let channelId = "";
+        try {
+            const selectedChannel = interaction.fields
+                .getSelectedChannels("channel")
+                ?.first();
+            if (selectedChannel)
+                channelId = selectedChannel.id;
+        }
+        catch { }
+        if (!channelId) {
+            try {
+                const raw = interaction.data?.components?.[0]?.components?.[0]?.values?.[0];
+                if (raw)
+                    channelId = raw;
+            }
+            catch { }
+        }
+        if (!channelId) {
             await interaction.reply({
-                content: "Nenhum canal foi selecionado.",
+                content: `${getEmojiTag("action_warning")} Nenhum canal foi selecionado.`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -196,11 +228,15 @@ createResponder({
         const guildData = await db.guilds.get(interaction.guild.id);
         if (!guildData.channels)
             guildData.channels = {};
-        guildData.channels.tickets = selectedChannel.id;
+        guildData.channels.tickets = channelId;
         guildData.markModified("channels");
         await guildData.save();
         const container = await renderTab("ticket", interaction.guild, interaction.client, guildData);
         await updatePanelResponse(interaction, container);
+        await interaction.followUp({
+            content: `${getEmojiTag("action_check")} Canal de Transcript configurado para <#${channelId}>!`,
+            flags: ["Ephemeral"],
+        }).catch(() => { });
     },
 });
 // 2.3.1 Modal Editar Canal do Cofre (Vault)
@@ -218,7 +254,7 @@ createResponder({
             .setChannelSelectMenuComponent(new ChannelSelectMenuBuilder()
             .setCustomId("channel")
             .setPlaceholder("Selecione um canal para o cofre")
-            .setChannelTypes(ChannelType.GuildText));
+            .setChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement));
         modal.addComponents(label);
         await interaction.showModal(modal);
     },
@@ -228,12 +264,26 @@ createResponder({
     types: [ResponderType.Modal, ResponderType.ModalComponent],
     cache: "cached",
     async run(interaction) {
-        const selectedChannel = interaction.fields
-            .getSelectedChannels("channel")
-            ?.first();
-        if (!selectedChannel) {
+        let channelId = "";
+        try {
+            const selectedChannel = interaction.fields
+                .getSelectedChannels("channel")
+                ?.first();
+            if (selectedChannel)
+                channelId = selectedChannel.id;
+        }
+        catch { }
+        if (!channelId) {
+            try {
+                const raw = interaction.data?.components?.[0]?.components?.[0]?.values?.[0];
+                if (raw)
+                    channelId = raw;
+            }
+            catch { }
+        }
+        if (!channelId) {
             await interaction.reply({
-                content: "Nenhum canal foi selecionado.",
+                content: `${getEmojiTag("action_warning")} Nenhum canal foi selecionado.`,
                 flags: ["Ephemeral"],
             });
             return;
@@ -241,11 +291,15 @@ createResponder({
         const guildData = await db.guilds.get(interaction.guild.id);
         if (!guildData.channels)
             guildData.channels = {};
-        guildData.channels.vault = selectedChannel.id;
+        guildData.channels.vault = channelId;
         guildData.markModified("channels");
         await guildData.save();
         const container = await renderTab("ticket", interaction.guild, interaction.client, guildData);
         await updatePanelResponse(interaction, container);
+        await interaction.followUp({
+            content: `${getEmojiTag("action_check")} Canal do Cofre (Backup de Mídia) configurado para <#${channelId}>!`,
+            flags: ["Ephemeral"],
+        }).catch(() => { });
     },
 });
 // 2.4 Modal Adicionar Opção de Abertura (5 campos)

@@ -4,7 +4,7 @@ import { createContainer, createSection, createEmbed, Separator, createRow, } fr
 import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, LabelBuilder, PermissionFlagsBits, RadioGroupBuilder, StringSelectMenuBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { formatEmoji, getCleanAvatarURL, safeSendDM } from "#functions";
+import { formatEmoji, getCleanAvatarURL, safeSendDM, getOrCreateVaultWebhook, cleanupVaultWebhookCache, } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
@@ -705,50 +705,8 @@ createResponder({
         }
     },
 });
-// Cache para reutilizar o webhook permanente do cofre e nunca criar múltiplos webhooks
-const vaultWebhookCache = new Map();
-export function cleanupVaultWebhookCache() {
-    const size = vaultWebhookCache.size;
-    vaultWebhookCache.clear();
-    return size;
-}
-async function getOrCreateVaultWebhook(vaultChannel, clientUser) {
-    if (!vaultChannel || typeof vaultChannel.fetchWebhooks !== "function") {
-        return null;
-    }
-    try {
-        const cached = vaultWebhookCache.get(vaultChannel.id);
-        if (cached) {
-            return cached;
-        }
-        const webhooks = await vaultChannel.fetchWebhooks().catch(() => null);
-        if (webhooks && webhooks.size > 0) {
-            // 1. Reutilizar webhook já criado por este bot ou com nome padrão
-            const existing = webhooks.find((w) => w.owner?.id === clientUser?.id) ||
-                webhooks.find((w) => w.name === "Cofre de Mídia" || w.name === "Ticket Media Vault") ||
-                webhooks.first();
-            if (existing) {
-                vaultWebhookCache.set(vaultChannel.id, existing);
-                return existing;
-            }
-        }
-        // 2. Se não existir, criar exatamente 1 webhook (se houver limite disponível)
-        if (!webhooks || webhooks.size < 10) {
-            const created = await vaultChannel.createWebhook({
-                name: "Cofre de Mídia",
-                avatar: clientUser?.displayAvatarURL?.({ extension: "png" }),
-                reason: "Webhook único para backup de imagens de tickets",
-            });
-            vaultWebhookCache.set(vaultChannel.id, created);
-            return created;
-        }
-        return null;
-    }
-    catch (err) {
-        console.error("[Vault Webhook] Erro ao buscar/criar webhook:", err);
-        return null;
-    }
-}
+// Re-export das funções do cofre centralizadas em #functions
+export { cleanupVaultWebhookCache, getOrCreateVaultWebhook };
 export async function generateTranscript(channel, ticket, closer) {
     try {
         const allMessages = [];

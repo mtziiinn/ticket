@@ -2,7 +2,7 @@ import { createEvent } from "#base";
 import { Message, PermissionFlagsBits } from "discord.js";
 import { createContainer, createSection, Separator } from "@magicyan/discord";
 import { db } from "#database";
-import { getEmojiTag, sendBotLog } from "#functions";
+import { getEmojiTag, sendBotLog, sendMediaToVault } from "#functions";
 
 // Rastreador leve em memória de timestamps de menções
 // Chave: "guildId:userId" -> Timestamps [timestamp1, timestamp2, ...]
@@ -27,7 +27,57 @@ createEvent({
     if (message.author.bot) return;
     if (!message.guild || !message.member) return;
 
-    // Ignorar Administradores e quem tem permissão de gerenciar mensagens
+    // ==========================================
+    // 1. COFRE DE MÍDIA (VAULT) EM TEMPO REAL
+    // ==========================================
+    if (message.attachments.size > 0) {
+      try {
+        const ticket = await db.tickets.getByChannel(message.channelId);
+        if (ticket && !ticket.closed) {
+          const guildData = await db.guilds.get(message.guild.id);
+          const vaultChannelId =
+            guildData?.channels?.vault || guildData?.channels?.logs;
+          if (vaultChannelId) {
+            const vaultChannel =
+              message.guild.channels.cache.get(vaultChannelId) ||
+              (await message.guild.channels
+                .fetch(vaultChannelId)
+                .catch(() => null));
+
+            if (vaultChannel?.isTextBased()) {
+              const atts = Array.from(message.attachments.values()).map(
+                (a) => ({
+                  url: a.url,
+                  name: a.name,
+                  contentType: a.contentType || undefined,
+                }),
+              );
+
+              await sendMediaToVault({
+                vaultChannel,
+                clientUser: message.client.user,
+                author: {
+                  id: message.author.id,
+                  username: message.author.username,
+                  displayName: message.member?.displayName,
+                  avatarURL: message.author.displayAvatarURL({
+                    extension: "png",
+                    forceStatic: true,
+                  }),
+                },
+                ticketId: ticket.ticketId || "TICKET",
+                channelId: message.channelId,
+                attachments: atts,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("[Vault Realtime] Erro ao salvar anexo no cofre:", err);
+      }
+    }
+
+    // Ignorar Administradores e quem tem permissão de gerenciar mensagens para anti-flood
     if (
       message.member.permissions.has(PermissionFlagsBits.Administrator) ||
       message.member.permissions.has(PermissionFlagsBits.ManageMessages)
