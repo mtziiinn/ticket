@@ -22,6 +22,9 @@ export function announcementContainer(options) {
     if (descFormatted.trim()) {
         items.push(Separator.Default, descFormatted);
     }
+    if (options.videoUrl) {
+        items.push(Separator.Default, `🎥 **Vídeo:** [Assistir / Reproduzir Vídeo](${options.videoUrl})`);
+    }
     if (options.fileLink || options.fileDisplayName) {
         const fileName = options.fileDisplayName ||
             decodeURIComponent(options.fileLink?.split("/").pop() || "arquivo").split("?")[0] ||
@@ -56,6 +59,9 @@ export function announcementDMContainer(options) {
     if (descFormatted.trim()) {
         items.push(Separator.Default, descFormatted);
     }
+    if (options.videoUrl) {
+        items.push(Separator.Default, `🎥 **Vídeo:** [Assistir / Reproduzir Vídeo](${options.videoUrl})`);
+    }
     if (options.fileLink || options.fileDisplayName) {
         const fileName = options.fileDisplayName ||
             decodeURIComponent(options.fileLink?.split("/").pop() || "arquivo").split("?")[0] ||
@@ -84,7 +90,7 @@ export async function resolveRoleRecipients(guild, roleIds) {
     return recipients;
 }
 export async function sendChannelAnnouncement(options) {
-    const { channel, title, message, color, image, thumbnail, mentionEveryone, authorName, barImage, file, headerEmoji, } = options;
+    const { channel, title, message, color, image, thumbnail, mentionEveryone, authorName, barImage, file, headerEmoji, videoUrl, } = options;
     const container = announcementContainer({
         title,
         message,
@@ -94,6 +100,7 @@ export async function sendChannelAnnouncement(options) {
         authorName,
         barImage,
         headerEmoji,
+        videoUrl,
         fileLink: typeof file === "string" ? file : undefined,
         fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
     });
@@ -101,8 +108,15 @@ export async function sendChannelAnnouncement(options) {
         components: [container],
         flags: ["IsComponentsV2"],
     };
+    let content = "";
     if (mentionEveryone) {
-        payload.content = "@everyone";
+        content = "@everyone";
+    }
+    if (videoUrl) {
+        content = content ? `${content}\n${videoUrl}` : videoUrl;
+    }
+    if (content) {
+        payload.content = content;
     }
     if (file) {
         try {
@@ -118,7 +132,7 @@ export async function sendChannelAnnouncement(options) {
     return channel;
 }
 export async function sendDMAnnouncement(options) {
-    const { guild, role, title, message, color, image, thumbnail, authorName, barImage, file, headerEmoji, } = options;
+    const { guild, role, title, message, color, image, thumbnail, authorName, barImage, file, headerEmoji, videoUrl, } = options;
     const roles = Array.isArray(role) ? role : [role];
     const roleIds = new Set(roles.map((r) => r.id));
     const recipients = await resolveRoleRecipients(guild, roleIds);
@@ -135,6 +149,7 @@ export async function sendDMAnnouncement(options) {
         authorName,
         barImage,
         headerEmoji,
+        videoUrl,
         fileLink: typeof file === "string" ? file : undefined,
         fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
     });
@@ -142,6 +157,9 @@ export async function sendDMAnnouncement(options) {
         components: [container],
         flags: ["IsComponentsV2"],
     };
+    if (videoUrl) {
+        payload.content = videoUrl;
+    }
     if (file) {
         try {
             payload.files = [

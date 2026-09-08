@@ -24,6 +24,7 @@ export interface AnnouncementContainerOptions {
   authorName?: string;
   barImage?: string | null;
   headerEmoji?: string;
+  videoUrl?: string;
   fileLink?: string;
   fileDisplayName?: string;
 }
@@ -53,6 +54,13 @@ export function announcementContainer(options: AnnouncementContainerOptions) {
 
   if (descFormatted.trim()) {
     items.push(Separator.Default, descFormatted);
+  }
+
+  if (options.videoUrl) {
+    items.push(
+      Separator.Default,
+      `🎥 **Vídeo:** [Assistir / Reproduzir Vídeo](${options.videoUrl})`,
+    );
   }
 
   if (options.fileLink || options.fileDisplayName) {
@@ -90,6 +98,7 @@ export interface AnnouncementDMOptions {
   authorName?: string;
   barImage?: string | null;
   headerEmoji?: string;
+  videoUrl?: string;
   fileLink?: string;
   fileDisplayName?: string;
 }
@@ -121,6 +130,13 @@ export function announcementDMContainer(options: AnnouncementDMOptions) {
 
   if (descFormatted.trim()) {
     items.push(Separator.Default, descFormatted);
+  }
+
+  if (options.videoUrl) {
+    items.push(
+      Separator.Default,
+      `🎥 **Vídeo:** [Assistir / Reproduzir Vídeo](${options.videoUrl})`,
+    );
   }
 
   if (options.fileLink || options.fileDisplayName) {
@@ -186,6 +202,7 @@ export interface SendChannelAnnouncementOptions {
   barImage?: string | null;
   file?: string | AttachmentBuilder;
   headerEmoji?: string;
+  videoUrl?: string;
 }
 
 export async function sendChannelAnnouncement(
@@ -203,6 +220,7 @@ export async function sendChannelAnnouncement(
     barImage,
     file,
     headerEmoji,
+    videoUrl,
   } = options;
 
   const container = announcementContainer({
@@ -214,6 +232,7 @@ export async function sendChannelAnnouncement(
     authorName,
     barImage,
     headerEmoji,
+    videoUrl,
     fileLink: typeof file === "string" ? file : undefined,
     fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
   });
@@ -223,8 +242,15 @@ export async function sendChannelAnnouncement(
     flags: ["IsComponentsV2"],
   };
 
+  let content = "";
   if (mentionEveryone) {
-    payload.content = "@everyone";
+    content = "@everyone";
+  }
+  if (videoUrl) {
+    content = content ? `${content}\n${videoUrl}` : videoUrl;
+  }
+  if (content) {
+    payload.content = content;
   }
 
   if (file) {
@@ -254,6 +280,7 @@ export interface SendDMAnnouncementOptions {
   barImage?: string | null;
   file?: string | AttachmentBuilder;
   headerEmoji?: string;
+  videoUrl?: string;
 }
 
 export async function sendDMAnnouncement(options: SendDMAnnouncementOptions) {
@@ -269,6 +296,7 @@ export async function sendDMAnnouncement(options: SendDMAnnouncementOptions) {
     barImage,
     file,
     headerEmoji,
+    videoUrl,
   } = options;
 
   const roles = Array.isArray(role) ? role : [role];
@@ -290,6 +318,7 @@ export async function sendDMAnnouncement(options: SendDMAnnouncementOptions) {
     authorName,
     barImage,
     headerEmoji,
+    videoUrl,
     fileLink: typeof file === "string" ? file : undefined,
     fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
   });
@@ -298,6 +327,10 @@ export async function sendDMAnnouncement(options: SendDMAnnouncementOptions) {
     components: [container],
     flags: ["IsComponentsV2"],
   };
+
+  if (videoUrl) {
+    payload.content = videoUrl;
+  }
 
   if (file) {
     try {

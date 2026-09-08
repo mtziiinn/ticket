@@ -62,15 +62,16 @@ createCommand({
       new ActionRowBuilder<TextInputBuilder>().addComponents(
         new TextInputBuilder()
           .setCustomId("anexo")
-          .setLabel("URL do anexo/imagem (opcional)")
+          .setLabel("URL de imagem ou vídeo (opcional)")
+          .setPlaceholder("Link de vídeo (YouTube, MP4, Streamable...) ou imagem")
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
           .setMaxLength(400),
       ),
       new LabelBuilder()
-        .setLabel("Arquivo para enviar (opcional)")
+        .setLabel("Arquivo ou Vídeo para enviar (opcional)")
         .setDescription(
-          "Anexe um arquivo real para enviar junto com o comunicado (1 arquivo, imagem ou documento).",
+          "Anexe um arquivo ou vídeo real (MP4, imagem ou documento) para enviar junto com o comunicado.",
         )
         .setFileUploadComponent(
           new FileUploadBuilder()
@@ -107,7 +108,8 @@ createCommand({
         new ActionRowBuilder<TextInputBuilder>().addComponents(
           new TextInputBuilder()
             .setCustomId("anexo")
-            .setLabel("URL do anexo/imagem (opcional)")
+            .setLabel("URL de imagem ou vídeo (opcional)")
+            .setPlaceholder("Link de vídeo (YouTube, MP4, Streamable...) ou imagem")
             .setStyle(TextInputStyle.Short)
             .setRequired(false)
             .setMaxLength(400),

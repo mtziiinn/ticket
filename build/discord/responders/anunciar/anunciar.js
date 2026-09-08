@@ -1,7 +1,7 @@
 import { createResponder } from "#base";
 import { ResponderType } from "@constatic/base";
 import { createContainer, createRow, Separator } from "@magicyan/discord";
-import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, RoleSelectMenuBuilder, } from "discord.js";
+import { ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, ChannelSelectMenuBuilder, ChannelType, FileUploadBuilder, LabelBuilder, ModalBuilder, RoleSelectMenuBuilder, TextInputBuilder, TextInputStyle, } from "discord.js";
 import { db } from "#database";
 import { getEmojiTag, sendChannelAnnouncement, sendDMAnnouncement, } from "#functions";
 import { formatHexColor, getBannerUrl } from "../panel/panelView.js";
@@ -14,6 +14,23 @@ function isValidUrl(raw) {
     catch {
         return false;
     }
+}
+export function isVideoUrl(raw) {
+    if (!raw)
+        return false;
+    const lower = raw.toLowerCase();
+    return (lower.includes("youtube.com") ||
+        lower.includes("youtu.be") ||
+        lower.includes("twitch.tv") ||
+        lower.includes("streamable.com") ||
+        lower.includes("tiktok.com") ||
+        lower.endsWith(".mp4") ||
+        lower.endsWith(".webm") ||
+        lower.endsWith(".mov") ||
+        lower.endsWith(".mkv") ||
+        lower.includes(".mp4?") ||
+        lower.includes(".webm?") ||
+        lower.includes(".mov?"));
 }
 function renderConfirm(userId, guild) {
     const state = pending.get(userId);
@@ -30,11 +47,14 @@ function renderConfirm(userId, guild) {
     const lines = [
         `${getEmojiTag("file")} **Assunto:** ${state.assunto}`,
         `**Mensagem:** ${state.mensagem || "_(sem mensagem)_"}`,
+        state.videoUrl
+            ? `🎥 **Vídeo (Player):** [Assistir Vídeo](${state.videoUrl})`
+            : "",
         state.anexo
-            ? `${getEmojiTag("file")} **Anexo:** [ver imagem](${state.anexo})`
+            ? `${getEmojiTag("file")} **Imagem / Anexo:** [ver imagem](${state.anexo})`
             : "",
         state.fileName
-            ? `${getEmojiTag("file")} **Arquivo:** ${state.fileName}`
+            ? `📎 **Arquivo:** \`${state.fileName}\``
             : "",
         `**Canal de envio:** ${channelName === "cargo" ? `<#${state.channelId}>` : (state.channelId ? `<#${state.channelId}>` : channelName)}`,
         `**Cargos por DM:** ${rolesText}`,
@@ -47,6 +67,10 @@ function renderConfirm(userId, guild) {
         .setPlaceholder("Selecionar cargos para DM...")
         .setMinValues(1)
         .setMaxValues(20)), createRow(new ButtonBuilder()
+        .setCustomId("anunciar/midia")
+        .setLabel("Adicionar / Alterar Vídeo ou Arquivo")
+        .setEmoji("🎬")
+        .setStyle(ButtonStyle.Secondary)), createRow(new ButtonBuilder()
         .setCustomId("anunciar/enviar")
         .setLabel("Enviar Comunicado")
         .setEmoji("📨")
@@ -94,10 +118,22 @@ createResponder({
         catch (err) {
             console.error("[anunciar] Erro ao processar arquivo enviado:", err);
         }
+        const rawAnexo = isValidUrl(anexoRaw) ? anexoRaw : undefined;
+        let videoUrl;
+        let imageOrAnexo;
+        if (rawAnexo) {
+            if (isVideoUrl(rawAnexo)) {
+                videoUrl = rawAnexo;
+            }
+            else {
+                imageOrAnexo = rawAnexo;
+            }
+        }
         pending.set(interaction.user.id, {
             assunto,
             mensagem,
-            anexo: isValidUrl(anexoRaw) ? anexoRaw : undefined,
+            anexo: imageOrAnexo,
+            videoUrl,
             file: file ?? undefined,
             fileName,
             roleIds: [],
@@ -145,6 +181,152 @@ createResponder({
         });
     },
 });
+// Botão para Adicionar / Editar Vídeo ou Arquivo
+createResponder({
+    customId: "anunciar/midia",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        if (!interaction.inCachedGuild())
+            return;
+        const state = pending.get(interaction.user.id);
+        if (!state) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} Este comunicado expirou. Use \`/anunciar\` novamente.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const modal = new ModalBuilder()
+            .setCustomId("anunciar/modal/midia")
+            .setTitle("Vídeo ou Arquivo");
+        modal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
+            .setCustomId("video_url")
+            .setLabel("Link do Vídeo (YouTube, MP4, Streamable)")
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder("https://youtube.com/watch?v=... ou link direto .mp4")
+            .setValue(state.videoUrl || "")
+            .setRequired(false)
+            .setMaxLength(400)), new ActionRowBuilder().addComponents(new TextInputBuilder()
+            .setCustomId("arquivo_url")
+            .setLabel("URL de Imagem ou Arquivo (opcional)")
+            .setStyle(TextInputStyle.Short)
+            .setPlaceholder("https://exemplo.com/imagem.png ou .zip")
+            .setValue(state.anexo || "")
+            .setRequired(false)
+            .setMaxLength(400)), new LabelBuilder()
+            .setLabel("Novo Arquivo ou Vídeo (Upload opcional)")
+            .setDescription("Anexe um arquivo ou vídeo real (MP4, documento, etc.)")
+            .setFileUploadComponent(new FileUploadBuilder()
+            .setCustomId("arquivo_upload")
+            .setRequired(false)
+            .setMaxValues(1)));
+        try {
+            await interaction.showModal(modal);
+        }
+        catch {
+            const fallbackModal = new ModalBuilder()
+                .setCustomId("anunciar/modal/midia")
+                .setTitle("Vídeo ou Arquivo");
+            fallbackModal.addComponents(new ActionRowBuilder().addComponents(new TextInputBuilder()
+                .setCustomId("video_url")
+                .setLabel("Link do Vídeo (YouTube, MP4, Streamable)")
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder("https://youtube.com/watch?v=... ou link direto .mp4")
+                .setValue(state.videoUrl || "")
+                .setRequired(false)
+                .setMaxLength(400)), new ActionRowBuilder().addComponents(new TextInputBuilder()
+                .setCustomId("arquivo_url")
+                .setLabel("URL de Imagem ou Arquivo (opcional)")
+                .setStyle(TextInputStyle.Short)
+                .setPlaceholder("https://exemplo.com/imagem.png ou .zip")
+                .setValue(state.anexo || "")
+                .setRequired(false)
+                .setMaxLength(400)));
+            await interaction.showModal(fallbackModal);
+        }
+    },
+});
+// Modal de Vídeo / Arquivo Submit
+createResponder({
+    customId: "anunciar/modal/midia",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        if (!interaction.inCachedGuild())
+            return;
+        const state = pending.get(interaction.user.id);
+        if (!state) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} Este comunicado expirou. Use \`/anunciar\` novamente.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const videoRaw = interaction.fields.getTextInputValue("video_url").trim();
+        const arquivoRaw = interaction.fields.getTextInputValue("arquivo_url").trim();
+        if (videoRaw) {
+            if (isValidUrl(videoRaw)) {
+                state.videoUrl = videoRaw;
+            }
+            else if (["remover", "none", "off", "limpar"].includes(videoRaw.toLowerCase())) {
+                state.videoUrl = undefined;
+            }
+        }
+        else {
+            state.videoUrl = undefined;
+        }
+        if (arquivoRaw) {
+            if (isValidUrl(arquivoRaw)) {
+                if (isVideoUrl(arquivoRaw) && !state.videoUrl) {
+                    state.videoUrl = arquivoRaw;
+                }
+                else {
+                    state.anexo = arquivoRaw;
+                }
+            }
+            else if (["remover", "none", "off", "limpar"].includes(arquivoRaw.toLowerCase())) {
+                state.anexo = undefined;
+            }
+        }
+        else {
+            state.anexo = undefined;
+        }
+        try {
+            const uploadedFiles = interaction.fields.getUploadedFiles?.("arquivo_upload");
+            const uploaded = uploadedFiles?.first?.() ||
+                (uploadedFiles?.values
+                    ? Array.from(uploadedFiles.values())[0]
+                    : null);
+            if (uploaded?.url) {
+                const res = await fetch(uploaded.url);
+                if (res.ok) {
+                    const buf = Buffer.from(await res.arrayBuffer());
+                    if (buf.length > 0) {
+                        state.file = new AttachmentBuilder(buf).setName(uploaded.name || "arquivo");
+                        state.fileName = state.file.name ?? undefined;
+                    }
+                }
+            }
+        }
+        catch (err) {
+            console.error("[anunciar/midia] Erro ao processar upload:", err);
+        }
+        const container = renderConfirm(interaction.user.id, interaction.guild);
+        if (interaction.isFromMessage()) {
+            await interaction.update({
+                components: [container],
+                flags: ["IsComponentsV2"],
+            });
+        }
+        else {
+            await interaction.reply({
+                components: [container],
+                flags: ["Ephemeral", "IsComponentsV2"],
+            });
+        }
+    },
+});
 createResponder({
     customId: "anunciar/enviar",
     types: [ResponderType.Button],
@@ -188,6 +370,7 @@ createResponder({
                     authorName,
                     authorId: interaction.user.id,
                     headerEmoji,
+                    videoUrl: state.videoUrl,
                 });
                 if (result.recipients === 0) {
                     parts.push(`${getEmojiTag("action_warning")} **DM:** nenhum membro encontrado nos cargos selecionados.`);
@@ -226,6 +409,7 @@ createResponder({
                     authorName,
                     authorId: interaction.user.id,
                     headerEmoji,
+                    videoUrl: state.videoUrl,
                 });
                 parts.push(`${getEmojiTag("other_terminal")} **Canal:** <#${channel.id}>`);
             }
@@ -236,6 +420,12 @@ createResponder({
         }
         else {
             parts.push(`${getEmojiTag("action_x")} **Canal:** nenhum canal válido selecionado.`);
+        }
+        if (state.videoUrl) {
+            parts.push(`🎥 **Vídeo:** [Player integrado no chat](${state.videoUrl})`);
+        }
+        if (state.fileName) {
+            parts.push(`📎 **Arquivo:** \`${state.fileName}\``);
         }
         pending.delete(interaction.user.id);
         await interaction.followUp({
