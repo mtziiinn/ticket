@@ -9,6 +9,7 @@ import {
   ChannelSelectMenuBuilder,
   ChannelSelectMenuInteraction,
   ChannelType,
+  Guild,
   RoleSelectMenuBuilder,
   RoleSelectMenuInteraction,
   TextChannel,
@@ -42,36 +43,35 @@ function isValidUrl(raw: string): boolean {
   }
 }
 
-function renderConfirm(userId: string) {
+function renderConfirm(userId: string, guild?: Guild) {
   const state = pending.get(userId);
   if (!state) {
     return createContainer(
       formatHexColor("#38bdf8"),
-      `| ${getEmojiTag("action_warning")} Este comunicado expirou. Use \`/anunciar\` novamente.`,
+      `${getEmojiTag("action_warning")} Este comunicado expirou. Use \`/anunciar\` novamente.`,
     );
   }
 
   const channelName = state.channelId
-    ? `<#${state.channelId}>`
+    ? guild?.channels.cache.get(state.channelId)?.name ?? `cargo`
     : "Canal atual";
   const rolesText = state.roleIds.length
     ? state.roleIds.map((id) => `<@&${id}>`).join(" ")
-    : "Nenhum cargo (sem envio por DM)";
+    : "Nenhum cargo (sem DM)";
 
-  const prismEmoji = getEmojiTag("prism") || "💎";
-  const header = `## ${prismEmoji} Confirmar Comunicado Oficial (Prism)`;
+  const header = `## ${getEmojiTag("prism")} Confirmar Comunicado`;
 
   const lines = [
-    `| ${getEmojiTag("folder")} **Assunto:** \`${state.assunto}\``,
-    `| **Mensagem:** ${state.mensagem ? state.mensagem : "*(sem corpo de texto)*"}`,
+    `${getEmojiTag("file")} **Assunto:** ${state.assunto}`,
+    `**Mensagem:** ${state.mensagem || "_(sem mensagem)_"}`,
     state.anexo
-      ? `| ${getEmojiTag("file")} **Imagem/Anexo:** [Visualizar Link](${state.anexo})`
+      ? `${getEmojiTag("file")} **Anexo:** [ver imagem](${state.anexo})`
       : "",
     state.fileName
-      ? `| ${getEmojiTag("file")} **Arquivo Anexado:** \`${state.fileName}\``
+      ? `${getEmojiTag("file")} **Arquivo:** ${state.fileName}`
       : "",
-    `| ${getEmojiTag("other_terminal")} **Canal de Envio:** ${channelName}`,
-    `| ${getEmojiTag("user_users")} **Cargos para Disparo na DM:** ${rolesText}`,
+    `**Canal de envio:** ${channelName === "cargo" ? `<#${state.channelId}>` : (state.channelId ? `<#${state.channelId}>` : channelName)}`,
+    `**Cargos por DM:** ${rolesText}`,
   ].filter((line) => line !== "");
 
   return (createContainer as any)(
@@ -83,13 +83,13 @@ function renderConfirm(userId: string) {
     new ActionRowBuilder<ChannelSelectMenuBuilder>().addComponents(
       new ChannelSelectMenuBuilder()
         .setCustomId("anunciar/canal")
-        .setPlaceholder("Selecionar canal de envio do comunicado...")
+        .setPlaceholder("Selecionar canal de envio...")
         .setChannelTypes(ChannelType.GuildText),
     ),
     new ActionRowBuilder<RoleSelectMenuBuilder>().addComponents(
       new RoleSelectMenuBuilder()
         .setCustomId("anunciar/cargos")
-        .setPlaceholder("Selecionar cargos para disparo na DM...")
+        .setPlaceholder("Selecionar cargos para DM...")
         .setMinValues(1)
         .setMaxValues(20),
     ),
@@ -160,7 +160,7 @@ createResponder({
       roleIds: [],
     });
 
-    const container = renderConfirm(interaction.user.id);
+    const container = renderConfirm(interaction.user.id, interaction.guild);
     await interaction.reply({
       components: [container],
       flags: ["Ephemeral", "IsComponentsV2"] as any,
@@ -178,7 +178,7 @@ createResponder({
     if (!state) return;
 
     state.channelId = interaction.values[0];
-    const container = renderConfirm(interaction.user.id);
+    const container = renderConfirm(interaction.user.id, interaction.guild);
     await interaction.update({
       components: [container],
       flags: ["IsComponentsV2"] as any,
@@ -196,7 +196,7 @@ createResponder({
     if (!state) return;
 
     state.roleIds = interaction.values;
-    const container = renderConfirm(interaction.user.id);
+    const container = renderConfirm(interaction.user.id, interaction.guild);
     await interaction.update({
       components: [container],
       flags: ["IsComponentsV2"] as any,
@@ -225,8 +225,9 @@ createResponder({
     const barImage = getBannerUrl(guildData);
     const authorName = interaction.member.displayName || interaction.user.username;
 
-    const title = state.assunto;
+    const title = `• **${state.assunto}**`;
     const body = state.mensagem || "Comunicado oficial da equipe.";
+    const headerEmoji = "prism";
     const parts: string[] = [];
 
     const roles: import("discord.js").Role[] = [];
@@ -249,20 +250,21 @@ createResponder({
           file: state.file,
           authorName,
           authorId: interaction.user.id,
+          headerEmoji,
         });
         if (result.recipients === 0) {
           parts.push(
-            `${getEmojiTag("action_warning")} **DM:** Nenhum membro encontrado nos cargos selecionados.`,
+            `${getEmojiTag("action_warning")} **DM:** nenhum membro encontrado nos cargos selecionados.`,
           );
         } else {
           parts.push(
             `${getEmojiTag("user_users")} **DM:** \`${result.success}/${result.recipients}\` entregues` +
-              (result.failed ? ` (\`${result.failed}\` falharam / DMs fechadas)` : ""),
+              (result.failed ? ` (\`${result.failed}\` falharam)` : ""),
           );
         }
       } catch (err) {
         console.error("[anunciar] Erro no envio por DM:", err);
-        parts.push(`${getEmojiTag("action_x")} **DM:** Erro ao disparar mensagens.`);
+        parts.push(`${getEmojiTag("action_x")} **DM:** erro ao enviar.`);
       }
     }
 
@@ -292,22 +294,23 @@ createResponder({
           file: state.file,
           authorName,
           authorId: interaction.user.id,
+          headerEmoji,
         });
-        parts.push(`${getEmojiTag("folder")} **Canal:** <#${channel.id}>`);
+        parts.push(`${getEmojiTag("other_terminal")} **Canal:** <#${channel.id}>`);
       } catch (err) {
         console.error("[anunciar] Erro no envio ao canal:", err);
-        parts.push(`${getEmojiTag("action_x")} **Canal:** Erro ao enviar comunicado.`);
+        parts.push(`${getEmojiTag("action_x")} **Canal:** erro ao enviar.`);
       }
     } else {
       parts.push(
-        `${getEmojiTag("action_x")} **Canal:** Nenhum canal de texto válido selecionado.`,
+        `${getEmojiTag("action_x")} **Canal:** nenhum canal válido selecionado.`,
       );
     }
 
     pending.delete(interaction.user.id);
 
     await interaction.followUp({
-      content: `${getEmojiTag("action_check")} **Comunicado Oficial enviado com sucesso!**\n${parts.join("\n")}`,
+      content: `${getEmojiTag("action_check")} **Comunicado enviado!**\n${parts.join("\n")}`,
       flags: ["Ephemeral"],
     });
   },
@@ -323,7 +326,7 @@ createResponder({
 
     const container = createContainer(
       formatHexColor("#38bdf8"),
-      `| ${getEmojiTag("action_x")} Comunicado **cancelado**.`,
+      `${getEmojiTag("action_x")} Comunicado **cancelado**.`,
     );
 
     await interaction.update({

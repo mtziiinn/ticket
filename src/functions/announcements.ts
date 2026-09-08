@@ -23,6 +23,7 @@ export interface AnnouncementContainerOptions {
   thumbnail?: string;
   authorName?: string;
   barImage?: string | null;
+  headerEmoji?: string;
   fileLink?: string;
   fileDisplayName?: string;
 }
@@ -33,7 +34,7 @@ export function announcementContainer(options: AnnouncementContainerOptions) {
       ? formatHexColor(options.color)
       : formatHexColor("#38bdf8");
 
-  const prismEmoji = getEmojiTag("prism") || "💎";
+  const prismEmoji = getEmojiTag((options.headerEmoji as any) || "prism") || "💎";
   const descFormatted = (options.message || "").replace(/\\n/g, "\n");
   const authorLine = options.authorName ? ` | Enviado por: **${options.authorName}**` : "";
 
@@ -88,6 +89,7 @@ export interface AnnouncementDMOptions {
   thumbnail?: string;
   authorName?: string;
   barImage?: string | null;
+  headerEmoji?: string;
   fileLink?: string;
   fileDisplayName?: string;
 }
@@ -98,7 +100,7 @@ export function announcementDMContainer(options: AnnouncementDMOptions) {
       ? formatHexColor(options.color)
       : formatHexColor("#38bdf8");
 
-  const prismEmoji = getEmojiTag("prism") || "💎";
+  const prismEmoji = getEmojiTag((options.headerEmoji as any) || "prism") || "💎";
   const descFormatted = (options.message || "").replace(/\\n/g, "\n");
   const authorLine = options.authorName ? ` | Enviado por: **${options.authorName}**` : "";
 
@@ -183,6 +185,7 @@ export interface SendChannelAnnouncementOptions {
   authorId?: string;
   barImage?: string | null;
   file?: string | AttachmentBuilder;
+  headerEmoji?: string;
 }
 
 export async function sendChannelAnnouncement(
@@ -199,6 +202,7 @@ export async function sendChannelAnnouncement(
     authorName,
     barImage,
     file,
+    headerEmoji,
   } = options;
 
   const container = announcementContainer({
@@ -209,6 +213,7 @@ export async function sendChannelAnnouncement(
     thumbnail,
     authorName,
     barImage,
+    headerEmoji,
     fileLink: typeof file === "string" ? file : undefined,
     fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
   });
@@ -248,6 +253,7 @@ export interface SendDMAnnouncementOptions {
   authorId?: string;
   barImage?: string | null;
   file?: string | AttachmentBuilder;
+  headerEmoji?: string;
 }
 
 export async function sendDMAnnouncement(options: SendDMAnnouncementOptions) {
@@ -262,6 +268,7 @@ export async function sendDMAnnouncement(options: SendDMAnnouncementOptions) {
     authorName,
     barImage,
     file,
+    headerEmoji,
   } = options;
 
   const roles = Array.isArray(role) ? role : [role];
@@ -282,6 +289,7 @@ export async function sendDMAnnouncement(options: SendDMAnnouncementOptions) {
     thumbnail,
     authorName,
     barImage,
+    headerEmoji,
     fileLink: typeof file === "string" ? file : undefined,
     fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
   });

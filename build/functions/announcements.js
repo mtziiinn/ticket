@@ -6,7 +6,7 @@ export function announcementContainer(options) {
     const finalColor = options.color && /^#?[0-9a-fA-F]{3,8}$/.test(options.color)
         ? formatHexColor(options.color)
         : formatHexColor("#38bdf8");
-    const prismEmoji = getEmojiTag("prism") || "💎";
+    const prismEmoji = getEmojiTag(options.headerEmoji || "prism") || "💎";
     const descFormatted = (options.message || "").replace(/\\n/g, "\n");
     const authorLine = options.authorName ? ` | Enviado por: **${options.authorName}**` : "";
     const items = [];
@@ -40,7 +40,7 @@ export function announcementDMContainer(options) {
     const finalColor = options.color && /^#?[0-9a-fA-F]{3,8}$/.test(options.color)
         ? formatHexColor(options.color)
         : formatHexColor("#38bdf8");
-    const prismEmoji = getEmojiTag("prism") || "💎";
+    const prismEmoji = getEmojiTag(options.headerEmoji || "prism") || "💎";
     const descFormatted = (options.message || "").replace(/\\n/g, "\n");
     const authorLine = options.authorName ? ` | Enviado por: **${options.authorName}**` : "";
     const items = [];
@@ -84,7 +84,7 @@ export async function resolveRoleRecipients(guild, roleIds) {
     return recipients;
 }
 export async function sendChannelAnnouncement(options) {
-    const { channel, title, message, color, image, thumbnail, mentionEveryone, authorName, barImage, file, } = options;
+    const { channel, title, message, color, image, thumbnail, mentionEveryone, authorName, barImage, file, headerEmoji, } = options;
     const container = announcementContainer({
         title,
         message,
@@ -93,6 +93,7 @@ export async function sendChannelAnnouncement(options) {
         thumbnail,
         authorName,
         barImage,
+        headerEmoji,
         fileLink: typeof file === "string" ? file : undefined,
         fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
     });
@@ -117,7 +118,7 @@ export async function sendChannelAnnouncement(options) {
     return channel;
 }
 export async function sendDMAnnouncement(options) {
-    const { guild, role, title, message, color, image, thumbnail, authorName, barImage, file, } = options;
+    const { guild, role, title, message, color, image, thumbnail, authorName, barImage, file, headerEmoji, } = options;
     const roles = Array.isArray(role) ? role : [role];
     const roleIds = new Set(roles.map((r) => r.id));
     const recipients = await resolveRoleRecipients(guild, roleIds);
@@ -133,6 +134,7 @@ export async function sendDMAnnouncement(options) {
         thumbnail,
         authorName,
         barImage,
+        headerEmoji,
         fileLink: typeof file === "string" ? file : undefined,
         fileDisplayName: file instanceof AttachmentBuilder ? (file.name ?? undefined) : undefined,
     });
