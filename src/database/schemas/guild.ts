@@ -53,6 +53,12 @@ export interface IGuild {
     primaryColor?: string;
     bannerUrl?: string;
   };
+  antiflood?: {
+    enabled?: boolean;
+    maxMentions?: number;
+    windowSeconds?: number;
+    timeoutMinutes?: number;
+  };
 }
 
 export interface GuildModel extends Model<IGuild> {
@@ -112,6 +118,12 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
     avatarUrl: String,
     primaryColor: String,
     bannerUrl: String,
+  },
+  antiflood: {
+    enabled: { type: Boolean, default: false },
+    maxMentions: { type: Number, default: 3 },
+    windowSeconds: { type: Number, default: 10 },
+    timeoutMinutes: { type: Number, default: 5 },
   },
 });
 

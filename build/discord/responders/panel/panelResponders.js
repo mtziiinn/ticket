@@ -1258,3 +1258,101 @@ createResponder({
         await updatePanelResponse(interaction, container);
     },
 });
+// ==========================================
+// 8. Módulo de Anti-Flood da Staff
+// ==========================================
+// 8.1 Toggle Ativar / Desativar
+createResponder({
+    customId: "panel/antiflood/toggle",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.antiflood = guildData.antiflood || {};
+        guildData.antiflood.enabled = !guildData.antiflood.enabled;
+        guildData.markModified("antiflood");
+        await guildData.save();
+        const container = await renderTab("antiflood", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});
+// 8.2 Abrir Modal de Edição de Parâmetros
+createResponder({
+    customId: "panel/antiflood/edit",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const af = guildData.antiflood || {};
+        const modal = new ModalBuilder()
+            .setCustomId("panel/antiflood/modal")
+            .setTitle("Configurar Anti-Flood da Staff");
+        const mentionsInput = new TextInputBuilder()
+            .setCustomId("max_mentions")
+            .setPlaceholder("Ex: 3 (mínimo de menções para punição)")
+            .setValue(String(af.maxMentions ?? 3))
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+        const windowInput = new TextInputBuilder()
+            .setCustomId("window_seconds")
+            .setPlaceholder("Ex: 10 (segundos para monitorar)")
+            .setValue(String(af.windowSeconds ?? 10))
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+        const timeoutInput = new TextInputBuilder()
+            .setCustomId("timeout_minutes")
+            .setPlaceholder("Ex: 5 (minutos de castigo no servidor)")
+            .setValue(String(af.timeoutMinutes ?? 5))
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true);
+        modal.addComponents(new LabelBuilder()
+            .setLabel("Limite de Menções:")
+            .setTextInputComponent(mentionsInput), new LabelBuilder()
+            .setLabel("Janela de Tempo (Segundos):")
+            .setTextInputComponent(windowInput), new LabelBuilder()
+            .setLabel("Duração do Castigo (Minutos):")
+            .setTextInputComponent(timeoutInput));
+        await interaction.showModal(modal);
+    },
+});
+// 8.3 Processar Modal de Edição
+createResponder({
+    customId: "panel/antiflood/modal",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        const rawMentions = parseInt(interaction.fields.getTextInputValue("max_mentions").trim(), 10);
+        const rawWindow = parseInt(interaction.fields.getTextInputValue("window_seconds").trim(), 10);
+        const rawTimeout = parseInt(interaction.fields.getTextInputValue("timeout_minutes").trim(), 10);
+        if (isNaN(rawMentions) || rawMentions < 2 || rawMentions > 20) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} O limite de menções deve ser um número entre 2 e 20.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        if (isNaN(rawWindow) || rawWindow < 3 || rawWindow > 120) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} A janela de tempo deve ser entre 3 e 120 segundos.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        if (isNaN(rawTimeout) || rawTimeout < 1 || rawTimeout > 1440) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_x")} A duração do castigo deve ser entre 1 minuto e 1440 minutos (24 horas).`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const guildData = await db.guilds.get(interaction.guild.id);
+        guildData.antiflood = guildData.antiflood || {};
+        guildData.antiflood.maxMentions = rawMentions;
+        guildData.antiflood.windowSeconds = rawWindow;
+        guildData.antiflood.timeoutMinutes = rawTimeout;
+        guildData.markModified("antiflood");
+        await guildData.save();
+        const container = await renderTab("antiflood", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});

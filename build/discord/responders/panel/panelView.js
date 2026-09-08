@@ -75,6 +75,12 @@ export function buildPanelDropdown(currentTab = "home") {
             .setEmoji(getEmojiId("folder") || "📁")
             .setDefault(currentTab === "logs"),
         new StringSelectMenuOptionBuilder()
+            .setValue("antiflood")
+            .setLabel("Anti-Flood Staff")
+            .setDescription("Proteção contra menções excessivas à equipe")
+            .setEmoji(getEmojiId("shield") || "🛡️")
+            .setDefault(currentTab === "antiflood"),
+        new StringSelectMenuOptionBuilder()
             .setValue("commands")
             .setLabel("Comandos")
             .setDescription("Lista de comandos e instruções do bot")
@@ -394,6 +400,39 @@ export async function renderCommandsTab(guildData) {
         `\`Pagamento\` > \`Produção\` > \`Aberto\` > \`Fila\` > \`Concluído\`.`,
     ].join("\n"));
 }
+export async function renderAntifloodTab(guildData) {
+    const color = getPanelColor(guildData);
+    const af = guildData.antiflood || {};
+    const isEnabled = Boolean(af.enabled);
+    const maxMentions = af.maxMentions ?? 3;
+    const windowSeconds = af.windowSeconds ?? 10;
+    const timeoutMinutes = af.timeoutMinutes ?? 5;
+    const staffRole = guildData.channels?.staffRole
+        ? `<@&${guildData.channels.staffRole}>`
+        : "*Não configurado (protege administradores)*";
+    const statusTag = isEnabled
+        ? `${getEmojiTag("action_check")} **ATIVADO** (Proteção ativa)`
+        : `${getEmojiTag("action_x")} **DESATIVADO**`;
+    return createContainer(color, `## ${getEmojiTag("shield")} Sistema Anti-Flood da Equipe`, buildPanelDropdown("antiflood"), Separator.Default, createSection({
+        content: `| **Status do Sistema:**\n${statusTag}\n*Aplica castigo (timeout) caso membros fiquem marcando a staff repetidamente.*`,
+        button: new ButtonBuilder()
+            .setCustomId("panel/antiflood/toggle")
+            .setLabel(isEnabled ? "Desativar Proteção" : "Ativar Proteção")
+            .setStyle(isEnabled ? ButtonStyle.Danger : ButtonStyle.Success)
+            .setEmoji(isEnabled ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🟢")),
+    }), Separator.Default, createSection({
+        content: [
+            `| **Sensibilidade:** Máximo de \`${maxMentions} menções\` em \`${windowSeconds} segundos\``,
+            `| **Punição:** Timeout de \`${timeoutMinutes} minutos\` no servidor`,
+            `| **Alvo Monitorado:** ${staffRole}`,
+        ].join("\n"),
+        button: new ButtonBuilder()
+            .setCustomId("panel/antiflood/edit")
+            .setLabel("Configurar Parâmetros")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("action_add") || "⚙️"),
+    }), Separator.Default, `*💡 Dica: Membros com permissão de Administrador ou com o cargo da equipe são imunes à punição.*`);
+}
 export async function renderTab(tab, guild, client, guildData) {
     if (!guildData) {
         guildData = await db.guilds.get(guild.id);
@@ -411,6 +450,8 @@ export async function renderTab(tab, guild, client, guildData) {
             return await renderVerificationTab(guildData);
         case "logs":
             return await renderLogsTab(guildData);
+        case "antiflood":
+            return await renderAntifloodTab(guildData);
         case "commands":
             return await renderCommandsTab(guildData);
         case "home":

@@ -54,6 +54,12 @@ export const guildSchema = new Schema({
         primaryColor: String,
         bannerUrl: String,
     },
+    antiflood: {
+        enabled: { type: Boolean, default: false },
+        maxMentions: { type: Number, default: 3 },
+        windowSeconds: { type: Number, default: 10 },
+        timeoutMinutes: { type: Number, default: 5 },
+    },
 });
 guildSchema.index({ id: 1 }, { unique: true });
 const cache = new Map();
