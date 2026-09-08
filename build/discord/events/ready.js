@@ -8,7 +8,7 @@ createEvent({
     once: true,
     async run(client) {
         const statuses = [
-            "💻 Desenvolvido por Mts",
+            "💻 Desenvolvido para Prism",
             "💫 Transformando comunidades",
             "🚨 Desenvolvendo soluções profissionais",
         ];

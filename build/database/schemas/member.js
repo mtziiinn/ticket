@@ -6,11 +6,17 @@ export const memberSchema = new Schema({
     wallet: {
         coins: { type: Number, default: 0 },
     },
+    payments: {
+        pixKey: String,
+        pixType: String,
+        mpAccessToken: String,
+        stripeSecretKey: String,
+    },
 }, {
     statics: {
         async get(member) {
             const query = { id: member.id, guildId: member.guild.id };
-            return (await this.findOne(query)) ?? this.create(query);
+            return (await this.findOne(query)) ?? (await this.create(query));
         },
     },
 });

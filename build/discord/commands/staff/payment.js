@@ -66,7 +66,7 @@ export function createPaymentModal(targetUserId = "") {
 }
 createCommand({
     name: "gerar-pagamento",
-    description: "💳 Gera uma cobrança automática para um cliente no chat atual.",
+    description: "💳 Gera cobrança para um cliente usando suas credenciais (/meu-pagamento) ou as da loja.",
     type: ApplicationCommandType.ChatInput,
     defaultMemberPermissions: PermissionFlagsBits.ManageMessages,
     options: [
@@ -104,6 +104,11 @@ createResponder({
             return;
         }
         await interaction.deferReply();
+        const memberDoc = await db.members.get({
+            id: interaction.user.id,
+            guild: { id: interaction.guild.id },
+        });
+        const memberP = memberDoc.payments || {};
         const guildData = await db.guilds.get(interaction.guild.id);
         const p = guildData.payments || {};
         const currencySymbol = currency === "USD" ? "$" : "R$";
@@ -115,16 +120,25 @@ createResponder({
             ? `<@${finalTargetUserId}>`
             : "Qualquer membro";
         if (gateway === "pix_manual") {
-            const pixKey = p.pixKey || guildData.channels?.pixKey || "Não configurada";
-            const pixType = p.pixType || "Chave PIX";
-            const qrSections = [];
-            if (pixKey && pixKey !== "Não configurada") {
-                const pixPayload = generatePixPayload(pixKey);
-                const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
-                qrSections.push(createMediaGallery(qrCodeUrl), `| **Código PIX Copia e Cola:**\n\`\`\`text\n${pixPayload}\n\`\`\``, Separator.Default);
+            const pixKey = memberP.pixKey || p.pixKey || guildData.channels?.pixKey;
+            const pixType = memberP.pixType || p.pixType || "Chave PIX";
+            const isIndividual = Boolean(memberP.pixKey);
+            if (!pixKey || pixKey === "Não configurada") {
+                await interaction.editReply({
+                    content: `${getEmojiTag("action_x")} Nenhuma chave PIX encontrada!\nConfigure sua chave pessoal com o comando \`/meu-pagamento\` ou configure a chave padrão da loja no \`/painel\`.`,
+                });
+                return;
             }
+            const qrSections = [];
+            const pixPayload = generatePixPayload(pixKey);
+            const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
+            qrSections.push(createMediaGallery(qrCodeUrl), `| **Código PIX Copia e Cola:**\n\`\`\`text\n${pixPayload}\n\`\`\``, Separator.Default);
+            const receiverTag = isIndividual
+                ? `<@${interaction.user.id}> *(Chave Pessoal)*`
+                : `*Loja Oficial (Padrão)*`;
             const container = createContainer("#22c55e", `## ${getEmojiTag("other_dollar")} Cobrança Gerada`, Separator.Default, [
                 `| **Cliente:** ${clientMention}`,
+                `| **Recebedor:** ${receiverTag}`,
                 `| **Valor:** \`${formattedAmount}\``,
                 `| **Método:** PIX (Manual)`,
                 `| **Descrição:** ${description}`,
@@ -142,7 +156,7 @@ createResponder({
                     status: "pending",
                 };
                 await ticket.save();
-                await sendActionLog(interaction.guild, ticket, interaction.user, "Gerar Cobrança", `Gerou cobrança no valor de **${formattedAmount}** via PIX Manual.`);
+                await sendActionLog(interaction.guild, ticket, interaction.user, "Gerar Cobrança", `Gerou cobrança no valor de **${formattedAmount}** via PIX Manual (${isIndividual ? "Chave Pessoal" : "Loja"}).`);
                 if (msg && "pin" in msg) {
                     await msg.pin().catch(() => null);
                 }
@@ -151,7 +165,17 @@ createResponder({
         }
         if (gateway === "pix_mp" || gateway === "card_mp") {
             const ticketId = ticket?.ticketId || `charge_${Date.now()}`;
-            const token = p.mpAccessToken || env.MP_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
+            const token = memberP.mpAccessToken ||
+                p.mpAccessToken ||
+                env.MP_ACCESS_TOKEN ||
+                process.env.MP_ACCESS_TOKEN;
+            const isIndividual = Boolean(memberP.mpAccessToken);
+            if (!token) {
+                await interaction.editReply({
+                    content: `${getEmojiTag("action_x")} Mercado Pago não configurado!\nConfigure seu Access Token pessoal com \`/meu-pagamento\` ou configure as credenciais da loja no \`/painel\`.`,
+                });
+                return;
+            }
             const chargeResult = await createMercadoPagoCharge({
                 amount,
                 description,
@@ -165,9 +189,13 @@ createResponder({
                 });
                 return;
             }
+            const receiverTag = isIndividual
+                ? `<@${interaction.user.id}> *(Conta MP Pessoal)*`
+                : `*Loja Oficial (Padrão)*`;
             const rows = [];
             const sections = [
                 `| **Cliente:** ${clientMention}`,
+                `| **Recebedor:** ${receiverTag}`,
                 `| **Valor:** \`${formattedAmount}\``,
                 `| **Método:** ${gateway === "pix_mp" ? "PIX (Mercado Pago)" : "Cartão / Boleto (Mercado Pago)"}`,
                 `| **Descrição:** ${description}`,
@@ -216,7 +244,7 @@ createResponder({
                     ticketUrl: chargeResult.pix?.ticketUrl,
                 };
                 await ticket.save();
-                await sendActionLog(interaction.guild, ticket, interaction.user, "Gerar Cobrança", `Gerou cobrança no valor de **${formattedAmount}** via Mercado Pago (${gateway === "pix_mp" ? "PIX" : "Cartão"}).`);
+                await sendActionLog(interaction.guild, ticket, interaction.user, "Gerar Cobrança", `Gerou cobrança no valor de **${formattedAmount}** via Mercado Pago (${isIndividual ? "Conta Pessoal" : "Loja"}).`);
                 if (msg && "pin" in msg) {
                     await msg.pin().catch(() => null);
                 }
@@ -224,43 +252,53 @@ createResponder({
             return;
         }
         // Stripe
+        const stripeSecretKey = memberP.stripeSecretKey || p.stripeSecretKey;
+        const isIndividualStripe = Boolean(memberP.stripeSecretKey);
+        if (!stripeSecretKey) {
+            await interaction.editReply({
+                content: `${getEmojiTag("action_x")} Stripe não configurada!\nConfigure sua Secret Key pessoal com \`/meu-pagamento\` ou configure as credenciais da loja no \`/painel\`.`,
+            });
+            return;
+        }
         const rows = [];
-        if (p.stripeSecretKey) {
-            try {
-                const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${p.stripeSecretKey}`,
-                        "Content-Type": "application/x-www-form-urlencoded",
-                    },
-                    body: new URLSearchParams({
-                        "line_items[0][price_data][currency]": currency.toLowerCase(),
-                        "line_items[0][price_data][product_data][name]": description,
-                        "line_items[0][price_data][unit_amount]": Math.round(amount * 100).toString(),
-                        "line_items[0][quantity]": "1",
-                        mode: "payment",
-                        success_url: `${env.WEB_URL}?success=true`,
-                        cancel_url: `${env.WEB_URL}?canceled=true`,
-                        client_reference_id: ticket?.ticketId || `stripe_${Date.now()}`,
-                    }).toString(),
-                });
-                if (stripeRes.ok) {
-                    const session = (await stripeRes.json());
-                    if (session.url) {
-                        rows.push(createRow(new ButtonBuilder()
-                            .setLabel("Pagar com Stripe (Cartão)")
-                            .setStyle(ButtonStyle.Link)
-                            .setURL(session.url)
-                            .setEmoji(getEmojiId("other_card") || "💳")));
-                    }
+        try {
+            const stripeRes = await fetch("https://api.stripe.com/v1/checkout/sessions", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${stripeSecretKey}`,
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                    "line_items[0][price_data][currency]": currency.toLowerCase(),
+                    "line_items[0][price_data][product_data][name]": description,
+                    "line_items[0][price_data][unit_amount]": Math.round(amount * 100).toString(),
+                    "line_items[0][quantity]": "1",
+                    mode: "payment",
+                    success_url: `${env.WEB_URL}?success=true`,
+                    cancel_url: `${env.WEB_URL}?canceled=true`,
+                    client_reference_id: ticket?.ticketId || `stripe_${Date.now()}`,
+                }).toString(),
+            });
+            if (stripeRes.ok) {
+                const session = (await stripeRes.json());
+                if (session.url) {
+                    rows.push(createRow(new ButtonBuilder()
+                        .setLabel("Pagar com Stripe (Cartão)")
+                        .setStyle(ButtonStyle.Link)
+                        .setURL(session.url)
+                        .setEmoji(getEmojiId("other_card") || "💳")));
                 }
             }
-            catch (err) {
-                console.warn("[Stripe Checkout] Falha ao criar sessão:", err);
-            }
         }
+        catch (err) {
+            console.warn("[Stripe Checkout] Falha ao criar sessão:", err);
+        }
+        const receiverTagStripe = isIndividualStripe
+            ? `<@${interaction.user.id}> *(Conta Stripe Pessoal)*`
+            : `*Loja Oficial (Padrão)*`;
         const container = createContainer("#22c55e", `## ${getEmojiTag("other_card")} Cobrança Gerada (Stripe)`, Separator.Default, [
             `| **Cliente:** ${clientMention}`,
+            `| **Recebedor:** ${receiverTagStripe}`,
             `| **Valor:** \`${formattedAmount}\``,
             `| **Método:** Stripe (Internacional)`,
             `| **Descrição:** ${description}`,
@@ -278,7 +316,7 @@ createResponder({
                 status: "pending",
             };
             await ticket.save();
-            await sendActionLog(interaction.guild, ticket, interaction.user, "Gerar Cobrança", `Gerou cobrança no valor de **${formattedAmount}** via Stripe.`);
+            await sendActionLog(interaction.guild, ticket, interaction.user, "Gerar Cobrança", `Gerou cobrança no valor de **${formattedAmount}** via Stripe (${isIndividualStripe ? "Conta Pessoal" : "Loja"}).`);
             if (msg && "pin" in msg) {
                 await msg.pin().catch(() => null);
             }

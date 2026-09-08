@@ -4,7 +4,7 @@ import mongoose, {
   Schema,
 } from "mongoose";
 import { guildSchema, IGuild, GuildModel } from "./schemas/guild.js";
-import { memberSchema } from "./schemas/member.js";
+import { memberSchema, IMember, MemberModel } from "./schemas/member.js";
 import { ticketSchema } from "./schemas/ticket.js";
 import { transcriptSchema } from "./schemas/transcript.js";
 import { pendingDeliverySchema } from "./schemas/pendingDelivery.js";
@@ -39,7 +39,7 @@ dmQueueSchema.index({ createdAt: 1 });
 
 export const db = {
   guilds: model<IGuild, GuildModel>("guild", guildSchema, "guilds"),
-  members: model("member", memberSchema, "members"),
+  members: model<IMember, MemberModel>("member", memberSchema, "members"),
   tickets: model("ticket", ticketSchema, "tickets"),
   transcripts: model("transcript", transcriptSchema, "transcripts"),
   pendingDeliveries: model(
