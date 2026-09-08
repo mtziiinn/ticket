@@ -25,10 +25,17 @@ export function getVerifyEmbedColor(guildData) {
     return getPanelColor(guildData);
 }
 export function getBannerUrl(guildData) {
-    if (guildData?.identity?.bannerUrl) {
-        return guildData.identity.bannerUrl;
+    if (guildData?.identity?.bannerEnabled === false) {
+        return null;
     }
-    return null;
+    if (guildData?.identity?.bannerUrl) {
+        const trimmed = guildData.identity.bannerUrl.trim();
+        if (["none", "desativado", "remover", "disabled", "null"].includes(trimmed.toLowerCase())) {
+            return null;
+        }
+        return trimmed;
+    }
+    return BANNER_URL;
 }
 export function buildPanelDropdown(currentTab = "home") {
     const options = [
@@ -166,13 +173,20 @@ export async function renderTicketTab(guildData) {
             .setLabel("Editar Canal")
             .setStyle(ButtonStyle.Secondary)
             .setEmoji(getEmojiId("action_add") || "✏️"),
-    }), Separator.Default, createSection({
+    }), Separator.Default, Separator.Default, createSection({
         content: `| **Canal do Cofre (Backup de Imagens):**\n${vaultChannelDisplay}`,
         button: new ButtonBuilder()
             .setCustomId("panel/ticket/edit_vault_channel")
             .setLabel("Editar Canal")
             .setStyle(ButtonStyle.Secondary)
             .setEmoji(getEmojiId("action_add") || "✏️"),
+    }), Separator.Default, createSection({
+        content: `| ${getEmojiTag("apps_figma")} **Barrinha / Banner:** ${getBannerUrl(guildData) ? `${getEmojiTag("action_check")} Ativada ([Ver Imagem](${getBannerUrl(guildData)}))` : `${getEmojiTag("action_x")} Desativada (Opcional)`}`,
+        button: new ButtonBuilder()
+            .setCustomId("panel/identity/toggle_banner")
+            .setLabel(getBannerUrl(guildData) ? "Desativar Barrinha" : "Ativar Barrinha")
+            .setStyle(getBannerUrl(guildData) ? ButtonStyle.Danger : ButtonStyle.Primary)
+            .setEmoji(getBannerUrl(guildData) ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🔵")),
     }), Separator.Default, `| **Opções de Abertura:**\n${catLines}`, Separator.Default, createRow(new ButtonBuilder()
         .setCustomId("panel/ticket/add_category")
         .setLabel("Adicionar Opção")
@@ -321,18 +335,19 @@ export async function renderIdentityTab(guild, client, guildData) {
     const identity = guildData.identity || {};
     const currentColor = getPanelColor(guildData);
     const currentBanner = getBannerUrl(guildData);
+    const isBannerEnabled = currentBanner !== null;
     const avatarDisplay = identity.avatarUrl
         ? `[Visualizar Imagem](${identity.avatarUrl})`
         : `[Foto Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
-    const bannerDisplay = currentBanner
-        ? `[Visualizar Banner](${currentBanner})`
-        : `\`Sem banner configurado (Padrão)\``;
+    const bannerDisplay = isBannerEnabled
+        ? `${getEmojiTag("action_check")} **Ativada** ${currentBanner === BANNER_URL ? "*(Barrinha Padrão Oficial)*" : "*(Personalizada)*"}\n[Visualizar Barrinha](${currentBanner})`
+        : `${getEmojiTag("action_x")} **Desativada** *(Opcional - nenhum banner exibido nos painéis)*`;
     const botAvatar = identity.avatarUrl ||
         client.user?.displayAvatarURL() ||
         emojis.static.other_bot;
     const items = [
         createSection({
-            content: `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT\nPersonalize a foto de perfil, cores e banner do sistema.`,
+            content: `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT\nPersonalize a foto de perfil, cores e a barrinha/banner dos painéis.`,
             thumbnail: botAvatar,
         }),
         buildPanelDropdown("identity"),
@@ -356,12 +371,20 @@ export async function renderIdentityTab(guild, client, guildData) {
         }),
         Separator.Default,
         createSection({
-            content: `| ${getEmojiTag("apps_figma")} **Banner do Painel & Sistema:**\n${bannerDisplay}`,
+            content: `| ${getEmojiTag("apps_figma")} **Barrinha / Banner:**\n${bannerDisplay}`,
             button: new ButtonBuilder()
                 .setCustomId("panel/identity/edit_banner")
-                .setLabel("Editar Banner")
+                .setLabel("Editar Link")
                 .setStyle(ButtonStyle.Secondary)
                 .setEmoji(getEmojiId("action_add") || "🖼️"),
+        }),
+        createSection({
+            content: `| ${getEmojiTag("action_info")} **Exibição da Barrinha:** Atualmente ${isBannerEnabled ? "visível nos painéis" : "desativada (opcional)"}.`,
+            button: new ButtonBuilder()
+                .setCustomId("panel/identity/toggle_banner")
+                .setLabel(isBannerEnabled ? "Desativar Barrinha" : "Ativar Barrinha")
+                .setStyle(isBannerEnabled ? ButtonStyle.Danger : ButtonStyle.Primary)
+                .setEmoji(isBannerEnabled ? (getEmojiId("action_remove") || "🔴") : (getEmojiId("action_check") || "🔵")),
         }),
         Separator.Default,
         createRow(new ButtonBuilder()

@@ -1,10 +1,10 @@
 import { createResponder } from "#base";
 import { ResponderType } from "@constatic/base";
-import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, } from "@magicyan/discord";
+import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { formatEmoji, getCleanAvatarURL } from "#functions";
-import { formatHexColor } from "../panel/panelView.js";
+import { formatHexColor, getBannerUrl } from "../panel/panelView.js";
 const cooldowns = new Map();
 export function cleanupCooldowns(force = false) {
     const now = Date.now();
@@ -124,25 +124,38 @@ async function processTicketSubmission(interaction, routeCategory) {
         const panelColor = guildData?.identity?.primaryColor
             ? formatHexColor(guildData.identity.primaryColor)
             : constants.colors.azoxo;
-        const container = createContainer(panelColor, createSection({
-            content: `## <:other_ticket:1502789959378145300> Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
-            thumbnail: getCleanAvatarURL(user),
-        }), Separator.Default, `<:folder_open:1502789875928400103> **Categoria do atendimento:**\n\`\`\`\n${category.toUpperCase()}\n\`\`\``, `<:action_info:1502789798983766016> **Motivo do contato:**\n\`\`\`\n${description}\n\`\`\``, Separator.Default, createRow(new ButtonBuilder({
-            customId: "ticket/manage/claim",
-            label: "Assumir Ticket",
-            style: ButtonStyle.Secondary,
-            emoji: "1502789940612698192",
-        }), new ButtonBuilder({
-            customId: "ticket/manage/admin",
-            label: "Painel Admin",
-            style: ButtonStyle.Secondary,
-            emoji: "1502789931808981012",
-        })), createRow(new ButtonBuilder({
-            customId: "ticket/manage/close_confirm",
-            label: "Finalizar Ticket",
-            style: ButtonStyle.Secondary,
-            emoji: "1502789802918150206",
-        })));
+        const banner = getBannerUrl(guildData);
+        const ticketItems = [
+            createSection({
+                content: `## <:other_ticket:1502789959378145300> Ticket ${ticketId}\n${user} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas. Envie abaixo sua solicitação e aguarde.`,
+                thumbnail: getCleanAvatarURL(user),
+            }),
+            Separator.Default,
+            `<:folder_open:1502789875928400103> **Categoria do atendimento:**\n\`\`\`\n${category.toUpperCase()}\n\`\`\``,
+            `<:action_info:1502789798983766016> **Motivo do contato:**\n\`\`\`\n${description}\n\`\`\``,
+            Separator.Default,
+            createRow(new ButtonBuilder({
+                customId: "ticket/manage/claim",
+                label: "Assumir Ticket",
+                style: ButtonStyle.Secondary,
+                emoji: "1502789940612698192",
+            }), new ButtonBuilder({
+                customId: "ticket/manage/admin",
+                label: "Painel Admin",
+                style: ButtonStyle.Secondary,
+                emoji: "1502789931808981012",
+            })),
+            createRow(new ButtonBuilder({
+                customId: "ticket/manage/close_confirm",
+                label: "Finalizar Ticket",
+                style: ButtonStyle.Secondary,
+                emoji: "1502789802918150206",
+            })),
+        ];
+        if (banner) {
+            ticketItems.push(Separator.Default, createMediaGallery(banner));
+        }
+        const container = createContainer(panelColor, ...ticketItems);
         const mainMessage = await channel.send({
             components: [container],
             flags: ["IsComponentsV2"],

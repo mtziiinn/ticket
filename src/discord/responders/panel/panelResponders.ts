@@ -21,6 +21,7 @@ import {
   getTicketEmbedColor,
   getVerifyEmbedColor,
   getBannerUrl,
+  BANNER_URL,
 } from "./panelView.js";
 import { getEmojiId, getEmojiTag } from "#functions";
 import {
@@ -1087,8 +1088,8 @@ createResponder({
     }
 
     const verifyColor = getVerifyEmbedColor(guildData);
-    const container = createContainer(
-      verifyColor,
+    const banner = getBannerUrl(guildData);
+    const verifyItems: any[] = [
       `## ${getEmojiTag("shield_check")} VERIFICAÇÃO`,
       `Para ter acesso completo aos canais do servidor, realize a sua verificação de segurança abaixo.`,
       Separator.Default,
@@ -1106,7 +1107,13 @@ createResponder({
           .setStyle(ButtonStyle.Secondary)
           .setEmoji(getEmojiId("action_info") || "❓"),
       ),
-    );
+    ];
+
+    if (banner) {
+      verifyItems.push(Separator.Default, createMediaGallery(banner));
+    }
+
+    const container = (createContainer as any)(verifyColor, ...verifyItems);
 
     await (channel as any).send({
       components: [container],
@@ -1555,28 +1562,28 @@ createResponder({
   },
 });
 
-// 7.3 Alterar Banner do Painel
+// 7.3 Alterar Barrinha / Banner do Painel
 createResponder({
   customId: "panel/identity/edit_banner",
   types: [ResponderType.Button],
   cache: "cached",
   async run(interaction) {
     const guildData = await db.guilds.get(interaction.guild.id);
-    const currentBanner = guildData.identity?.bannerUrl || "";
+    const currentBanner = guildData.identity?.bannerUrl || BANNER_URL;
 
     const modal = new ModalBuilder()
       .setCustomId("panel/identity/modal/banner")
-      .setTitle("Editar Banner do Sistema");
+      .setTitle("Configurar Barrinha / Banner");
 
     const input = new TextInputBuilder()
       .setCustomId("banner_url")
-      .setPlaceholder("https://exemplo.com/banner.png (vazio para sem banner)")
-      .setValue(currentBanner)
+      .setPlaceholder(BANNER_URL)
+      .setValue(currentBanner === BANNER_URL ? "" : currentBanner)
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
 
     const label = new LabelBuilder()
-      .setLabel("URL do Banner (vazio para sem banner):")
+      .setLabel("URL da Imagem (ou deixe vazio para padrão):")
       .setTextInputComponent(input);
 
     modal.addComponents(label);
@@ -1590,17 +1597,19 @@ createResponder({
   cache: "cached",
   async run(interaction) {
     const rawInput = interaction.fields.getTextInputValue("banner_url").trim();
-    const isReset =
-      !rawInput ||
-      ["nenhum", "remover", "padrao", "none"].includes(rawInput.toLowerCase());
+    const isDisable =
+      ["nenhum", "remover", "none", "desativar", "off"].includes(rawInput.toLowerCase());
+    const isDefault =
+      !rawInput || ["padrao", "default", "restaurar"].includes(rawInput.toLowerCase());
 
     if (
-      !isReset &&
+      !isDisable &&
+      !isDefault &&
       !rawInput.startsWith("http://") &&
       !rawInput.startsWith("https://")
     ) {
       await interaction.reply({
-        content: `${getEmojiTag("action_x")} URL inválida! O link do banner deve começar com \`http://\` ou \`https://\` (ou deixe vazio para sem banner).`,
+        content: `${getEmojiTag("action_x")} URL inválida! O link da barrinha deve começar com \`http://\` ou \`https://\` (ou digite \`none\` para desativar).`,
         flags: ["Ephemeral"],
       });
       return;
@@ -1609,9 +1618,14 @@ createResponder({
     const guildData = await db.guilds.get(interaction.guild.id);
     guildData.identity = guildData.identity || {};
 
-    if (isReset) {
+    if (isDisable) {
+      guildData.identity.bannerEnabled = false;
+      guildData.identity.bannerUrl = "none";
+    } else if (isDefault) {
+      guildData.identity.bannerEnabled = true;
       guildData.identity.bannerUrl = undefined;
     } else {
+      guildData.identity.bannerEnabled = true;
       guildData.identity.bannerUrl = rawInput;
     }
 
@@ -1628,7 +1642,48 @@ createResponder({
   },
 });
 
-// 7.4 Restaurar Padrões de Identidade
+// 7.4 Alternar Barrinha (Ativar / Desativar - Opcional)
+createResponder({
+  customId: "panel/identity/toggle_banner",
+  types: [ResponderType.Button],
+  cache: "cached",
+  async run(interaction) {
+    const guildData = await db.guilds.get(interaction.guild.id);
+    guildData.identity = guildData.identity || {};
+
+    const currentlyActive = getBannerUrl(guildData) !== null;
+    guildData.identity.bannerEnabled = !currentlyActive;
+
+    if (!currentlyActive && guildData.identity.bannerUrl === "none") {
+      guildData.identity.bannerUrl = undefined;
+    }
+
+    guildData.markModified("identity");
+    await (guildData as any).save();
+
+    const msgComponents = (interaction.message as any).components || [];
+    let currentTab = "identity";
+    for (const row of msgComponents) {
+      const select = row.components?.find(
+        (c: any) => c.data?.type === 3 || c.customId === "panel/tab_select",
+      );
+      if (select) {
+        currentTab = select.options?.find((o: any) => o.default)?.value || currentTab;
+        break;
+      }
+    }
+
+    const container = await renderTab(
+      currentTab,
+      interaction.guild,
+      interaction.client,
+      guildData,
+    );
+    await updatePanelResponse(interaction, container);
+  },
+});
+
+// 7.5 Restaurar Padrões de Identidade
 createResponder({
   customId: "panel/identity/reset",
   types: [ResponderType.Button],
@@ -1639,6 +1694,7 @@ createResponder({
       avatarUrl: undefined,
       primaryColor: undefined,
       bannerUrl: undefined,
+      bannerEnabled: true,
     };
     guildData.markModified("identity");
     await (guildData as any).save();

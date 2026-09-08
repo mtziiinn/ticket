@@ -52,6 +52,7 @@ export interface IGuild {
     avatarUrl?: string;
     primaryColor?: string;
     bannerUrl?: string;
+    bannerEnabled?: boolean;
   };
   antiflood?: {
     enabled?: boolean;
@@ -118,6 +119,7 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
     avatarUrl: String,
     primaryColor: String,
     bannerUrl: String,
+    bannerEnabled: { type: Boolean, default: true },
   },
   antiflood: {
     enabled: { type: Boolean, default: false },

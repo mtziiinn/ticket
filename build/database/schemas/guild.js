@@ -53,6 +53,7 @@ export const guildSchema = new Schema({
         avatarUrl: String,
         primaryColor: String,
         bannerUrl: String,
+        bannerEnabled: { type: Boolean, default: true },
     },
     antiflood: {
         enabled: { type: Boolean, default: false },
