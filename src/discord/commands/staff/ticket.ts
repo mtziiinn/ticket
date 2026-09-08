@@ -140,6 +140,11 @@ createCommand({
       description: "Limpa a memória RAM e o cache temporário do bot",
       type: ApplicationCommandOptionType.Subcommand,
     },
+    {
+      name: "ram",
+      description: "Exibe diagnóstico detalhado de consumo de memória RAM e uptime",
+      type: ApplicationCommandOptionType.Subcommand,
+    },
   ],
   async run(interaction) {
     const { options, guildId, member } = interaction;
@@ -244,6 +249,46 @@ createCommand({
         ].join("\n"),
         Separator.Default,
         `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 1 hora e varreduras contínuas.*`,
+      );
+
+      await interaction.editReply({
+        components: [container],
+        flags: ["IsComponentsV2"] as any,
+      });
+    }
+
+    if (subcommand === "ram") {
+      await interaction.deferReply({ flags: ["Ephemeral"] });
+
+      const mem = process.memoryUsage();
+      const toMB = (bytes: number) => (bytes / 1024 / 1024).toFixed(2);
+      const uptimeSec = Math.floor(process.uptime());
+      const hours = Math.floor(uptimeSec / 3600);
+      const minutes = Math.floor((uptimeSec % 3600) / 60);
+      const seconds = uptimeSec % 60;
+      const uptimeStr = `${hours}h ${minutes}m ${seconds}s`;
+
+      const heapPercent = ((mem.heapUsed / mem.heapTotal) * 100).toFixed(1);
+
+      const container = createContainer(
+        constants.colors.azoxo,
+        createSection({
+          content: `## ${getEmojiTag("database")} Diagnóstico de Memória & Saúde\nMonitoramento de telemetria do processo Node.js na hospedagem.`,
+          thumbnail: interaction.client.user?.displayAvatarURL() as any,
+        }),
+        Separator.Default,
+        `### ${getEmojiTag("clock")} Tempo de Atividade (Uptime)`,
+        `| ${getEmojiTag("clock_add")} **Uptime do Processo:** \`${uptimeStr}\`\n| ${getEmojiTag("other_bot")} **Node.js:** \`${process.version}\` (\`${process.platform}\`)`,
+        Separator.Default,
+        `### ${getEmojiTag("database_check")} Alocação de Memória (RAM)`,
+        [
+          `${getEmojiTag("cloud_check")} **RSS Total do Processo:** \`${toMB(mem.rss)} MB\` *(limite container: 512 MB)*`,
+          `${getEmojiTag("database")} **Heap Utilizado:** \`${toMB(mem.heapUsed)} MB\` / \`${toMB(mem.heapTotal)} MB\` (\`${heapPercent}%\`)`,
+          `${getEmojiTag("action_info")} **Memória Externa (C++/Buffers):** \`${toMB(mem.external)} MB\``,
+          `${getEmojiTag("file_check")} **ArrayBuffers:** \`${toMB(mem.arrayBuffers || 0)} MB\``,
+        ].join("\n"),
+        Separator.Default,
+        `*Dica: Use \`/ticket limpar-cache\` se desejar forçar a reciclagem imediata e Garbage Collection.*`,
       );
 
       await interaction.editReply({

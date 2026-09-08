@@ -23,7 +23,7 @@ createEvent({
                 status: "dnd",
                 activities: [{ name: statuses[i], type: ActivityType.Custom }],
             });
-        }, 10000);
+        }, 60000); // Rotação a cada 1 minuto (economiza ciclos de CPU e conexões de Gateway)
         // Verificação automática de sorteios a cada 30 segundos
         setInterval(async () => {
             try {
@@ -39,20 +39,5 @@ createEvent({
                 console.error("[Giveaway Sweep] Erro:", err);
             }
         }, 30000);
-        // Sincronizar apelido configurado nas guilds
-        try {
-            for (const guild of client.guilds.cache.values()) {
-                const guildData = await db.guilds.get(guild.id);
-                if (guildData?.identity?.botName &&
-                    guild.members.me?.displayName !== guildData.identity.botName) {
-                    await guild.members.me
-                        ?.setNickname(guildData.identity.botName)
-                        .catch(() => { });
-                }
-            }
-        }
-        catch (err) {
-            console.error("[Ready] Erro ao sincronizar apelido do bot:", err);
-        }
     },
 });

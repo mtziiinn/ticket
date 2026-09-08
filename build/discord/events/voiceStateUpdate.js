@@ -1,6 +1,6 @@
 import { createEvent } from "#base";
 import { createContainer, createSection, Separator } from "@magicyan/discord";
-import { getEmojiTag, sendBotLog } from "#functions";
+import { getBotLogChannelId, getEmojiTag, sendBotLog } from "#functions";
 createEvent({
     name: "voiceStateUpdate",
     event: "voiceStateUpdate",
@@ -10,6 +10,10 @@ createEvent({
         const guild = newState.guild || oldState.guild;
         const member = newState.member || oldState.member;
         if (!guild || !member)
+            return;
+        // Checagem antecipada rápida para evitar alocações desnecessárias na memória
+        const hasLogChannel = await getBotLogChannelId(guild.id);
+        if (!hasLogChannel)
             return;
         try {
             const timestamp = Math.floor(Date.now() / 1000);

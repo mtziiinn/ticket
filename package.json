@@ -9,9 +9,9 @@
     "dev:dev": "tsx --expose-gc --env-file=.env.dev ./src/index.ts",
     "watch": "tsx --watch --expose-gc --env-file=.env ./src/index.ts",
     "watch:dev": "tsx --watch --expose-gc --env-file=.env.dev ./src/index.ts",
-    "start": "node --expose-gc --max-old-space-size=460 --env-file=.env .",
-    "start:dev": "node --expose-gc --max-old-space-size=460 --env-file=.env.dev .",
-    "start:discloud": "node --expose-gc --max-old-space-size=460 ."
+    "start": "node --expose-gc --max-old-space-size=380 --env-file=.env .",
+    "start:dev": "node --expose-gc --max-old-space-size=380 --env-file=.env.dev .",
+    "start:discloud": "node --expose-gc --max-old-space-size=380 ."
   },
   "dependencies": {
     "@constatic/base": "0.0.10",

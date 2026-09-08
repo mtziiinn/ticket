@@ -439,8 +439,6 @@ export async function renderIdentityTab(
   const identity = guildData.identity || {};
   const currentColor = getPanelColor(guildData);
   const currentBanner = getBannerUrl(guildData);
-  const botDisplayName =
-    guild.members.me?.displayName || client.user?.username || "Bot";
   const avatarDisplay = identity.avatarUrl
     ? `[Visualizar Imagem](${identity.avatarUrl})`
     : `[Foto Padrão do Discord](${client.user?.displayAvatarURL() || ""})`;
@@ -455,19 +453,10 @@ export async function renderIdentityTab(
 
   const items: any[] = [
     createSection({
-      content: `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT\nPersonalize o nome, foto de perfil, cores e banner do sistema.`,
+      content: `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT\nPersonalize a foto de perfil, cores e banner do sistema.`,
       thumbnail: botAvatar as any,
     }),
     buildPanelDropdown("identity"),
-    Separator.Default,
-    createSection({
-      content: `| ${getEmojiTag("other_bot")} **Nome do Bot no Servidor:**\n\`${botDisplayName}\``,
-      button: new ButtonBuilder()
-        .setCustomId("panel/identity/edit_name")
-        .setLabel("Editar Nome")
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji(getEmojiId("action_add") || "✏️"),
-    }),
     Separator.Default,
     createSection({
       content: `| ${getEmojiTag("user_users")} **Foto de Perfil (Avatar):**\n${avatarDisplay}`,

@@ -24,16 +24,16 @@ const { client } = await bootstrap({
     partials: [Partials.Message, Partials.Channel, Partials.User, Partials.GuildMember],
     makeCache: Options.cacheWithLimits({
         ...Options.DefaultMakeCacheSettings,
-        MessageManager: 100,
-        UserManager: 50,
-        GuildMemberManager: 100,
+        MessageManager: 5,
+        UserManager: 30,
+        GuildMemberManager: 50,
         PresenceManager: 0,
         ReactionManager: 0,
         ThreadManager: 0,
-        VoiceStateManager: 50,
+        VoiceStateManager: 5,
         ApplicationCommandManager: 0,
-        BaseGuildEmojiManager: 50,
-        GuildEmojiManager: 50,
+        BaseGuildEmojiManager: 0,
+        GuildEmojiManager: 0,
         GuildInviteManager: 0,
         GuildStickerManager: 0,
         GuildScheduledEventManager: 0,
@@ -42,15 +42,15 @@ const { client } = await bootstrap({
     sweepers: {
         ...Options.DefaultSweeperSettings,
         messages: {
-            interval: 300,
-            lifetime: 600,
+            interval: 120,
+            lifetime: 180,
         },
         users: {
-            interval: 600,
+            interval: 300,
             filter: () => (user) => user.id !== client?.user?.id,
         },
         guildMembers: {
-            interval: 600,
+            interval: 300,
             filter: () => (member) => member.id !== client?.user?.id,
         },
     },
@@ -167,13 +167,15 @@ runAllCleanups().catch((err) => console.error("[Cleanup] Erro inicial:", err));
 function runPeriodicCacheCleanup() {
     try {
         const res = clearBotCache(client);
-        console.log(`[Cache] Limpeza periódica concluída | Msgs: ${res.messagesSwept}, Users: ${res.usersSwept}, Membros: ${res.membersSwept}, Voice: ${res.voiceStatesSwept}, Captchas: ${res.captchasSwept} | Heap: ${res.heapUsedAfterMB}MB (-${res.heapDiffMB}MB) | RSS: ${res.rssAfterMB}MB`);
+        if (res.heapDiffMB > 2 || res.messagesSwept > 0 || res.membersSwept > 5) {
+            console.log(`[Cache] Limpeza periódica | Msgs: ${res.messagesSwept} | Membros: ${res.membersSwept} | Heap: ${res.heapUsedAfterMB}MB (-${res.heapDiffMB}MB) | RSS: ${res.rssAfterMB}MB`);
+        }
     }
     catch (error) {
         console.error("[Cache] Erro na limpeza periódica:", error);
     }
 }
 // Configura intervalos
-setInterval(runAllCleanups, 6 * 60 * 60 * 1000);
-setInterval(processDmQueue, 10000);
-setInterval(runPeriodicCacheCleanup, 60 * 60 * 1000); // A cada 1 hora (60 minutos)
+setInterval(runAllCleanups, 6 * 60 * 60 * 1000); // A cada 6 horas
+setInterval(processDmQueue, 60 * 1000); // A cada 60 segundos (reduz queries de polling desnecessárias)
+setInterval(runPeriodicCacheCleanup, 20 * 60 * 1000); // A cada 20 minutos para manter RSS estável na Discloud

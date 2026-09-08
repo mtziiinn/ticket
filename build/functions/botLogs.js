@@ -1,8 +1,22 @@
 import { db } from "#database";
 /**
- * Envia uma mensagem de log formatada para o canal de logs configurado no servidor (botLogsChannel).
+ * Retorna o ID do canal de logs configurado ou null se desativado.
+ * Permite checagem antecipada para evitar alocação inútil de componentes.
  */
-export async function sendBotLog(guild, container) {
+export async function getBotLogChannelId(guildId) {
+    try {
+        const guildData = await db.guilds.get(guildId);
+        return guildData?.botLogsChannel || null;
+    }
+    catch {
+        return null;
+    }
+}
+/**
+ * Envia uma mensagem de log formatada para o canal de logs configurado no servidor (botLogsChannel).
+ * Suporta contêiner estático ou factory function para alocação lazy.
+ */
+export async function sendBotLog(guild, containerOrFactory) {
     try {
         const guildData = await db.guilds.get(guild.id);
         const logChannelId = guildData?.botLogsChannel;
@@ -14,6 +28,9 @@ export async function sendBotLog(guild, container) {
         }
         if (!logChannel || !logChannel.isTextBased())
             return;
+        const container = typeof containerOrFactory === "function"
+            ? containerOrFactory()
+            : containerOrFactory;
         await logChannel.send({
             components: [container],
             flags: ["IsComponentsV2"],

@@ -20,9 +20,24 @@ export function cleanupCooldowns(force = false) {
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(interaction, routeCategory) {
     const { guild, user, fields } = interaction;
+    // 0. Proteção de Cooldown contra cliques duplos simultâneos
+    const now = Date.now();
+    const userCooldown = cooldowns.get(user.id);
+    if (userCooldown && userCooldown > now) {
+        const remaining = Math.ceil((userCooldown - now) / 1000);
+        await interaction
+            .reply({
+            content: `<:action_x:1502789802918150206> Aguarde **${remaining}s** antes de tentar abrir outro ticket.`,
+            flags: ["Ephemeral"],
+        })
+            .catch(() => { });
+        return;
+    }
+    cooldowns.set(user.id, now + 10000); // 10s de cooldown
     // 1. Verificar se o sistema está fechado (Loja Fechada)
     const guildData = await db.guilds.get(guild.id);
     if (guildData.channels?.closed) {
+        cooldowns.delete(user.id);
         await interaction
             .reply({
             content: `<:action_x:1502789802918150206> Desculpe, o setor de atendimentos está temporariamente **fechado**. Tente novamente mais tarde!`,
@@ -136,31 +151,21 @@ async function processTicketSubmission(interaction, routeCategory) {
         await mainMessage
             .pin()
             .catch((err) => console.error("[Submit] Erro ao fixar mensagem:", err));
-        // Apagar a mensagem automática do Discord com um pequeno delay
+        // Apagar a mensagem automática de pin do Discord com pequeno delay (sem poluir o cache)
         setTimeout(async () => {
             try {
-                console.log(`[Submit] Iniciando busca de mensagem de pin em: ${channel.id}`);
-                const messages = await channel.messages.fetch({ limit: 50 });
-                console.log(`[Submit] Mensagens buscadas: ${messages.size}`);
-                const pinSystemMessage = messages.find((m) => {
-                    console.log(`[Submit] Verificando msg ${m.id} - Tipo: ${m.type}`);
-                    return m.type === MessageType.ChannelPinnedMessage;
-                });
-                if (pinSystemMessage) {
-                    console.log(`[Submit] Mensagem de pin encontrada (${pinSystemMessage.id}). Tentando deletar...`);
-                    await pinSystemMessage
-                        .delete()
-                        .then(() => console.log(`[Submit] Mensagem de pin deletada com sucesso.`))
-                        .catch((err) => console.error(`[Submit] Erro ao deletar msg de pin:`, err));
-                }
-                else {
-                    console.log(`[Submit] Nenhuma mensagem de pin encontrada nas últimas 50 mensagens.`);
+                const messages = await channel.messages
+                    .fetch({ limit: 5, cache: false })
+                    .catch(() => null);
+                const pinMsg = messages?.find((m) => m.type === MessageType.ChannelPinnedMessage);
+                if (pinMsg) {
+                    await pinMsg.delete().catch(() => { });
                 }
             }
-            catch (e) {
-                console.error("[Submit] Erro crítico ao processar limpeza de pin:", e);
+            catch {
+                /* ignore */
             }
-        }, 5000);
+        }, 4000);
         // 4. Salvar no banco
         await db.tickets.create({
             guildId: guild.id,

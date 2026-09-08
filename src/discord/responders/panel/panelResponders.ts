@@ -1395,90 +1395,7 @@ createResponder({
 // 7. Módulo de Identidade Visual do BOT
 // ==========================================
 
-// 7.1 Alterar Nome do Bot
-createResponder({
-  customId: "panel/identity/edit_name",
-  types: [ResponderType.Button],
-  cache: "cached",
-  async run(interaction) {
-    const guildData = await db.guilds.get(interaction.guild.id);
-    const currentName =
-      guildData.identity?.botName ||
-      interaction.guild.members.me?.displayName ||
-      interaction.client.user?.username ||
-      "";
-
-    const modal = new ModalBuilder()
-      .setCustomId("panel/identity/modal/name")
-      .setTitle("Editar Nome do Bot");
-
-    const input = new TextInputBuilder()
-      .setCustomId("bot_name")
-      .setPlaceholder("Ex: One Tickets")
-      .setValue(currentName)
-      .setStyle(TextInputStyle.Short)
-      .setMinLength(1)
-      .setMaxLength(32)
-      .setRequired(true);
-
-    const label = new LabelBuilder()
-      .setLabel("Nome do Bot no Servidor:")
-      .setTextInputComponent(input);
-
-    modal.addComponents(label);
-    await interaction.showModal(modal);
-  },
-});
-
-createResponder({
-  customId: "panel/identity/modal/name",
-  types: [ResponderType.Modal, ResponderType.ModalComponent],
-  cache: "cached",
-  async run(interaction) {
-    const newName = interaction.fields.getTextInputValue("bot_name").trim();
-    if (!newName) {
-      await interaction.reply({
-        content: `${getEmojiTag("action_x")} O nome não pode ser vazio.`,
-        flags: ["Ephemeral"],
-      }).catch(() => {});
-      return;
-    }
-
-    if (interaction.isFromMessage?.()) {
-      await interaction.deferUpdate().catch(() => {});
-    } else {
-      await interaction.deferReply({ ephemeral: true }).catch(() => {});
-    }
-
-    try {
-      await interaction.guild.members.me?.setNickname(newName);
-    } catch (err) {
-      console.error("[Identity] Erro ao alterar apelido no servidor:", err);
-    }
-
-    try {
-      await interaction.client.user?.setUsername(newName);
-    } catch {
-      // Username global pode atingir rate limit do Discord
-    }
-
-    const guildData = await db.guilds.get(interaction.guild.id);
-    guildData.identity = guildData.identity || {};
-    guildData.identity.botName = newName;
-    guildData.markModified("identity");
-    await (guildData as any).save();
-
-    const container = await renderTab(
-      "identity",
-      interaction.guild,
-      interaction.client,
-      guildData,
-    );
-    await updatePanelResponse(interaction, container);
-  },
-});
-
-// 7.2 Alterar Foto de Perfil (Avatar)
+// 7.1 Alterar Foto de Perfil (Avatar)
 createResponder({
   customId: "panel/identity/edit_avatar",
   types: [ResponderType.Button],
@@ -1576,7 +1493,7 @@ createResponder({
   },
 });
 
-// 7.3 Alterar Cor Principal (Embeds)
+// 7.2 Alterar Cor Principal (Embeds)
 createResponder({
   customId: "panel/identity/edit_color",
   types: [ResponderType.Button],
@@ -1638,7 +1555,7 @@ createResponder({
   },
 });
 
-// 7.4 Alterar Banner do Painel
+// 7.3 Alterar Banner do Painel
 createResponder({
   customId: "panel/identity/edit_banner",
   types: [ResponderType.Button],
@@ -1711,7 +1628,7 @@ createResponder({
   },
 });
 
-// 7.5 Restaurar Padrões de Identidade
+// 7.4 Restaurar Padrões de Identidade
 createResponder({
   customId: "panel/identity/reset",
   types: [ResponderType.Button],
@@ -1719,19 +1636,12 @@ createResponder({
   async run(interaction) {
     const guildData = await db.guilds.get(interaction.guild.id);
     guildData.identity = {
-      botName: undefined,
       avatarUrl: undefined,
       primaryColor: undefined,
       bannerUrl: undefined,
     };
     guildData.markModified("identity");
     await (guildData as any).save();
-
-    try {
-      await interaction.guild.members.me?.setNickname(null);
-    } catch {
-      // Ignorar caso sem permissão
-    }
 
     const container = await renderTab(
       "identity",
