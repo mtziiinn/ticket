@@ -2,6 +2,7 @@ import { createResponder } from "#base";
 import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle } from "discord.js";
+import { randomBytes } from "node:crypto";
 import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
@@ -78,8 +79,9 @@ async function processDeliverMedia(interaction) {
             await interaction.followUp({ content: "Ticket não encontrado.", flags: ["Ephemeral"] }).catch(() => null);
             return;
         }
-        // Gerar token único
-        const token = Math.random().toString(36).substring(2, 10).toUpperCase();
+        // O link é uma credencial de acesso ao upload: use entropia criptográfica.
+        const token = randomBytes(32).toString("base64url");
+        const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
         await db.pendingDeliveries.create({
             token,
             channelId: channel.id,
@@ -87,6 +89,7 @@ async function processDeliverMedia(interaction) {
             description,
             ticketId: ticket.ticketId,
             status: "pending",
+            expiresAt,
         });
         const uploadUrl = `${env.WEB_URL}/upload/${token}`;
         await interaction.followUp({

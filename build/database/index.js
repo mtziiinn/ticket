@@ -44,4 +44,5 @@ export const db = {
     giveaways: model("giveaway", giveawaySchema, "giveaways"),
     dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
 };
+await db.pendingDeliveries.createIndexes();
 export { cleanupGuildCache } from "./schemas/guild.js";

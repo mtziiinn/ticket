@@ -3,7 +3,7 @@ import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, modalFieldsToRecord, Separator, createRow, createMediaGallery, } from "@magicyan/discord";
 import { ButtonBuilder, ButtonStyle, ChannelType, PermissionFlagsBits, StringSelectMenuBuilder, TextInputStyle, ModalBuilder, LabelBuilder, TextInputBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
-import { formatEmoji, getCleanAvatarURL, getEmojiTag } from "#functions";
+import { formatEmoji, getCleanAvatarURL, getEmojiTag, reportError } from "#functions";
 import { formatHexColor, getBannerUrl } from "../panel/panelView.js";
 const cooldowns = new Map();
 export function cleanupCooldowns(force = false) {
@@ -227,6 +227,7 @@ async function processTicketSubmission(interaction, routeCategory) {
     }
     catch (error) {
         console.error("[Ticket] ERRO NA CRIAÇÃO:", error);
+        reportError("ticketError", error, "Erro ao criar ticket");
         await interaction
             .editReply({
             content: `<:action_x:1502789802918150206> Erro ao criar ticket: \`${error.message}\``,

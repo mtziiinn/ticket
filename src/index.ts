@@ -15,21 +15,45 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
-import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM } from "#functions";
+import {
+  clearBotCache,
+  getCleanAvatarURL,
+  getEmojiTag,
+  safeSendDM,
+  sendErrorWebhook,
+} from "#functions";
 
 // =======================================================
 // RESILIÊNCIA GLOBAL / HANDLERS ANTI-CRASH PARA PRODUÇÃO
 // =======================================================
 process.on("unhandledRejection", (reason: any) => {
   console.error("[Anti-Crash] Rejeição de Promise não tratada detectada:", reason);
+  sendErrorWebhook({
+    type: "unhandledRejection",
+    message: reason?.message || String(reason) || "Rejeição desconhecida",
+    stack: reason?.stack || "",
+    context: "Processo principal — Promise não tratada",
+  });
 });
 
 process.on("uncaughtException", (error: Error, origin: string) => {
   console.error(`[Anti-Crash] Exceção não capturada (${origin}):`, error);
+  sendErrorWebhook({
+    type: "uncaughtException",
+    message: error?.message || String(error) || "Exceção desconhecida",
+    stack: error?.stack || "",
+    context: `Origem: ${origin}`,
+  });
 });
 
 process.on("uncaughtExceptionMonitor", (error: Error, origin: string) => {
   console.error(`[Anti-Crash Monitor] Erro monitorado (${origin}):`, error);
+  sendErrorWebhook({
+    type: "warning",
+    message: error?.message || String(error) || "Erro monitorado",
+    stack: error?.stack || "",
+    context: `Monitor — Origem: ${origin}`,
+  });
 });
 
 console.log("------------------------------------------");

@@ -21,7 +21,7 @@ import {
   MessageType,
 } from "discord.js";
 import { db } from "#database";
-import { formatEmoji, getCleanAvatarURL, getEmojiTag } from "#functions";
+import { formatEmoji, getCleanAvatarURL, getEmojiTag, reportError } from "#functions";
 import { formatHexColor, getBannerUrl } from "../panel/panelView.js";
 
 const cooldowns = new Map<string, number>();
@@ -301,6 +301,7 @@ async function processTicketSubmission(
     });
   } catch (error: any) {
     console.error("[Ticket] ERRO NA CRIAÇÃO:", error);
+    reportError("ticketError", error, "Erro ao criar ticket");
     await interaction
       .editReply({
         content: `<:action_x:1502789802918150206> Erro ao criar ticket: \`${error.message}\``,

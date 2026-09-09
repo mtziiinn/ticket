@@ -102,3 +102,4 @@ export * from "./botLogs.js";
 export * from "./announcements.js";
 export * from "./panelJson.js";
 export * from "./vault.js";
+export * from "./errorWebhook.js";

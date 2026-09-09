@@ -4,18 +4,36 @@ import { db } from "#database";
 import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
 import "./constants.js";
 import { GatewayIntentBits, Options, Partials, ButtonBuilder, ButtonStyle, } from "discord.js";
-import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM } from "#functions";
+import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM, sendErrorWebhook, } from "#functions";
 // =======================================================
 // RESILIÊNCIA GLOBAL / HANDLERS ANTI-CRASH PARA PRODUÇÃO
 // =======================================================
 process.on("unhandledRejection", (reason) => {
     console.error("[Anti-Crash] Rejeição de Promise não tratada detectada:", reason);
+    sendErrorWebhook({
+        type: "unhandledRejection",
+        message: reason?.message || String(reason) || "Rejeição desconhecida",
+        stack: reason?.stack || "",
+        context: "Processo principal — Promise não tratada",
+    });
 });
 process.on("uncaughtException", (error, origin) => {
     console.error(`[Anti-Crash] Exceção não capturada (${origin}):`, error);
+    sendErrorWebhook({
+        type: "uncaughtException",
+        message: error?.message || String(error) || "Exceção desconhecida",
+        stack: error?.stack || "",
+        context: `Origem: ${origin}`,
+    });
 });
 process.on("uncaughtExceptionMonitor", (error, origin) => {
     console.error(`[Anti-Crash Monitor] Erro monitorado (${origin}):`, error);
+    sendErrorWebhook({
+        type: "warning",
+        message: error?.message || String(error) || "Erro monitorado",
+        stack: error?.stack || "",
+        context: `Monitor — Origem: ${origin}`,
+    });
 });
 console.log("------------------------------------------");
 console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO (PRISM)");
@@ -110,7 +128,11 @@ async function cleanupPendingDeliveries() {
         console.error("[Cleanup] Erro ao limpar pending deliveries:", error);
     }
 }
+let isProcessingDmQueue = false;
 async function processDmQueue() {
+    if (isProcessingDmQueue)
+        return;
+    isProcessingDmQueue = true;
     try {
         const queue = await db.dmQueue
             .find()
@@ -118,6 +140,7 @@ async function processDmQueue() {
             .limit(5)
             .lean();
         for (const item of queue) {
+            let delivered = false;
             try {
                 const user = await client.users.fetch(item.ownerId);
                 const staff = await client.users.fetch(item.staffId);
@@ -138,6 +161,7 @@ async function processDmQueue() {
                     flags: ["IsComponentsV2"],
                 }, "DM Queue");
                 if (sent) {
+                    delivered = true;
                     console.log(`[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`);
                 }
                 else {
@@ -145,6 +169,7 @@ async function processDmQueue() {
                         const channel = await client.channels.fetch(item.channelId);
                         if (channel?.isTextBased() && "send" in channel) {
                             await channel.send(`<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`);
+                            delivered = true;
                         }
                     }
                     catch {
@@ -155,11 +180,16 @@ async function processDmQueue() {
             catch (err) {
                 console.error(`[DM Queue] Erro ao processar item para ${item.ownerId}:`, err);
             }
-            await db.dmQueue.deleteOne({ _id: item._id });
+            if (delivered) {
+                await db.dmQueue.deleteOne({ _id: item._id });
+            }
         }
     }
     catch (error) {
         console.error("[DM Queue] Erro no processamento:", error);
+    }
+    finally {
+        isProcessingDmQueue = false;
     }
 }
 async function runAllCleanups() {
