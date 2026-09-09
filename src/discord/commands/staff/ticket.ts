@@ -182,7 +182,7 @@ createCommand({
       const container = createContainer(
         constants.colors.azoxo,
         createSection({
-          content: `## ${getEmojiTag("prism")} Estatísticas de Tickets • Prism\nConfira abaixo o resumo completo dos atendimentos do servidor.`,
+          content: `## ${getEmojiTag("prism")} Estatísticas de Tickets • ${brand.brandName}\nConfira abaixo o resumo completo dos atendimentos do servidor.`,
           thumbnail: emojis.static.prism || emojis.static.other_ticket,
         }),
         Separator.Default,
@@ -278,7 +278,7 @@ createCommand({
         }),
         Separator.Default,
         `### ${getEmojiTag("clock")} Tempo de Atividade (Uptime)`,
-        `| ${getEmojiTag("clock_add")} **Uptime do Processo:** \`${uptimeStr}\`\n| ${getEmojiTag("prism")} **Bot:** \`Prism Tickets\` | **Node.js:** \`${process.version}\` (\`${process.platform}\`)`,
+        `| ${getEmojiTag("clock_add")} **Uptime do Processo:** \`${uptimeStr}\`\n| ${getEmojiTag("prism")} **Bot:** \`${brand.brandName} Tickets\` | **Node.js:** \`${process.version}\` (\`${process.platform}\`)`,
         Separator.Default,
         `### ${getEmojiTag("database_check")} Alocação de Memória (RAM)`,
         [

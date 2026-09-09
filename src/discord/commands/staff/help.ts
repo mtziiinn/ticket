@@ -8,7 +8,7 @@ createCommand({
   description: "Central de ajuda com todos os comandos do bot",
   type: ApplicationCommandType.ChatInput,
   async run(interaction) {
-    const header = `## ${getEmojiTag("action_info")} Central de Comandos • PR1SM\nConfira abaixo os comandos disponíveis. Todas as respostas são **efêmeras** (apenas você enxerga).`;
+    const header = `## ${getEmojiTag("action_info")} Central de Comandos • ${brand.brandName}\nConfira abaixo os comandos disponíveis. Todas as respostas são **efêmeras** (apenas você enxerga).`;
 
     const pagamentos = [
       `${getEmojiTag("other_dollar")} **${getEmojiTag("other_wallet")} \`/gerar-pagamento\`** — Gera uma cobrança (PIX, Mercado Pago ou Stripe) para um cliente.`,

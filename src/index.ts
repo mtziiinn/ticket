@@ -57,7 +57,7 @@ process.on("uncaughtExceptionMonitor", (error: Error, origin: string) => {
   });
 });
 
-log.info("Init", "PRISM Bot iniciando...");
+log.info("Init", `${brand.brandName} Bot iniciando...`);
 
 const { client } = await bootstrap({
   meta: import.meta,

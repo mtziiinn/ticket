@@ -74,7 +74,7 @@ createResponder({
 
     const modal = new ModalBuilder()
       .setCustomId("panel/anuncios/modal_canal")
-      .setTitle("Anúncio em Canal (Prism)");
+      .setTitle(`Anúncio em Canal (${brand.brandName})`);
 
     modal.addComponents(
       new ActionRowBuilder<TextInputBuilder>().addComponents(
@@ -228,7 +228,7 @@ createResponder({
 
     const modal = new ModalBuilder()
       .setCustomId("panel/anuncios/modal_dm")
-      .setTitle("Disparo na DM (Prism)");
+      .setTitle(`Disparo na DM (${brand.brandName})`);
 
     modal.addComponents(
       new ActionRowBuilder<TextInputBuilder>().addComponents(

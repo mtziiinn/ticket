@@ -1,7 +1,5 @@
 import { env } from "#env";
-
-const ERROR_WEBHOOK_URL =
-  "https://discord.com/api/webhooks/1546382996398145606/t3bahBmouQZTIGsPer6pGBOZLU_bsSOslpCLwJLNrCp6kG_jFBmit3Ht5c9gNsKTxxWU";
+import "../constants.js";
 
 interface ErrorReport {
   type: string;
@@ -64,6 +62,9 @@ function getTypeEmoji(type: string): string {
 }
 
 export async function sendErrorWebhook(report: ErrorReport): Promise<void> {
+  const webhookUrl = brand.errorWebhook?.url;
+  if (!webhookUrl) return;
+
   try {
     const mem = process.memoryUsage();
 
@@ -121,17 +122,17 @@ export async function sendErrorWebhook(report: ErrorReport): Promise<void> {
       description: truncate(report.message, 2000),
       fields,
       footer: {
-        text: `PRISM Bot • ${env.NODE_ENV || "production"}`,
+        text: `${brand.brandName} Bot • ${env.NODE_ENV || "production"}`,
       },
       timestamp: new Date().toISOString(),
     };
 
-    await fetch(ERROR_WEBHOOK_URL, {
+    await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username: "PRISM Error Logs",
-        avatar_url: "https://cdn.discordapp.com/emojis/1453205628599275540.png?size=128",
+        username: brand.errorWebhook?.name || `${brand.brandName} Error Logs`,
+        avatar_url: brand.avatarUrl,
         embeds: [embed],
       }),
     });

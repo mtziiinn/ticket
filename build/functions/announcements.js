@@ -36,7 +36,7 @@ export function announcementContainer(options) {
     if (options.barImage) {
         items.push(Separator.Default, createMediaGallery(options.barImage));
     }
-    items.push(Separator.Default, `- # Comunicado Oficial • Prism${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`);
+    items.push(Separator.Default, `- # Comunicado Oficial • ${brand.brandName}${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`);
     return createContainer(finalColor, ...items);
 }
 export function announcementDMContainer(options) {
@@ -73,7 +73,7 @@ export function announcementDMContainer(options) {
     if (options.barImage) {
         items.push(Separator.Default, createMediaGallery(options.barImage));
     }
-    items.push(Separator.Default, `- # Comunicado Oficial • Prism${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`);
+    items.push(Separator.Default, `- # Comunicado Oficial • ${brand.brandName}${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`);
     return createContainer(finalColor, ...items);
 }
 export async function resolveRoleRecipients(guild, roleIds) {

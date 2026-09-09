@@ -7,11 +7,9 @@ createEvent({
     event: "ready",
     once: true,
     async run(client) {
-        const statuses = [
-            "💻 Desenvolvido para Prism",
-            "💫 Transformando comunidades",
-            "🚨 Desenvolvendo soluções profissionais",
-        ];
+        const statuses = brand.presence?.length > 0
+            ? brand.presence
+            : [`💻 Desenvolvido para ${brand.brandName}`];
         let i = 0;
         client.user?.setPresence({
             status: "dnd",
@@ -41,7 +39,7 @@ createEvent({
         }, 30000);
         // Sincronizar bio (descrição da aplicação) do bot
         try {
-            const defaultBio = "<:robo2:1424614987644801045>・Desenvolvido por Mts ( @mtzin7.rp )";
+            const defaultBio = brand.appBio;
             await client.application?.fetch();
             if (client.application && client.application.description !== defaultBio) {
                 await client.application.edit({ description: defaultBio }).catch(() => { });

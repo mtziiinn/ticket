@@ -338,7 +338,7 @@ async function processCloseSubmission(interaction) {
                 const openedAtTimestamp = Math.floor(ticket.openedAt.getTime() / 1000);
                 const closedAtTimestamp = Math.floor(new Date().getTime() / 1000);
                 const logContainer = createContainer(constants.colors.primary, createSection({
-                    content: `## ${getEmojiTag("prism")} Atendimento ${ticket.ticketId} • Prism\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
+                    content: `## ${getEmojiTag("prism")} Atendimento ${ticket.ticketId} • ${brand.brandName}\nVenho registrar a log de encerramento do atendimento \`${ticket.ticketId}\`, encerrado por ${user}. Abaixo você pode ver todas as informações seguido do transcript.`,
                     thumbnail: getCleanAvatarURL(owner?.user || user),
                 }), Separator.Default, `**Identificação**\n` +
                     [
@@ -373,7 +373,7 @@ async function processCloseSubmission(interaction) {
             const openTime = Math.floor(new Date(ticket.openedAt).getTime() / 1000);
             const closeTime = Math.floor(Date.now() / 1000);
             const dmContainer = createContainer(constants.colors.danger, createSection({
-                content: `### ${getEmojiTag("prism")} Atendimento Encerrado • Prism\nOlá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
+                content: `### ${getEmojiTag("prism")} Atendimento Encerrado • ${brand.brandName}\nOlá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
                 thumbnail: getCleanAvatarURL(user),
             }), Separator.Default, `<:calendar:1502789854486986752> **Aberto em:** <t:${openTime}:f>`, `<:calendar_check:1502789850649071740> **Encerrado em:** <t:${closeTime}:f>`, Separator.Default, `<:action_check:1502789797821939752> **Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``, wantTranscript && transcriptUrl
                 ? createRow(new ButtonBuilder({

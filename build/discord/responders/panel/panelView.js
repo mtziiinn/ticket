@@ -152,12 +152,12 @@ export async function renderHomeTab(guild, client, guildData) {
         emojis.static.other_bot;
     const items = [
         createSection({
-            content: `## ${getEmojiTag("prism")} PAINEL DE CONTROLE • PRISM\nGerencie tickets, moderação, gateways e identidades com facilidade.`,
+            content: `## ${getEmojiTag("prism")} PAINEL DE CONTROLE • ${brand.brandName}\nGerencie tickets, moderação, gateways e identidades com facilidade.`,
             thumbnail: botAvatar,
         }),
         buildPanelDropdown("home"),
         Separator.Default,
-        `| ${getEmojiTag("prism")} **Status do BOT (Prism):** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
+        `| ${getEmojiTag("prism")} **Status do BOT (${brand.brandName}):** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
         Separator.Default,
         `| ${getEmojiTag("prism")} **Tickets em Aberto:** \`${openTicketsCount}\``,
         Separator.Default,
@@ -381,7 +381,7 @@ export async function renderIdentityTab(guild, client, guildData) {
         emojis.static.other_bot;
     const items = [
         createSection({
-            content: `## ${getEmojiTag("prism")} Identidade Visual do BOT • Prism\nPersonalize a foto de perfil, cores e a barrinha/banner dos painéis.`,
+            content: `## ${getEmojiTag("prism")} Identidade Visual do BOT • ${brand.brandName}\nPersonalize a foto de perfil, cores e a barrinha/banner dos painéis.`,
             thumbnail: botAvatar,
         }),
         buildPanelDropdown("identity"),
@@ -435,7 +435,7 @@ export async function renderIdentityTab(guild, client, guildData) {
 export async function renderCommandsTab(guildData) {
     const color = getPanelColor(guildData);
     return createContainer(color, `## ${getEmojiTag("other_terminal")} Guia Geral de Comandos`, buildPanelDropdown("commands"), Separator.Default, [
-        `### ${getEmojiTag("prism")} Configuração e Gestão (Prism)`,
+        `### ${getEmojiTag("prism")} Configuração e Gestão (${brand.brandName})`,
         `• \`/painel\` - Painel central de controle (Tickets, Anúncios, Verificação, Gateways, Autorole e Logs).`,
         `• \`/anunciar\` - Abre o formulário interativo de comunicado oficial (envio em canal e/ou disparo por DM).`,
         `• \`/ticket stats\` - Exibe métricas de atendimento (hoje, semana, mês, total e por categoria).`,
@@ -508,7 +508,7 @@ export function renderAnunciosTab(guildData) {
     return createContainer(color, `## ${getEmojiTag("prism")} Sistema de Disparo de Anúncios & Comunicados`, buildPanelDropdown("anuncios"), Separator.Default, `> ${getEmojiTag("prism")} **Canal Padrão:** ${targetChannel}\n` +
         `> ${getEmojiTag("user_check")} **Cargos da DM:** ${dmRoles}\n` +
         `> ${getEmojiTag("apps_figma")} **Barrinha dos Comunicados:** ${bannerStatus}\n\n` +
-        `● **Anúncio em Canal:** Publica um comunicado oficial formatado com a identidade **Prism** em azul claro (#38bdf8), anexos e menção @everyone opcional.\n\n` +
+        `● **Anúncio em Canal:** Publica um comunicado oficial formatado com a identidade **${brand.brandName}**, anexos e menção @everyone opcional.\n\n` +
         `● **Anúncio na DM:** Dispara individualmente para a DM de todos os membros dos cargos selecionados com proteção contra rate-limit e limpeza de memória.`, Separator.Default, new ActionRowBuilder().addComponents(new ChannelSelectMenuBuilder()
         .setCustomId("panel/anuncios/select_channel")
         .setPlaceholder("Canal padrão para envio de comunicados...")

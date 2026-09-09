@@ -82,7 +82,7 @@ export function announcementContainer(options: AnnouncementContainerOptions) {
 
   items.push(
     Separator.Default,
-    `- # Comunicado Oficial • Prism${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`,
+    `- # Comunicado Oficial • ${brand.brandName}${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`,
   );
 
   return (createContainer as any)(finalColor, ...items);
@@ -158,7 +158,7 @@ export function announcementDMContainer(options: AnnouncementDMOptions) {
 
   items.push(
     Separator.Default,
-    `- # Comunicado Oficial • Prism${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`,
+    `- # Comunicado Oficial • ${brand.brandName}${authorLine} | <t:${Math.floor(Date.now() / 1000)}:f>`,
   );
 
   return (createContainer as any)(finalColor, ...items);
