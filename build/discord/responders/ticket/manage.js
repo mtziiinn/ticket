@@ -328,7 +328,24 @@ createResponder({
             }
             case "send_pix":
             case "charge_modal": {
-                const modal = createPaymentModal(ticket.ownerId);
+                const memberDoc = await db.members.get({
+                    id: interaction.user.id,
+                    guild: { id: guild.id },
+                });
+                const memberP = memberDoc?.payments || {};
+                const guildData = await db.guilds.get(guild.id);
+                const p = guildData?.payments || {};
+                let preferredGateway = "pix_manual";
+                if (memberP.mpAccessToken || (!memberP.pixKey && p.mpAccessToken)) {
+                    preferredGateway = "pix_mp";
+                }
+                else if (memberP.pixKey || p.pixKey || guildData?.channels?.pixKey) {
+                    preferredGateway = "pix_manual";
+                }
+                else if (memberP.stripeSecretKey || p.stripeSecretKey) {
+                    preferredGateway = "stripe";
+                }
+                const modal = createPaymentModal(ticket.ownerId || "none", preferredGateway);
                 await interaction.showModal(modal).catch((e) => console.error("[Charge Modal]", e));
                 break;
             }

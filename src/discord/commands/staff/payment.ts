@@ -29,9 +29,15 @@ import {
 } from "#functions";
 import { sendActionLog } from "../../responders/ticket/logger.js";
 
-export function createPaymentModal(targetUserId: string = ""): ModalBuilder {
+export function createPaymentModal(
+  targetUserId: string = "none",
+  preferredGateway: string = "pix_manual",
+): ModalBuilder {
+  const safeTargetId =
+    targetUserId && targetUserId.trim() !== "" ? targetUserId.trim() : "none";
+
   const modal = new ModalBuilder()
-    .setCustomId(`payment/create_modal/${targetUserId}`)
+    .setCustomId(`payment/create_modal/${safeTargetId}`)
     .setTitle("Gerar Pagamento");
 
   const gatewaySelect = new StringSelectMenuBuilder()
@@ -42,22 +48,26 @@ export function createPaymentModal(targetUserId: string = ""): ModalBuilder {
         .setLabel("PIX (Manual)")
         .setValue("pix_manual")
         .setEmoji(getEmojiId("other_dollar") || "🟢")
-        .setDescription("Chave PIX manual para transferência direta"),
+        .setDescription("Chave PIX manual para transferência direta")
+        .setDefault(preferredGateway === "pix_manual"),
       new StringSelectMenuOptionBuilder()
         .setLabel("PIX (Mercado Pago)")
         .setValue("pix_mp")
         .setEmoji(getEmojiId("other_dollar") || "🟢")
-        .setDescription("PIX dinâmico com aprovação automática"),
+        .setDescription("PIX dinâmico com aprovação automática")
+        .setDefault(preferredGateway === "pix_mp"),
       new StringSelectMenuOptionBuilder()
         .setLabel("Cartão/Boleto (Mercado Pago)")
         .setValue("card_mp")
         .setEmoji(getEmojiId("other_card") || "🟢")
-        .setDescription("Checkout transparente via Mercado Pago"),
+        .setDescription("Checkout transparente via Mercado Pago")
+        .setDefault(preferredGateway === "card_mp"),
       new StringSelectMenuOptionBuilder()
         .setLabel("Stripe (Cartão Internacional)")
         .setValue("stripe")
         .setEmoji(getEmojiId("other_card") || "💳")
-        .setDescription("Pagamento internacional em USD/BRL via cartão"),
+        .setDescription("Pagamento internacional em USD/BRL via cartão")
+        .setDefault(preferredGateway === "stripe"),
     );
 
   const currencySelect = new StringSelectMenuBuilder()
@@ -113,6 +123,23 @@ export function createPaymentModal(targetUserId: string = ""): ModalBuilder {
   return modal;
 }
 
+function getSafeModalSelect(interaction: any, customId: string): string | undefined {
+  try {
+    const values = interaction.fields.getStringSelectValues(customId);
+    return values?.[0];
+  } catch {
+    return undefined;
+  }
+}
+
+function getSafeModalText(interaction: any, customId: string): string {
+  try {
+    return interaction.fields.getTextInputValue(customId) || "";
+  } catch {
+    return "";
+  }
+}
+
 createCommand({
   name: "gerar-pagamento",
   description:
@@ -131,54 +158,79 @@ createCommand({
     if (!interaction.inCachedGuild()) return;
 
     const targetUser = interaction.options.getUser("cliente");
-    const targetUserId = targetUser?.id || "";
-
-    const modal = createPaymentModal(targetUserId);
-    await interaction.showModal(modal);
-  },
-});
-
-createResponder({
-  customId: "payment/create_modal/:targetUserId",
-  types: [ResponderType.Modal, ResponderType.ModalComponent],
-  cache: "cached",
-  async run(interaction, { targetUserId }) {
-    const gateway =
-      interaction.fields.getStringSelectValues("gateway")?.[0] || "pix_mp";
-    const currency =
-      interaction.fields.getStringSelectValues("currency")?.[0] || "BRL";
-    const amountStr = interaction.fields.getTextInputValue("amount");
-    const description = interaction.fields.getTextInputValue("description");
-
-    const amount = parseFloat(amountStr.replace(",", "."));
-    if (isNaN(amount) || amount <= 0) {
-      await interaction.reply({
-        content: `${getEmojiTag("action_warning")} Valor de cobrança inválido!`,
-        flags: ["Ephemeral"],
-      });
-      return;
-    }
-
-    await interaction.deferReply();
+    const targetUserId = targetUser?.id || "none";
 
     const memberDoc = await db.members.get({
       id: interaction.user.id,
       guild: { id: interaction.guild.id },
     });
-    const memberP = memberDoc.payments || {};
-
+    const memberP = memberDoc?.payments || {};
     const guildData = await db.guilds.get(interaction.guild.id);
-    const p = guildData.payments || {};
+    const p = guildData?.payments || {};
 
-    const currencySymbol = currency === "USD" ? "$" : "R$";
-    const formattedAmount = `${currencySymbol} ${amount.toFixed(2)}`;
+    let preferredGateway = "pix_manual";
+    if (memberP.mpAccessToken || (!memberP.pixKey && p.mpAccessToken)) {
+      preferredGateway = "pix_mp";
+    } else if (memberP.pixKey || p.pixKey || guildData?.channels?.pixKey) {
+      preferredGateway = "pix_manual";
+    } else if (memberP.stripeSecretKey || p.stripeSecretKey) {
+      preferredGateway = "stripe";
+    }
 
-    // Identificar cliente e ticket
-    const ticket = await db.tickets.getByChannel(interaction.channelId || "");
-    const finalTargetUserId = targetUserId || ticket?.ownerId || "";
-    const clientMention = finalTargetUserId
-      ? `<@${finalTargetUserId}>`
-      : "Qualquer membro";
+    const modal = createPaymentModal(targetUserId, preferredGateway);
+    await interaction.showModal(modal);
+  },
+});
+
+async function handlePaymentModalSubmit(
+  interaction: any,
+  rawTargetUserId?: string,
+) {
+  const memberDoc = await db.members.get({
+    id: interaction.user.id,
+    guild: { id: interaction.guild.id },
+  });
+  const memberP = memberDoc?.payments || {};
+
+  const guildData = await db.guilds.get(interaction.guild.id);
+  const p = guildData?.payments || {};
+
+  let fallbackGateway = "pix_manual";
+  if (memberP.pixKey || p.pixKey || guildData?.channels?.pixKey) {
+    fallbackGateway = "pix_manual";
+  } else if (memberP.mpAccessToken || p.mpAccessToken) {
+    fallbackGateway = "pix_mp";
+  } else if (memberP.stripeSecretKey || p.stripeSecretKey) {
+    fallbackGateway = "stripe";
+  }
+
+  const gateway = getSafeModalSelect(interaction, "gateway") || fallbackGateway;
+  const currency = getSafeModalSelect(interaction, "currency") || "BRL";
+  const amountStr = getSafeModalText(interaction, "amount");
+  const description = getSafeModalText(interaction, "description") || "Atendimento / Serviço";
+
+  const amount = parseFloat(amountStr.replace(",", "."));
+  if (isNaN(amount) || amount <= 0) {
+    await interaction.reply({
+      content: `${getEmojiTag("action_warning")} Valor de cobrança inválido!`,
+      flags: ["Ephemeral"],
+    });
+    return;
+  }
+
+  await interaction.deferReply();
+
+  const currencySymbol = currency === "USD" ? "$" : "R$";
+  const formattedAmount = `${currencySymbol} ${amount.toFixed(2)}`;
+
+  // Identificar cliente e ticket
+  const cleanTargetUserId =
+    rawTargetUserId && rawTargetUserId !== "none" ? rawTargetUserId : "";
+  const ticket = await db.tickets.getByChannel(interaction.channelId || "");
+  const finalTargetUserId = cleanTargetUserId || ticket?.ownerId || "";
+  const clientMention = finalTargetUserId
+    ? `<@${finalTargetUserId}>`
+    : "Qualquer membro";
 
     if (gateway === "pix_manual") {
       const pixKey =
@@ -483,5 +535,22 @@ createResponder({
         await (msg as any).pin().catch(() => null);
       }
     }
+  }
+
+createResponder({
+  customId: "payment/create_modal/:targetUserId",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction, { targetUserId }) {
+    await handlePaymentModalSubmit(interaction, targetUserId);
+  },
+});
+
+createResponder({
+  customId: "payment/create_modal",
+  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  cache: "cached",
+  async run(interaction) {
+    await handlePaymentModalSubmit(interaction);
   },
 });
