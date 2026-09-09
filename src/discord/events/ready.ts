@@ -47,7 +47,7 @@ createEvent({
     // Sincronizar bio (descrição da aplicação) do bot
     try {
       const defaultBio =
-        "<:robo2:1424614987644801045>・Desenvolvido por <@1061397602916126771>";
+        "<:robo2:1424614987644801045>・Desenvolvido por @mts";
       await client.application?.fetch();
       if (client.application && client.application.description !== defaultBio) {
         await client.application.edit({ description: defaultBio }).catch(() => {});
