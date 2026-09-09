@@ -125,6 +125,7 @@ createResponder({
                 const container = await createMainPanel(ticket, owner);
                 await interaction.update({
                     components: [container],
+                    flags: ["IsComponentsV2"],
                 });
                 // Notificar no canal do ticket
                 await channel
@@ -294,7 +295,7 @@ createResponder({
                         .catch(() => null);
                     if (mainMessage) {
                         await mainMessage
-                            .edit({ components: [container] })
+                            .edit({ components: [container], flags: ["IsComponentsV2"] })
                             .catch((err) => console.error("[Manage]", err));
                     }
                 }
@@ -687,7 +688,7 @@ createResponder({
                     .catch(() => null);
                 if (mainMessage) {
                     await mainMessage
-                        .edit({ components: [container] })
+                        .edit({ components: [container], flags: ["IsComponentsV2"] })
                         .catch((err) => console.error("[Transfer]", err));
                 }
             }
@@ -1032,7 +1033,7 @@ createResponder({
                 .catch(() => null);
             if (mainMessage) {
                 await mainMessage
-                    .edit({ components: [container] })
+                    .edit({ components: [container], flags: ["IsComponentsV2"] })
                     .catch((err) => console.error("[Manage]", err));
             }
         }
