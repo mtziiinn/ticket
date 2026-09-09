@@ -40,7 +40,7 @@ export async function finishGiveaway(giveawayDoc, client) {
             const winnersText = winners.length > 0
                 ? winners.map((id) => `<@${id}>`).join(", ")
                 : "*Nenhum participante válido.*";
-            const updatedContainer = createContainer("#38bdf8", `## ${getEmojiTag("other_ticket")} Sorteio Finalizado: ${giveawayDoc.item}`, Separator.Default, `| **Ganhadores (${winners.length}):**\n${winnersText}`, Separator.Default, `*Sorteio encerrado em <t:${Math.floor(Date.now() / 1000)}:R>*`);
+            const updatedContainer = createContainer("#38bdf8", `## ${getEmojiTag("prism")} Sorteio Finalizado: ${giveawayDoc.item}`, Separator.Default, `| **Ganhadores (${winners.length}):**\n${winnersText}`, Separator.Default, `*Sorteio encerrado em <t:${Math.floor(Date.now() / 1000)}:R>*`);
             if (msg) {
                 await msg.edit({
                     components: [updatedContainer],
@@ -105,14 +105,14 @@ createCommand({
         const endsAt = new Date(Date.now() + durationMs);
         const endTimestamp = Math.floor(endsAt.getTime() / 1000);
         await interaction.deferReply({ flags: ["Ephemeral"] });
-        const tempContainer = createContainer("#38bdf8", `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
+        const tempContainer = createContainer("#38bdf8", `## ${getEmojiTag("prism")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
             .setCustomId("giveaway/join/pending")
             .setLabel("Participar")
             .setStyle(ButtonStyle.Primary)
             .setEmoji(getEmojiId("user") || "👤"), new ButtonBuilder()
             .setCustomId("giveaway/manage/pending")
             .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("other_bot") || "⚙️")));
+            .setEmoji(getEmojiId("prism") || getEmojiId("other_bot") || "⚙️")));
         const channel = interaction.channel;
         if (!channel || !channel.isTextBased()) {
             await interaction.editReply({
@@ -124,14 +124,14 @@ createCommand({
             components: [tempContainer],
             flags: ["IsComponentsV2"],
         });
-        const finalContainer = createContainer("#38bdf8", `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
+        const finalContainer = createContainer("#38bdf8", `## ${getEmojiTag("prism")} Sorteio: ${item}`, Separator.Default, `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`, Separator.Default, `| Para participar, clique no botão abaixo!`, Separator.Default, createRow(new ButtonBuilder()
             .setCustomId(`giveaway/join/${message.id}`)
             .setLabel("Participar")
             .setStyle(ButtonStyle.Primary)
             .setEmoji(getEmojiId("user") || "👤"), new ButtonBuilder()
             .setCustomId(`giveaway/manage/${message.id}`)
             .setStyle(ButtonStyle.Secondary)
-            .setEmoji(getEmojiId("other_bot") || "⚙️")));
+            .setEmoji(getEmojiId("prism") || getEmojiId("other_bot") || "⚙️")));
         await message.edit({
             components: [finalContainer],
             flags: ["IsComponentsV2"],
@@ -231,7 +231,7 @@ createResponder({
             .setLabel("Excluir Sorteio")
             .setDescription("Cancela e deleta o sorteio.")
             .setEmoji(getEmojiId("action_remove") || "📁"));
-        const container = createContainer("#38bdf8", `## ${getEmojiTag("other_bot")} Gerenciar Sorteio`, `Escolha uma ação abaixo:`, Separator.Default, createRow(select));
+        const container = createContainer("#38bdf8", `## ${getEmojiTag("prism")} Gerenciar Sorteio`, `Escolha uma ação abaixo:`, Separator.Default, createRow(select));
         await interaction.reply({
             components: [container],
             flags: ["Ephemeral", "IsComponentsV2"],

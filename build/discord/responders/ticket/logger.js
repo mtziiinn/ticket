@@ -21,7 +21,7 @@ export async function sendActionLog(guild, ticket, staff, actionName, details) {
                 `<:clipboard:1502789887907205293> **Detalhes:** ${details}`,
             ].join("\n"), Separator.Default, `**Detalhes do Atendimento**\n` +
             [
-                `<:other_ticket:1502789959378145300> **Ticket ID:** \`${ticket.ticketId}\``,
+                `<:prism:1547021658496434246> **Ticket ID:** \`${ticket.ticketId}\``,
                 `<:user:1502789979229913268> **Dono do Ticket:** <@${ticket.ownerId}> (\`${ticket.ownerId}\`)`,
                 `<:clock:1502789859960422502> **Aberto em:** <t:${openedAtTimestamp}:f>`,
             ].join("\n"));

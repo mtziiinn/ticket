@@ -33,7 +33,7 @@ export async function createConfigPanel(guildId) {
         : "*Nenhuma categoria configurada.*";
     return createContainer(constants.colors.azoxo, createSection({
         content: `## <:shield_add:1502789931808981012> Painel de Configuração\nGerencie os canais, cargo de equipe e o status de funcionamento do sistema.`,
-        thumbnail: emojis.static.other_ticket,
+        thumbnail: emojis.static.prism || emojis.static.other_ticket,
     }), Separator.Default, "### <:database:1502789865023209512> Canais e Acesso", `> <:clock:1502789859960422502> **Logs de Atendimento:** ${logsDisplay}`, `> <:folder:1502789880214720533> **Cofre de Mídia (Vault):** ${vaultDisplay}`, `> <:other_dollar:1502789953334280345> **Chave PIX:** \`${channels?.pixKey || "Não configurada"}\``, `> <:user_users:1502789976327327801> **Cargo Staff:** ${staffRoleDisplay}`, Separator.Default, "### <:clock_check:1502789856881938502> Status de Funcionamento", `> ${statusDisplay}`, Separator.Default, "### <:folder_open:1502789875928400103> Categorias Ativas", catDisplay, Separator.Default, createRow(new ButtonBuilder({
         customId: "ticket/config/channels",
         label: "Sistema",
@@ -88,7 +88,7 @@ createResponder({
             const guideContainer = createContainer(constants.colors.primary, createSection({
                 content: "## <:action_info:1502789798983766016> Guia de Configuração\nSiga os passos abaixo para deixar seu sistema de tickets pronto para uso.",
                 thumbnail: emojis.static.action_info,
-            }), Separator.Default, "### <:database:1502789865023209512> 1. Canais e Acesso", "**Logs/Vault:** Defina os canais de registro e backup.\n**Cargo Staff:** O cargo que terá acesso administrativo aos tickets (não precisa ser ADM).", Separator.Default, "### <:clock_check:1502789856881938502> 2. Abrir/Fechar Loja", "Use os botões coloridos para bloquear ou liberar a abertura de novos tickets pelos usuários instantaneamente.", Separator.Default, "### <:folder_add:1502789875009851432> 3. Categorias Dinâmicas", "Crie setores de atendimento personalizados com IDs de categorias do Discord específicos. Cada categoria possui seu próprio emoji que aparece no nome do canal do ticket.", Separator.Default, "### <:other_ticket:1502789959378145300> 4. Painel de Abertura", "Após configurar tudo, use a aba **Ticket** no `/painel` e clique no botão **Enviar Painel do Ticket** para enviá-lo ao canal desejado.");
+            }), Separator.Default, "### <:database:1502789865023209512> 1. Canais e Acesso", "**Logs/Vault:** Defina os canais de registro e backup.\n**Cargo Staff:** O cargo que terá acesso administrativo aos tickets (não precisa ser ADM).", Separator.Default, "### <:clock_check:1502789856881938502> 2. Abrir/Fechar Loja", "Use os botões coloridos para bloquear ou liberar a abertura de novos tickets pelos usuários instantaneamente.", Separator.Default, "### <:folder_add:1502789875009851432> 3. Categorias Dinâmicas", "Crie setores de atendimento personalizados com IDs de categorias do Discord específicos. Cada categoria possui seu próprio emoji que aparece no nome do canal do ticket.", Separator.Default, "### <:prism:1547021658496434246> 4. Painel de Abertura", "Após configurar tudo, use a aba **Ticket** no `/painel` e clique no botão **Enviar Painel do Ticket** para enviá-lo ao canal desejado.");
             await interaction.reply({
                 components: [guideContainer],
                 flags: ["Ephemeral", "IsComponentsV2"],

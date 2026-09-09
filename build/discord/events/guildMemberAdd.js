@@ -40,7 +40,7 @@ createEvent({
             if (w.channelEntry) {
                 const entryChan = member.guild.channels.cache.get(w.channelEntry);
                 if (entryChan && entryChan.isTextBased()) {
-                    const welcomeContainer = createContainer("#38bdf8", `## ${getEmojiTag("user_add")} Bem-vindo(a) ao servidor, <@${member.id}>!`, `Você é o membro de número **#${member.guild.memberCount}**!\nEsperamos que aproveite a sua estadia conosco.`);
+                    const welcomeContainer = createContainer("#38bdf8", `## ${getEmojiTag("prism")} Bem-vindo(a) ao servidor, <@${member.id}>!`, `Você é o membro de número **#${member.guild.memberCount}**!\nEsperamos que aproveite a sua estadia conosco.`);
                     await entryChan.send({
                         components: [welcomeContainer],
                         flags: ["IsComponentsV2"],

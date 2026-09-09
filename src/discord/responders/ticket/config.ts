@@ -54,7 +54,7 @@ export async function createConfigPanel(guildId: string) {
     constants.colors.azoxo,
     createSection({
       content: `## <:shield_add:1502789931808981012> Painel de Configuração\nGerencie os canais, cargo de equipe e o status de funcionamento do sistema.`,
-      thumbnail: emojis.static.other_ticket,
+      thumbnail: emojis.static.prism || emojis.static.other_ticket,
     }),
     Separator.Default,
     "### <:database:1502789865023209512> Canais e Acesso",
@@ -149,7 +149,7 @@ createResponder({
         "### <:folder_add:1502789875009851432> 3. Categorias Dinâmicas",
         "Crie setores de atendimento personalizados com IDs de categorias do Discord específicos. Cada categoria possui seu próprio emoji que aparece no nome do canal do ticket.",
         Separator.Default,
-        "### <:other_ticket:1502789959378145300> 4. Painel de Abertura",
+        "### <:prism:1547021658496434246> 4. Painel de Abertura",
         "Após configurar tudo, use a aba **Ticket** no `/painel` e clique no botão **Enviar Painel do Ticket** para enviá-lo ao canal desejado.",
       );
 

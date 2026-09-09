@@ -78,7 +78,7 @@ export function buildPanelDropdown(currentTab = "home") {
             .setValue("ticket")
             .setLabel("Ticket")
             .setDescription("Canais e opções de abertura do suporte")
-            .setEmoji(getEmojiId("other_ticket") || "📁")
+            .setEmoji(getEmojiId("prism") || getEmojiId("other_ticket") || "📁")
             .setDefault(currentTab === "ticket"),
         new StringSelectMenuOptionBuilder()
             .setValue("payments")
@@ -159,7 +159,7 @@ export async function renderHomeTab(guild, client, guildData) {
         Separator.Default,
         `| ${getEmojiTag("prism")} **Status do BOT (Prism):** ${getEmojiTag("action_check")} \`Online - ${ping}ms\``,
         Separator.Default,
-        `| ${getEmojiTag("other_ticket")} **Tickets em Aberto:** \`${openTicketsCount}\``,
+        `| ${getEmojiTag("prism")} **Tickets em Aberto:** \`${openTicketsCount}\``,
         Separator.Default,
         `| ${getEmojiTag("user_users")} **Membros no Servidor:** \`${memberCount}\``,
     ];
@@ -187,11 +187,11 @@ export async function renderTicketTab(guildData) {
         })
             .join("\n")
         : "*Nenhuma opção de categoria cadastrada.*";
-    return createContainer(color, `## ${getEmojiTag("other_ticket")} Sistema de Ticket`, buildPanelDropdown("ticket"), Separator.Default, createRow(new ButtonBuilder()
+    return createContainer(color, `## ${getEmojiTag("prism") || getEmojiTag("other_ticket")} Sistema de Ticket`, buildPanelDropdown("ticket"), Separator.Default, createRow(new ButtonBuilder()
         .setCustomId("panel/ticket/send_panel")
         .setLabel("Enviar Painel do Ticket")
         .setStyle(ButtonStyle.Primary)
-        .setEmoji(getEmojiId("mail") || "📨")), Separator.Default, createSection({
+        .setEmoji(getEmojiId("prism") || getEmojiId("mail") || "📨")), Separator.Default, createSection({
         content: `| **Canal de Abertura:**\n${openChannelDisplay}`,
         button: new ButtonBuilder()
             .setCustomId("panel/ticket/edit_open_channel")
@@ -380,7 +380,7 @@ export async function renderIdentityTab(guild, client, guildData) {
         emojis.static.other_bot;
     const items = [
         createSection({
-            content: `## ${getEmojiTag("apps_figma")} Identidade Visual do BOT\nPersonalize a foto de perfil, cores e a barrinha/banner dos painéis.`,
+            content: `## ${getEmojiTag("prism")} Identidade Visual do BOT • Prism\nPersonalize a foto de perfil, cores e a barrinha/banner dos painéis.`,
             thumbnail: botAvatar,
         }),
         buildPanelDropdown("identity"),
@@ -449,7 +449,7 @@ export async function renderCommandsTab(guildData) {
         `• \`/gerar-pagamento\` - Gera cobrança interativa (PIX/Mercado Pago/Stripe) em BRL ou USD.`,
         `• **Entrega de Mídia:** Botão "Entregar Mídia" no painel admin do ticket gera link seguro de upload para envio de arquivos.`,
         ``,
-        `### ${getEmojiTag("other_ticket")} Sorteios e Eventos`,
+        `### ${getEmojiTag("prism")} Sorteios e Eventos`,
         `• \`/criar-sorteio [item] [ganhadores] [tempo]\` - Cria sorteio com botão de participação e painel de controle (reroll, finalizar, participantes).`,
         ``,
         `### ${getEmojiTag("action_warning")} Organização Automática de Tickets`,
@@ -543,7 +543,7 @@ export function renderJsonTab(guildData) {
     const verifyStatus = verifyCustom
         ? `${getEmojiTag("action_check")} **Personalizado via JSON**`
         : `${getEmojiTag("action_info")} **Padrão do Sistema**`;
-    return createContainer(color, `## ${getEmojiTag("other_save")} Central de Personalização JSON`, buildPanelDropdown("json"), Separator.Default, `> Personalize o layout visual dos painéis enviados nos canais utilizando código JSON exportado de sites como **embed.insidebots.com.br**, Discohook ou **Components V2**.\n> Os botões oficiais de ação (**Abrir Ticket**, **Verificar-se**, etc.) são preservados automaticamente!`, Separator.Default, `### ${getEmojiTag("other_ticket")} Painel de Tickets (Atendimento)\n| **Status:** ${ticketStatus}\n*Ao enviar o painel no canal, o layout JSON configurado será enviado junto com o botão oficial "Abrir Ticket".*`, createRow(new ButtonBuilder()
+    return createContainer(color, `## ${getEmojiTag("other_save")} Central de Personalização JSON`, buildPanelDropdown("json"), Separator.Default, `> Personalize o layout visual dos painéis enviados nos canais utilizando código JSON exportado de sites como **embed.insidebots.com.br**, Discohook ou **Components V2**.\n> Os botões oficiais de ação (**Abrir Ticket**, **Verificar-se**, etc.) são preservados automaticamente!`, Separator.Default, `### ${getEmojiTag("prism") || getEmojiTag("other_ticket")} Painel de Tickets (Atendimento)\n| **Status:** ${ticketStatus}\n*Ao enviar o painel no canal, o layout JSON configurado será enviado junto com o botão oficial "Abrir Ticket".*`, createRow(new ButtonBuilder()
         .setCustomId("panel/ticket/custom_json/open")
         .setLabel("Personalizar Tickets (JSON)")
         .setEmoji(getEmojiId("action_add") || "⚙️")

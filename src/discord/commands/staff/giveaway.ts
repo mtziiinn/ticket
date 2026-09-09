@@ -70,7 +70,7 @@ export async function finishGiveaway(
 
       const updatedContainer = createContainer(
         "#38bdf8",
-        `## ${getEmojiTag("other_ticket")} Sorteio Finalizado: ${giveawayDoc.item}`,
+        `## ${getEmojiTag("prism")} Sorteio Finalizado: ${giveawayDoc.item}`,
         Separator.Default,
         `| **Ganhadores (${winners.length}):**\n${winnersText}`,
         Separator.Default,
@@ -154,7 +154,7 @@ createCommand({
 
     const tempContainer = createContainer(
       "#38bdf8",
-      `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`,
+      `## ${getEmojiTag("prism")} Sorteio: ${item}`,
       Separator.Default,
       `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`,
       Separator.Default,
@@ -169,7 +169,7 @@ createCommand({
         new ButtonBuilder()
           .setCustomId("giveaway/manage/pending")
           .setStyle(ButtonStyle.Secondary)
-          .setEmoji(getEmojiId("other_bot") || "⚙️"),
+          .setEmoji(getEmojiId("prism") || getEmojiId("other_bot") || "⚙️"),
       ),
     );
 
@@ -188,7 +188,7 @@ createCommand({
 
     const finalContainer = createContainer(
       "#38bdf8",
-      `## ${getEmojiTag("other_ticket")} Sorteio: ${item}`,
+      `## ${getEmojiTag("prism")} Sorteio: ${item}`,
       Separator.Default,
       `| **Quantidade de Ganhadores:** \`${winnersCount}\`\n**Encerramento:** <t:${endTimestamp}:F> (<t:${endTimestamp}:R>)`,
       Separator.Default,
@@ -203,7 +203,7 @@ createCommand({
         new ButtonBuilder()
           .setCustomId(`giveaway/manage/${message.id}`)
           .setStyle(ButtonStyle.Secondary)
-          .setEmoji(getEmojiId("other_bot") || "⚙️"),
+          .setEmoji(getEmojiId("prism") || getEmojiId("other_bot") || "⚙️"),
       ),
     );
 
@@ -330,7 +330,7 @@ createResponder({
 
     const container = createContainer(
       "#38bdf8",
-      `## ${getEmojiTag("other_bot")} Gerenciar Sorteio`,
+      `## ${getEmojiTag("prism")} Gerenciar Sorteio`,
       `Escolha uma ação abaixo:`,
       Separator.Default,
       createRow(select),

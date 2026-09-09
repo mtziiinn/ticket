@@ -114,7 +114,7 @@ async function processTicketSubmission(
     let parentId = selectedCategory?.parentId;
 
     // Emojis customizados para o tópico
-    const eTicket = "<:other_ticket:1502789959378145300>";
+    const eTicket = "<:prism:1547021658496434246>";
     const eUser = "<:user:1502789979229913268>";
     const eCalendar = "<:calendar:1502789854486986752>";
     const eFolder = "<:folder:1502789880214720533>";
