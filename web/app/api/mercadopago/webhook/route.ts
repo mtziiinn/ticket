@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { resolveTenant } from "@/lib/tenant";
+import { resolveTenant, emojiTag } from "@/lib/tenant";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -165,12 +165,13 @@ export async function POST(request: NextRequest) {
 
       if (targetChannelId) {
         // Enviar mensagem de celebração no canal do ticket no Discord
+        const emo = (n: string, f: string) => emojiTag(tenant, n, f);
         const messageContent = [
-          `# ✅ Pagamento Aprovado com Sucesso!`,
+          `# ${emo("action_check", "✅")} Pagamento Aprovado com Sucesso!`,
           `Recebemos a confirmação do pagamento no valor de **${amountFormatted}** via **${paymentMethodName}**.`,
-          `\n> ⚙️ **Novo Status:** \`EM PRODUÇÃO\``,
-          `> 👤 **Cliente:** <@${ticket.ownerId}>`,
-          `> 🧾 **ID da Transação:** \`${payment.id}\``,
+          `\n> ${emo("clock_check", "⚙️")} **Novo Status:** \`EM PRODUÇÃO\``,
+          `> ${emo("user_check", "👤")} **Cliente:** <@${ticket.ownerId}>`,
+          `> ${emo("database", "🧾")} **ID da Transação:** \`${payment.id}\``,
           `\nA equipe foi notificada e já dará início ao desenvolvimento da sua encomenda! 🚀`,
         ].join("\n");
 

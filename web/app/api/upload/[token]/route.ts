@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
-import { resolveTenant } from "@/lib/tenant";
+import { resolveTenant, emojiTag } from "@/lib/tenant";
 import { createRequire } from "node:module";
 import type { ObjectId } from "mongodb";
 
@@ -215,13 +215,14 @@ export async function POST(
       ? ` (${fileEntries.length} arquivos compactados em ZIP)`
       : "";
     const staffMention = pending.staffId ? `<@${pending.staffId}>` : "Staff";
+    const emo = (n: string, f: string) => emojiTag(tenant, n, f);
     const channelMsg = [
-      `✅ ${staffMention} entregou a mídia!${sizeInfo}`,
-      `📎 **Arquivo:** \`${zipFilename}\``,
-      `📎 **Arquivos:** ${fileList}`,
-      `📋 **Descrição:** ${pending.description || "Mídia entregue"}`,
-      `🔗 **Link:** ${downloadUrl}`,
-      `⚠️ O link expira em **7 dias**.`,
+      `${emo("action_check", "✅")} ${staffMention} entregou a mídia!${sizeInfo}`,
+      `${emo("file_add", "📎")} **Arquivo:** \`${zipFilename}\``,
+      `${emo("file_add", "📎")} **Arquivos:** ${fileList}`,
+      `${emo("clipboard", "📋")} **Descrição:** ${pending.description || "Mídia entregue"}`,
+      `${emo("cloud_check", "🔗")} **Link:** ${downloadUrl}`,
+      `${emo("action_warning", "⚠️")} O link expira em **7 dias**.`,
     ].join("\n");
     await sendDiscordMessage(tenant.botToken, pending.channelId, channelMsg).catch((error) => {
       console.error("[Upload API] Não foi possível avisar o canal:", error);
