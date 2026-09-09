@@ -4,7 +4,7 @@ import { createContainer, createSection, createEmbed, Separator, createRow, } fr
 import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, LabelBuilder, PermissionFlagsBits, RadioGroupBuilder, StringSelectMenuBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
-import { formatEmoji, getCleanAvatarURL, safeSendDM, getOrCreateVaultWebhook, cleanupVaultWebhookCache, } from "#functions";
+import { formatEmoji, getCleanAvatarURL, getEmojiTag, safeSendDM, getOrCreateVaultWebhook, cleanupVaultWebhookCache, } from "#functions";
 import { sendActionLog } from "./logger.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
@@ -56,7 +56,7 @@ async function createMainPanel(ticket, owner) {
         ? formatHexColor(guildData.identity.primaryColor)
         : constants.colors.azoxo;
     return createContainer(color, createSection({
-        content: `## <:other_ticket:1502789959378145300> Ticket ${ticket.ticketId}\n${owner || "Usuário"} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas.` +
+        content: `## ${getEmojiTag("prism") || "<:prism:1547021658496434246>"} Ticket ${ticket.ticketId}\n${owner || "Usuário"} Seja bem-vindo(a) ao seu ticket! Através deste canal, a equipe irá realizar seu atendimento e esclarecer suas dúvidas.` +
             (isClaimed
                 ? `\n\n> <:user_check:1502789974276178121> **Assumido por:** <@${ticket.claimedBy}>`
                 : ""),

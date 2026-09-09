@@ -75,7 +75,8 @@ createResponder({
             });
             return;
         }
-        const guildIcon = interaction.guild.iconURL({ size: 128 }) ||
+        const guildIcon = emojis.static.prism ||
+            interaction.guild.iconURL({ size: 128 }) ||
             interaction.client.user?.displayAvatarURL() ||
             emojis.static.other_ticket;
         const ticketColor = getTicketEmbedColor(guildData);
@@ -84,11 +85,12 @@ createResponder({
             customId: "ticket/form/open",
             label: "Abrir Ticket",
             style: ButtonStyle.Primary,
-            emoji: getEmojiId("other_ticket") || "🎫",
+            emoji: getEmojiId("prism") || "1547021658496434246",
         }));
+        const prismEmoji = getEmojiTag("prism") || "<:prism:1547021658496434246>";
         const items = [
             createSection({
-                content: `## ${getEmojiTag("prism")} Central de Atendimento • Prism\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
+                content: `## ${prismEmoji} Central de Atendimento\nSeja bem-vindo(a) ao nosso sistema de suporte oficial. Através do atendimento, você pode falar diretamente com nossa equipe.`,
                 thumbnail: guildIcon,
             }),
             Separator.Default,
