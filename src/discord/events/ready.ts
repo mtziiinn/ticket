@@ -44,5 +44,15 @@ createEvent({
       }
     }, 30000);
 
+    // Sincronizar bio (descrição da aplicação) do bot
+    try {
+      const defaultBio = "🔷 Desenvolvido por @mts";
+      await client.application?.fetch();
+      if (client.application && client.application.description !== defaultBio) {
+        await client.application.edit({ description: defaultBio }).catch(() => {});
+      }
+    } catch (err) {
+      console.error("[Ready] Erro ao sincronizar bio do bot:", err);
+    }
   },
 });
