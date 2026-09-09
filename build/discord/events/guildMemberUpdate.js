@@ -7,6 +7,10 @@ createEvent({
     event: "guildMemberUpdate",
     async run(oldMember, newMember) {
         try {
+            // Sem o estado antigo confiável não dá para dizer "o que mudou".
+            // Membro parcial (não estava em cache) => abortar em vez de logar algo errado.
+            if (oldMember.partial)
+                return;
             const changes = [];
             let auditEvent = AuditLogEvent.MemberUpdate;
             // Cargos adicionados / removidos (nome, sem menção para não gerar ping)
@@ -61,13 +65,13 @@ createEvent({
             if (changes.length === 0)
                 return;
             const executor = await getAuditLogExecutor(newMember.guild, auditEvent, newMember.id);
-            const container = createContainer("#3b82f6", `## ${getEmojiTag("user_users")} Membro Atualizado`, [
+            const headerLines = [
                 `| ${getEmojiTag("user")} <@${newMember.id}> (\`${newMember.user.tag}\`)`,
-                executor ? `| ${getEmojiTag("user_check")} **Alterado por:** <@${executor.id}>` : "",
-                "",
-                "### O que mudou:",
-                changes.join("\n"),
-            ].filter(Boolean).join("\n"));
+                executor
+                    ? `| ${getEmojiTag("user_check")} **Alterado por:** <@${executor.id}>`
+                    : "",
+            ].filter(Boolean);
+            const container = createContainer("#3b82f6", `## ${getEmojiTag("user_users")} Membro Atualizado`, [...headerLines, "", "### O que mudou:", changes.join("\n")].join("\n"));
             await sendBotLog(newMember.guild, container);
         }
         catch (err) {

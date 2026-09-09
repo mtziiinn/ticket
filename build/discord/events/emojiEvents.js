@@ -29,7 +29,7 @@ createEvent({
         try {
             const executor = await getAuditLogExecutor(emoji.guild, AuditLogEvent.EmojiDelete, emoji.id);
             const container = createContainer("#ef4444", `## ${getEmojiTag("action_x")} Emoji Excluído`, [
-                `| ${getEmojiTag("apps_figma")} \`:emoji.name}:\``,
+                `| ${getEmojiTag("apps_figma")} \`:${emoji.name}:\``,
                 executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));
             await sendBotLog(emoji.guild, container);

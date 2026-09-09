@@ -5,6 +5,10 @@ createEvent({
   name: "guildDelete",
   event: "guildDelete",
   async run(guild) {
+    // Durante instabilidade do Discord este evento dispara com available=false.
+    // Não é uma saída real do servidor — abortar para não apagar dados.
+    if (!guild.available) return;
+
     await db.guilds.deleteOne({ id: guild.id });
     await db.tickets.deleteMany({ guildId: guild.id });
     await db.transcripts.deleteMany({ guildId: guild.id });

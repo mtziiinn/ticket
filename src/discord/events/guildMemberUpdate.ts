@@ -15,6 +15,10 @@ createEvent({
     newMember: GuildMember,
   ) {
     try {
+      // Sem o estado antigo confiável não dá para dizer "o que mudou".
+      // Membro parcial (não estava em cache) => abortar em vez de logar algo errado.
+      if (oldMember.partial) return;
+
       const changes: string[] = [];
       let auditEvent: AuditLogEvent = AuditLogEvent.MemberUpdate;
 
@@ -104,16 +108,17 @@ createEvent({
         newMember.id,
       );
 
+      const headerLines = [
+        `| ${getEmojiTag("user")} <@${newMember.id}> (\`${newMember.user.tag}\`)`,
+        executor
+          ? `| ${getEmojiTag("user_check")} **Alterado por:** <@${executor.id}>`
+          : "",
+      ].filter(Boolean);
+
       const container = createContainer(
         "#3b82f6",
         `## ${getEmojiTag("user_users")} Membro Atualizado`,
-        [
-          `| ${getEmojiTag("user")} <@${newMember.id}> (\`${newMember.user.tag}\`)`,
-          executor ? `| ${getEmojiTag("user_check")} **Alterado por:** <@${executor.id}>` : "",
-          "",
-          "### O que mudou:",
-          changes.join("\n"),
-        ].filter(Boolean).join("\n"),
+        [...headerLines, "", "### O que mudou:", changes.join("\n")].join("\n"),
       );
 
       await sendBotLog(newMember.guild, container);

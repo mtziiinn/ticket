@@ -11,6 +11,15 @@ createEvent({
     try {
       const guildData = await db.guilds.get(member.guild.id);
 
+      // Um ban também dispara guildMemberRemove. Nesse caso o log fica a cargo
+      // do evento guildBanAdd — abortar aqui para não duplicar como "Membro Saiu".
+      const banExecutor = await getAuditLogExecutor(
+        member.guild,
+        AuditLogEvent.MemberBanAdd,
+        member.id,
+      );
+      if (banExecutor) return;
+
       const kickExecutor = await getAuditLogExecutor(
         member.guild,
         AuditLogEvent.MemberKick,

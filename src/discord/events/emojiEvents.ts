@@ -49,7 +49,7 @@ createEvent({
         "#ef4444",
         `## ${getEmojiTag("action_x")} Emoji Excluído`,
         [
-          `| ${getEmojiTag("apps_figma")} \`:emoji.name}:\``,
+          `| ${getEmojiTag("apps_figma")} \`:${emoji.name}:\``,
           executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );

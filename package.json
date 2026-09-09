@@ -4,6 +4,7 @@
   "main": "build/index.js",
   "scripts": {
     "check": "tsc -p src/tsconfig.json --noEmit && echo ✔ Ok",
+    "prebuild": "node -e \"require('fs').rmSync('build',{recursive:true,force:true})\"",
     "build": "tsc -p src/tsconfig.json",
     "dev": "tsx --expose-gc --env-file=.env ./src/index.ts",
     "dev:dev": "tsx --expose-gc --env-file=.env.dev ./src/index.ts",
