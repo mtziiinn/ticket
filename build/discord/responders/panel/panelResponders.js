@@ -456,6 +456,14 @@ createResponder({
         const modal = new ModalBuilder()
             .setCustomId("panel/payments/modal/edit_pix")
             .setTitle("Configurar Chave PIX");
+        const nameLabel = new LabelBuilder()
+            .setLabel("Nome do Recebedor:")
+            .setTextInputComponent(new TextInputBuilder()
+            .setCustomId("pixName")
+            .setPlaceholder("Ex: Loja Oficial (nome do titular da conta)")
+            .setValue(p.pixName || "")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true));
         const keyLabel = new LabelBuilder()
             .setLabel("Chave PIX:")
             .setTextInputComponent(new TextInputBuilder()
@@ -472,7 +480,7 @@ createResponder({
             .setValue(p.pixType || "Aleatória")
             .setStyle(TextInputStyle.Short)
             .setRequired(true));
-        modal.addComponents(keyLabel, typeLabel);
+        modal.addComponents(nameLabel, keyLabel, typeLabel);
         await interaction.showModal(modal);
     },
 });
@@ -481,11 +489,13 @@ createResponder({
     types: [ResponderType.Modal, ResponderType.ModalComponent],
     cache: "cached",
     async run(interaction) {
+        const pixName = interaction.fields.getTextInputValue("pixName");
         const pixKey = interaction.fields.getTextInputValue("pixKey");
         const pixType = interaction.fields.getTextInputValue("pixType");
         const guildData = await db.guilds.get(interaction.guild.id);
         if (!guildData.payments)
             guildData.payments = {};
+        guildData.payments.pixName = pixName;
         guildData.payments.pixKey = pixKey;
         guildData.payments.pixType = pixType;
         if (!guildData.channels)

@@ -7,6 +7,7 @@ export const memberSchema = new Schema({
         coins: { type: Number, default: 0 },
     },
     payments: {
+        pixName: String,
         pixKey: String,
         pixType: String,
         mpAccessToken: String,

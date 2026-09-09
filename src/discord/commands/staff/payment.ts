@@ -233,6 +233,7 @@ async function handlePaymentModalSubmit(
     : "Qualquer membro";
 
     if (gateway === "pix_manual") {
+      const pixName = memberP.pixName || p.pixName || "";
       const pixKey =
         memberP.pixKey || p.pixKey || guildData.channels?.pixKey;
       const pixType = memberP.pixType || p.pixType || "Chave PIX";
@@ -255,8 +256,10 @@ async function handlePaymentModalSubmit(
       );
 
       const receiverTag = isIndividual
-        ? `<@${interaction.user.id}> *(Chave Pessoal)*`
-        : `*Loja Oficial (Padrão)*`;
+        ? `<@${interaction.user.id}> *(Chave Pessoal)*${pixName ? ` • **${pixName}**` : ""}`
+        : pixName
+          ? `*Loja Oficial (Padrão)* • **${pixName}**`
+          : `*Loja Oficial (Padrão)*`;
 
       const container = createContainer(
         "#38bdf8",
@@ -270,7 +273,11 @@ async function handlePaymentModalSubmit(
           `| **Descrição:** ${description}`,
         ].join("\n"),
         Separator.Default,
-        `| **Chave PIX (${pixType}):**\n\`\`\`text\n${pixKey}\n\`\`\``,
+        [
+          `| **Nome do Recebedor:** ${pixName || "*Não informado*"}`,
+          `| **Tipo de Chave:** ${pixType}`,
+          `| **Chave PIX:**\n\`\`\`text\n${pixKey}\n\`\`\``,
+        ].join("\n"),
         Separator.Default,
         ...qrSections,
         `*Após realizar o pagamento, envie o comprovante neste chat para que a equipe confirme o recebimento.*`,

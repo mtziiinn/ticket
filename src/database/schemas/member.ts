@@ -8,6 +8,7 @@ export interface IMember {
     coins?: number;
   };
   payments?: {
+    pixName?: string;
     pixKey?: string;
     pixType?: string;
     mpAccessToken?: string;
@@ -27,6 +28,7 @@ export const memberSchema = new Schema<IMember, MemberModel>(
       coins: { type: Number, default: 0 },
     },
     payments: {
+      pixName: String,
       pixKey: String,
       pixType: String,
       mpAccessToken: String,

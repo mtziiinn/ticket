@@ -166,6 +166,7 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
         ? `<@${finalTargetUserId}>`
         : "Qualquer membro";
     if (gateway === "pix_manual") {
+        const pixName = memberP.pixName || p.pixName || "";
         const pixKey = memberP.pixKey || p.pixKey || guildData.channels?.pixKey;
         const pixType = memberP.pixType || p.pixType || "Chave PIX";
         const isIndividual = Boolean(memberP.pixKey);
@@ -180,15 +181,21 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
         qrSections.push(createMediaGallery(qrCodeUrl), `| **Código PIX Copia e Cola:**\n\`\`\`text\n${pixPayload}\n\`\`\``, Separator.Default);
         const receiverTag = isIndividual
-            ? `<@${interaction.user.id}> *(Chave Pessoal)*`
-            : `*Loja Oficial (Padrão)*`;
+            ? `<@${interaction.user.id}> *(Chave Pessoal)*${pixName ? ` • **${pixName}**` : ""}`
+            : pixName
+                ? `*Loja Oficial (Padrão)* • **${pixName}**`
+                : `*Loja Oficial (Padrão)*`;
         const container = createContainer("#38bdf8", `## ${getEmojiTag("other_dollar")} Cobrança Gerada`, Separator.Default, [
             `| **Cliente:** ${clientMention}`,
             `| **Recebedor:** ${receiverTag}`,
             `| **Valor:** \`${formattedAmount}\``,
             `| **Método:** PIX (Manual)`,
             `| **Descrição:** ${description}`,
-        ].join("\n"), Separator.Default, `| **Chave PIX (${pixType}):**\n\`\`\`text\n${pixKey}\n\`\`\``, Separator.Default, ...qrSections, `*Após realizar o pagamento, envie o comprovante neste chat para que a equipe confirme o recebimento.*`);
+        ].join("\n"), Separator.Default, [
+            `| **Nome do Recebedor:** ${pixName || "*Não informado*"}`,
+            `| **Tipo de Chave:** ${pixType}`,
+            `| **Chave PIX:**\n\`\`\`text\n${pixKey}\n\`\`\``,
+        ].join("\n"), Separator.Default, ...qrSections, `*Após realizar o pagamento, envie o comprovante neste chat para que a equipe confirme o recebimento.*`);
         const msg = await interaction.editReply({
             components: [container],
             flags: ["IsComponentsV2"],

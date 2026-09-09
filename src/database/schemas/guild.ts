@@ -40,6 +40,7 @@ export interface IGuild {
   };
   botLogsChannel?: string;
   payments?: {
+    pixName?: string;
     pixKey?: string;
     pixType?: string;
     mpAccessToken?: string;
@@ -112,6 +113,7 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
   },
   botLogsChannel: String,
   payments: {
+    pixName: String,
     pixKey: String,
     pixType: String,
     mpAccessToken: String,

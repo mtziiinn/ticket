@@ -233,12 +233,13 @@ export async function renderTicketTab(guildData) {
 export async function renderPaymentsTab(guildData) {
     const color = getPanelColor(guildData);
     const p = guildData.payments || {};
+    const pixName = p.pixName;
     const pixKey = p.pixKey || guildData.channels?.pixKey;
     const pixType = p.pixType || "Chave PIX";
     const mpToken = p.mpAccessToken;
     const stripeKey = p.stripeSecretKey;
     return createContainer(color, `## ${getEmojiTag("other_dollar")} Sistema de Pagamentos`, buildPanelDropdown("payments"), Separator.Default, createSection({
-        content: `| **PIX (Manual):**\nChave: \`${pixKey || "Não configurada"}\` (${pixType})`,
+        content: `| **PIX (Manual):**\nNome: \`${pixName || "Não configurado"}\`\nChave: \`${pixKey || "Não configurada"}\` (${pixType})`,
         button: new ButtonBuilder()
             .setCustomId("panel/payments/edit_pix")
             .setLabel("Editar PIX")

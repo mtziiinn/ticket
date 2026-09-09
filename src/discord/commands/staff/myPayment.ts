@@ -56,7 +56,7 @@ export async function renderMyPaymentContainer(
   const hasIndividualStripe = Boolean(p.stripeSecretKey);
 
   const pixDisplay = hasIndividualPix
-    ? `\`${maskSecret(p.pixKey, 3, 3)}\` *(${p.pixType || "PIX"})* • ${getEmojiTag("action_check")} **Chave Própria**`
+    ? `**${p.pixName || "Sem nome"}** • \`${maskSecret(p.pixKey, 3, 3)}\` *(${p.pixType || "PIX"})* ${getEmojiTag("action_check")} *Chave Própria*`
     : guildP.pixKey
       ? `\`${maskSecret(guildP.pixKey, 3, 3)}\` • ${getEmojiTag("action_info")} *Padrão da Loja*`
       : `\`Não configurada\` • ${getEmojiTag("action_x")} *Nenhuma chave ativa*`;
@@ -181,12 +181,20 @@ createResponder({
       guild: { id: interaction.guild.id },
     });
 
+    const currentName = memberDoc.payments?.pixName || "";
     const currentKey = memberDoc.payments?.pixKey || "";
     const currentType = memberDoc.payments?.pixType || "Aleatória / E-mail / CPF";
 
     const modal = new ModalBuilder()
       .setCustomId("my_payment/modal/pix")
       .setTitle("Configurar Chave PIX Pessoal");
+
+    const nameInput = new TextInputBuilder()
+      .setCustomId("pix_name")
+      .setPlaceholder("Ex: Fulano da Silva (nome do titular da conta)")
+      .setValue(currentName)
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
 
     const keyInput = new TextInputBuilder()
       .setCustomId("pix_key")
@@ -203,6 +211,7 @@ createResponder({
       .setRequired(false);
 
     modal.addComponents(
+      new LabelBuilder().setLabel("Nome do Recebedor:").setTextInputComponent(nameInput),
       new LabelBuilder().setLabel("Chave PIX:").setTextInputComponent(keyInput),
       new LabelBuilder()
         .setLabel("Tipo da Chave (Opcional):")
@@ -219,9 +228,18 @@ createResponder({
   types: [ResponderType.Modal, ResponderType.ModalComponent],
   cache: "cached",
   async run(interaction) {
+    const rawName = interaction.fields.getTextInputValue("pix_name").trim();
     const rawKey = interaction.fields.getTextInputValue("pix_key").trim();
     const rawType =
       interaction.fields.getTextInputValue("pix_type")?.trim() || "Chave PIX";
+
+    if (!rawName) {
+      await interaction.reply({
+        content: `${getEmojiTag("action_x")} O nome do recebedor não pode ser vazio!`,
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
 
     if (!rawKey) {
       await interaction.reply({
@@ -237,6 +255,7 @@ createResponder({
     });
 
     memberDoc.payments = memberDoc.payments || {};
+    memberDoc.payments.pixName = rawName;
     memberDoc.payments.pixKey = rawKey;
     memberDoc.payments.pixType = rawType;
     memberDoc.markModified("payments");
@@ -434,6 +453,7 @@ createResponder({
     });
 
     memberDoc.payments = {
+      pixName: undefined,
       pixKey: undefined,
       pixType: undefined,
       mpAccessToken: undefined,

@@ -41,6 +41,7 @@ export const guildSchema = new Schema({
     },
     botLogsChannel: String,
     payments: {
+        pixName: String,
         pixKey: String,
         pixType: String,
         mpAccessToken: String,
