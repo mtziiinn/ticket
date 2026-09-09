@@ -166,11 +166,11 @@ export async function POST(request: NextRequest) {
       if (targetChannelId) {
         // Enviar mensagem de celebração no canal do ticket no Discord
         const messageContent = [
-          `# <:action_check:1502789797821939752> Pagamento Aprovado com Sucesso!`,
+          `# ✅ Pagamento Aprovado com Sucesso!`,
           `Recebemos a confirmação do pagamento no valor de **${amountFormatted}** via **${paymentMethodName}**.`,
-          `\n> <:clock_check:1502789856881938502> **Novo Status:** \`EM PRODUÇÃO\``,
-          `> <:user_check:1502789974276178121> **Cliente:** <@${ticket.ownerId}>`,
-          `> <:database:1502789865023209512> **ID da Transação:** \`${payment.id}\``,
+          `\n> ⚙️ **Novo Status:** \`EM PRODUÇÃO\``,
+          `> 👤 **Cliente:** <@${ticket.ownerId}>`,
+          `> 🧾 **ID da Transação:** \`${payment.id}\``,
           `\nA equipe foi notificada e já dará início ao desenvolvimento da sua encomenda! 🚀`,
         ].join("\n");
 

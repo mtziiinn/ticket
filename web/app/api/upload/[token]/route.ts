@@ -118,7 +118,13 @@ export async function POST(
     }
     pendingId = pending._id;
 
-    const baseUrl = process.env.WEB_URL || request.nextUrl.origin;
+    // Usa o domínio da própria requisição (tenant correto), não o WEB_URL global.
+    const reqHost =
+      request.headers.get("x-forwarded-host") || request.headers.get("host");
+    const reqProto = request.headers.get("x-forwarded-proto") || "https";
+    const baseUrl = reqHost
+      ? `${reqProto}://${reqHost}`
+      : process.env.WEB_URL || request.nextUrl.origin;
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     let zipFilename: string;
@@ -210,12 +216,12 @@ export async function POST(
       : "";
     const staffMention = pending.staffId ? `<@${pending.staffId}>` : "Staff";
     const channelMsg = [
-      `<:action_check:1502789797821939752> ${staffMention} entregou a mídia!${sizeInfo}`,
-      `<:file_add:1502789905112105071> **Arquivo:** \`${zipFilename}\``,
-      `<:file_add:1502789905112105071> **Arquivos:** ${fileList}`,
-      `<:clipboard:1502789887907205293> **Descrição:** ${pending.description || "Mídia entregue"}`,
-      `<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}`,
-      `<:action_warning:1502789801949265990> O link expira em **7 dias**.`,
+      `✅ ${staffMention} entregou a mídia!${sizeInfo}`,
+      `📎 **Arquivo:** \`${zipFilename}\``,
+      `📎 **Arquivos:** ${fileList}`,
+      `📋 **Descrição:** ${pending.description || "Mídia entregue"}`,
+      `🔗 **Link:** ${downloadUrl}`,
+      `⚠️ O link expira em **7 dias**.`,
     ].join("\n");
     await sendDiscordMessage(tenant.botToken, pending.channelId, channelMsg).catch((error) => {
       console.error("[Upload API] Não foi possível avisar o canal:", error);
