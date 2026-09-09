@@ -1,5 +1,5 @@
 import { createEvent } from "#base";
-import { createContainer, Separator } from "@magicyan/discord";
+import { createContainer } from "@magicyan/discord";
 import {
   AuditLogEvent,
   ChannelType,
@@ -31,18 +31,14 @@ createEvent({
       );
 
       const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
-      const timestamp = Math.floor(Date.now() / 1000);
 
       const container = createContainer(
         "#ef4444",
         `## ${getEmojiTag("action_x")} Canal Excluído`,
-        Separator.Default,
         [
-          `| ${getEmojiTag("folder")} **Canal:** \`#${channel.name}\` (\`${channel.id}\`)`,
-          `| ${getEmojiTag("action_info")} **Tipo:** \`${typeName}\``,
-          `| ${getEmojiTag("user_remove")} **Excluído por:** ${executor ? `<@${executor.id}> (\`${executor.tag}\`)` : "*Não identificado*"}`,
-          `| ${getEmojiTag("clock")} **Horário:** <t:${timestamp}:f> (<t:${timestamp}:R>)`,
-        ].join("\n"),
+          `| \`${channel.name}\` (\`${typeName}\`)`,
+          executor ? `| Por: <@${executor.id}>` : "",
+        ].filter(Boolean).join("\n"),
       );
 
       await sendBotLog(channel.guild, container);

@@ -1,5 +1,5 @@
 import { createEvent } from "#base";
-import { createContainer, Separator } from "@magicyan/discord";
+import { createContainer } from "@magicyan/discord";
 import { AuditLogEvent, ChannelType, NonThreadGuildBasedChannel } from "discord.js";
 import { getAuditLogExecutor, getEmojiTag, sendBotLog } from "#functions";
 
@@ -26,20 +26,14 @@ createEvent({
       );
 
       const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
-      const parentName = channel.parent ? channel.parent.name : "Nenhuma";
-      const timestamp = Math.floor(Date.now() / 1000);
 
       const container = createContainer(
         "#38bdf8",
         `## ${getEmojiTag("action_check")} Canal Criado`,
-        Separator.Default,
         [
-          `| ${getEmojiTag("folder")} **Canal:** <#${channel.id}> (\`${channel.name}\`)`,
-          `| ${getEmojiTag("action_info")} **Tipo:** \`${typeName}\``,
-          `| ${getEmojiTag("folder_open")} **Categoria:** \`${parentName}\``,
-          `| ${getEmojiTag("user_check")} **Criado por:** ${executor ? `<@${executor.id}> (\`${executor.tag}\`)` : "*Não identificado*"}`,
-          `| ${getEmojiTag("clock")} **Horário:** <t:${timestamp}:f> (<t:${timestamp}:R>)`,
-        ].join("\n"),
+          `| <#${channel.id}> (\`${typeName}\`)`,
+          executor ? `| Por: <@${executor.id}>` : "",
+        ].filter(Boolean).join("\n"),
       );
 
       await sendBotLog(channel.guild, container);

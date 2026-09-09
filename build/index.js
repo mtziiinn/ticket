@@ -4,12 +4,12 @@ import { db } from "#database";
 import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
 import "./constants.js";
 import { GatewayIntentBits, Options, Partials, ButtonBuilder, ButtonStyle, } from "discord.js";
-import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM, sendErrorWebhook, } from "#functions";
+import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM, sendErrorWebhook, log, } from "#functions";
 // =======================================================
 // RESILIÊNCIA GLOBAL / HANDLERS ANTI-CRASH PARA PRODUÇÃO
 // =======================================================
 process.on("unhandledRejection", (reason) => {
-    console.error("[Anti-Crash] Rejeição de Promise não tratada detectada:", reason);
+    log.error("Anti-Crash", "Promise não tratada", reason);
     sendErrorWebhook({
         type: "unhandledRejection",
         message: reason?.message || String(reason) || "Rejeição desconhecida",
@@ -18,7 +18,7 @@ process.on("unhandledRejection", (reason) => {
     });
 });
 process.on("uncaughtException", (error, origin) => {
-    console.error(`[Anti-Crash] Exceção não capturada (${origin}):`, error);
+    log.error("Anti-Crash", `Exceção não capturada (${origin})`, error);
     sendErrorWebhook({
         type: "uncaughtException",
         message: error?.message || String(error) || "Exceção desconhecida",
@@ -27,7 +27,7 @@ process.on("uncaughtException", (error, origin) => {
     });
 });
 process.on("uncaughtExceptionMonitor", (error, origin) => {
-    console.error(`[Anti-Crash Monitor] Erro monitorado (${origin}):`, error);
+    log.error("Monitor", `Erro monitorado (${origin})`, error);
     sendErrorWebhook({
         type: "warning",
         message: error?.message || String(error) || "Erro monitorado",
@@ -35,9 +35,7 @@ process.on("uncaughtExceptionMonitor", (error, origin) => {
         context: `Monitor — Origem: ${origin}`,
     });
 });
-console.log("------------------------------------------");
-console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO (PRISM)");
-console.log("------------------------------------------");
+log.info("Init", "PRISM Bot iniciando...");
 const { client } = await bootstrap({
     meta: import.meta,
     env,

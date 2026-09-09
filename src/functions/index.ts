@@ -118,3 +118,4 @@ export * from "./announcements.js";
 export * from "./panelJson.js";
 export * from "./vault.js";
 export * from "./errorWebhook.js";
+export * from "./logger.js";

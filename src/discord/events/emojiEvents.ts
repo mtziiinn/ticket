@@ -1,9 +1,8 @@
 import { createEvent } from "#base";
-import { createContainer, Separator } from "@magicyan/discord";
+import { createContainer } from "@magicyan/discord";
 import { AuditLogEvent, GuildEmoji } from "discord.js";
 import { getAuditLogExecutor, getEmojiTag, sendBotLog } from "#functions";
 
-// 1. Emoji Criado
 createEvent({
   name: "emojiCreate",
   event: "emojiCreate",
@@ -15,7 +14,6 @@ createEvent({
         emoji.id,
       );
 
-      const timestamp = Math.floor(Date.now() / 1000);
       const emojiDisplay = emoji.animated
         ? `<a:${emoji.name}:${emoji.id}>`
         : `<:${emoji.name}:${emoji.id}>`;
@@ -23,13 +21,10 @@ createEvent({
       const container = createContainer(
         "#38bdf8",
         `## ${getEmojiTag("action_check")} Emoji Adicionado`,
-        Separator.Default,
         [
-          `| ${getEmojiTag("apps_figma")} **Emoji:** ${emojiDisplay} \`:${emoji.name}:\` (\`${emoji.id}\`)`,
-          `| ${getEmojiTag("action_info")} **Tipo:** \`${emoji.animated ? "Animado (GIF)" : "Estático (PNG)"}\``,
-          `| ${getEmojiTag("user_check")} **Criado por:** ${executor ? `<@${executor.id}> (\`${executor.tag}\`)` : "*Não identificado*"}`,
-          `| ${getEmojiTag("clock")} **Horário:** <t:${timestamp}:f> (<t:${timestamp}:R>)`,
-        ].join("\n"),
+          `| ${emojiDisplay} \`:${emoji.name}:\``,
+          executor ? `| Por: <@${executor.id}>` : "",
+        ].filter(Boolean).join("\n"),
       );
 
       await sendBotLog(emoji.guild, container);
@@ -39,7 +34,6 @@ createEvent({
   },
 });
 
-// 2. Emoji Excluído
 createEvent({
   name: "emojiDelete",
   event: "emojiDelete",
@@ -51,17 +45,13 @@ createEvent({
         emoji.id,
       );
 
-      const timestamp = Math.floor(Date.now() / 1000);
-
       const container = createContainer(
         "#ef4444",
         `## ${getEmojiTag("action_x")} Emoji Excluído`,
-        Separator.Default,
         [
-          `| ${getEmojiTag("apps_figma")} **Nome:** \`:${emoji.name}:\` (\`${emoji.id}\`)`,
-          `| ${getEmojiTag("user_remove")} **Excluído por:** ${executor ? `<@${executor.id}> (\`${executor.tag}\`)` : "*Não identificado*"}`,
-          `| ${getEmojiTag("clock")} **Horário:** <t:${timestamp}:f> (<t:${timestamp}:R>)`,
-        ].join("\n"),
+          `| \`:${emoji.name}:\``,
+          executor ? `| Por: <@${executor.id}>` : "",
+        ].filter(Boolean).join("\n"),
       );
 
       await sendBotLog(emoji.guild, container);
@@ -71,7 +61,6 @@ createEvent({
   },
 });
 
-// 3. Emoji Renomeado
 createEvent({
   name: "emojiUpdate",
   event: "emojiUpdate",
@@ -85,7 +74,6 @@ createEvent({
         newEmoji.id,
       );
 
-      const timestamp = Math.floor(Date.now() / 1000);
       const emojiDisplay = newEmoji.animated
         ? `<a:${newEmoji.name}:${newEmoji.id}>`
         : `<:${newEmoji.name}:${newEmoji.id}>`;
@@ -93,14 +81,11 @@ createEvent({
       const container = createContainer(
         "#eab308",
         `## ${getEmojiTag("action_info")} Emoji Renomeado`,
-        Separator.Default,
         [
-          `| ${getEmojiTag("apps_figma")} **Emoji:** ${emojiDisplay}`,
-          `| **Nome Anterior:** \`:${oldEmoji.name}:\``,
-          `| **Novo Nome:** \`:${newEmoji.name}:\``,
-          `| ${getEmojiTag("user_check")} **Alterado por:** ${executor ? `<@${executor.id}> (\`${executor.tag}\`)` : "*Não identificado*"}`,
-          `| ${getEmojiTag("clock")} **Horário:** <t:${timestamp}:f> (<t:${timestamp}:R>)`,
-        ].join("\n"),
+          `| ${emojiDisplay}`,
+          `| \`${oldEmoji.name}\` ➔ \`${newEmoji.name}\``,
+          executor ? `| Por: <@${executor.id}>` : "",
+        ].filter(Boolean).join("\n"),
       );
 
       await sendBotLog(newEmoji.guild, container);
