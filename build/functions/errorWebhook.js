@@ -110,7 +110,7 @@ export async function sendErrorWebhook(report) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 username: "PRISM Error Logs",
-                avatar_url: "https://cdn.discordapp.com/emojis/1547021658496434246.png",
+                avatar_url: "https://cdn.discordapp.com/emojis/1453205628599275540.png?size=128",
                 embeds: [embed],
             }),
         });
