@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getDatabase } from "@/lib/mongodb";
+import { resolveTenantFromHeaders } from "@/lib/tenant";
 import type { TicketWithDeliveries } from "@/lib/types";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -33,7 +34,8 @@ interface TicketDocument {
 
 async function getTicketDeliveries(id: string): Promise<TicketWithDeliveries | null> {
   try {
-    const db = await getDatabase();
+    const tenant = await resolveTenantFromHeaders();
+    const db = await getDatabase(tenant.dbName);
     const collection = db.collection<TicketDocument>("tickets");
     const ticket = await collection.findOne(
       { ticketId: id },

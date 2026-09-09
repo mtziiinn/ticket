@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
+import { resolveTenant } from "@/lib/tenant";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -10,8 +11,11 @@ type MercadoPagoWebhookPayload = {
   action?: string;
 };
 
-async function sendDiscordMessage(channelId: string, content: string) {
-  const token = process.env.BOT_TOKEN;
+async function sendDiscordMessage(
+  token: string | undefined,
+  channelId: string,
+  content: string,
+) {
   if (!token) return null;
 
   const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
@@ -31,8 +35,11 @@ async function sendDiscordMessage(channelId: string, content: string) {
   return res.json();
 }
 
-async function updateDiscordChannelName(channelId: string, newStatusEmoji: string) {
-  const token = process.env.BOT_TOKEN;
+async function updateDiscordChannelName(
+  token: string | undefined,
+  channelId: string,
+  newStatusEmoji: string,
+) {
   if (!token) return null;
 
   try {
@@ -62,9 +69,10 @@ async function updateDiscordChannelName(channelId: string, newStatusEmoji: strin
 
 export async function POST(request: NextRequest) {
   try {
-    const mpToken = process.env.MP_ACCESS_TOKEN;
+    const tenant = resolveTenant(request);
+    const mpToken = tenant.mpAccessToken;
     if (!mpToken) {
-      console.warn("[MP Webhook] MP_ACCESS_TOKEN não configurado no ambiente.");
+      console.warn("[MP Webhook] MP_ACCESS_TOKEN não configurado para este tenant.");
       return NextResponse.json({ error: "MP_ACCESS_TOKEN not configured" }, { status: 500 });
     }
 
@@ -115,7 +123,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true, warning: "No ticketId found" });
       }
 
-      const db = await getDatabase();
+      const db = await getDatabase(tenant.dbName);
       const ticket = await db.collection("tickets").findOne({ ticketId });
 
       if (!ticket) {
@@ -166,10 +174,10 @@ export async function POST(request: NextRequest) {
           `\nA equipe foi notificada e já dará início ao desenvolvimento da sua encomenda! 🚀`,
         ].join("\n");
 
-        await sendDiscordMessage(targetChannelId, messageContent);
+        await sendDiscordMessage(tenant.botToken, targetChannelId, messageContent);
 
         // Atualizar o nome do canal com o emoji de produção (⚙️)
-        await updateDiscordChannelName(targetChannelId, "⚙️");
+        await updateDiscordChannelName(tenant.botToken, targetChannelId, "⚙️");
       }
 
       console.log(`[MP Webhook] Sucesso: Ticket #${ticketId} atualizado para status pago (produção)!`);

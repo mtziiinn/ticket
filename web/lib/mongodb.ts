@@ -20,7 +20,7 @@ const options = {};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
-let deliveryFilesIndexPromise: Promise<string> | undefined;
+const deliveryFilesIndexDone = new Set<string>();
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
@@ -49,12 +49,16 @@ export default function getClient() {
   return getClientPromise();
 }
 
-export async function getDatabase(): Promise<Db> {
+export async function getDatabase(dbName?: string): Promise<Db> {
   const c = await getClientPromise();
-  const db = c.db(process.env.DATABASE_NAME || "database");
-  deliveryFilesIndexPromise ??= db
-    .collection("delivery_files")
-    .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-  await deliveryFilesIndexPromise;
+  const db = c.db(dbName || process.env.DATABASE_NAME || "database");
+
+  if (!deliveryFilesIndexDone.has(db.databaseName)) {
+    await db
+      .collection("delivery_files")
+      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    deliveryFilesIndexDone.add(db.databaseName);
+  }
+
   return db;
 }

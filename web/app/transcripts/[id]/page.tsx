@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getDatabase } from "@/lib/mongodb";
+import { resolveTenantFromHeaders } from "@/lib/tenant";
 import { TranscriptViewer } from "@/components/transcript/transcript-viewer";
 import type { Transcript } from "@/lib/types";
 import type { Metadata } from "next";
@@ -10,7 +11,8 @@ interface PageProps {
 
 async function getTranscript(id: string): Promise<Transcript | null> {
   try {
-    const db = await getDatabase();
+    const tenant = await resolveTenantFromHeaders();
+    const db = await getDatabase(tenant.dbName);
     const collection = db.collection<Transcript>("transcripts");
     const cleanId = (id || "").trim();
     const transcript = await collection.findOne({

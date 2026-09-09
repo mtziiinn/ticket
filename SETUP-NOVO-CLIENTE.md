@@ -29,8 +29,9 @@ gere um `emojis.json` novo com os IDs dele e substitua o arquivo.
 
 ## 4. Banco de dados
 
-Crie um banco Mongo novo (ou apenas um `DATABASE_NAME` diferente na mesma
-instância). Guarde o `MONGO_URI`.
+Use o **mesmo cluster Mongo** da Prism, mas com um `DATABASE_NAME` **diferente**
+(ex.: `dusksociety`). Cada cópia do bot só enxerga o próprio banco — sorteios,
+fila de DM, tickets, tudo isolado. Guarde o `MONGO_URI` (o mesmo da Prism).
 
 ## 5. Preencher o `.env`
 
@@ -38,12 +39,12 @@ Copie `.env.example` para `.env` e preencha:
 
 | Variável | Observação |
 |---|---|
-| `BOT_TOKEN` | passo 2 |
-| `MONGO_URI` | passo 4 |
-| `DATABASE_NAME` | nome do banco desse cliente |
-| `WEB_URL` | URL do painel web, se houver; senão deixe o padrão |
+| `BOT_TOKEN` | passo 2 — **é o único segredo que muda de verdade** |
+| `MONGO_URI` | mesmo da Prism |
+| `DATABASE_NAME` | **diferente** da Prism (ex.: `dusksociety`) |
+| `WEB_URL` | domínio próprio deste cliente no painel (ver passo 11) |
 | `NODE_OPTIONS` | `--experimental-strip-types` (igual ao exemplo) |
-| `MP_ACCESS_TOKEN` | só se o cliente usar Mercado Pago |
+| `MP_ACCESS_TOKEN` | só se o cliente usar Mercado Pago (conta MP dele) |
 
 ## 6. Editar `brand.config.json`
 
@@ -97,15 +98,43 @@ discloud app commit <ID>
 No Discord, rode `/painel → Identidade Visual` para ajustar avatar, cor e
 banner **por servidor** (isso fica no banco, não no `brand.config.json`).
 
+## 11. Painel web (multi-tenant)
+
+O `web/` é **um único deploy na Vercel** servindo todos os clientes. Ele
+descobre qual cliente é pelo **domínio** da requisição.
+
+1. Na Vercel, no projeto do `web/`, adicione um domínio novo para este cliente
+   (ex.: `painel.dusk.com`).
+2. Edite a env var **`TENANTS`** (JSON, uma linha) adicionando a entrada do
+   cliente — domínio → `{ dbName, botToken, apiKey, mpAccessToken }`:
+
+   ```json
+   {
+     "painel.prism.com": { "dbName": "database",    "botToken": "...", "apiKey": "...", "mpAccessToken": "..." },
+     "painel.dusk.com":  { "dbName": "dusksociety", "botToken": "...", "apiKey": "...", "mpAccessToken": "..." }
+   }
+   ```
+
+   - `apiKey` tem que ser **igual** ao `API_KEY` que você usa (o bot manda esse
+     header ao criar transcript). Pode ser a mesma string para todos.
+   - `botToken` é o token do bot **deste** cliente (o mesmo do `.env` dele).
+3. Redeploy do `web/` (a Vercel pede após mudar env var).
+4. No `.env` do bot, `WEB_URL` = `https://painel.dusk.com`.
+
+Domínios fora do `TENANTS` continuam caindo no `BOT_TOKEN`/`DATABASE_NAME`/
+`API_KEY` soltos do ambiente — então a Prism segue funcionando sem mexer em nada
+até você migrar ela para dentro do `TENANTS` também.
+
 ## Checklist rápido
 
 - [ ] Projeto copiado sem `.git` / `.env` / `build/` do cliente antigo
 - [ ] Aplicação + bot criados, intents ligados, bot convidado
 - [ ] Bot no servidor dos emojis
-- [ ] Banco Mongo novo
+- [ ] `DATABASE_NAME` novo (mesmo cluster Mongo)
 - [ ] `.env` preenchido
 - [ ] `brand.config.json` editado
 - [ ] `node scripts/apply-brand.mjs` rodado e `ID=` zerado
 - [ ] `npm run build` sem erro
 - [ ] `discloud app upload` feito
+- [ ] Domínio do cliente adicionado na Vercel + entrada no `TENANTS` + redeploy do web
 - [ ] `/painel → Identidade Visual` conferido

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
+import { resolveTenant } from "@/lib/tenant";
 import { createRequire } from "node:module";
 import type { ObjectId } from "mongodb";
 
@@ -45,8 +46,11 @@ type Ticket = {
   deliveries?: Delivery[];
 };
 
-async function discordFetch(endpoint: string, options: RequestInit = {}) {
-  const token = process.env.BOT_TOKEN;
+async function discordFetch(
+  token: string | undefined,
+  endpoint: string,
+  options: RequestInit = {},
+) {
   if (!token) return null;
   const res = await fetch(`${DISCORD_API}${endpoint}`, {
     ...options,
@@ -64,8 +68,12 @@ async function discordFetch(endpoint: string, options: RequestInit = {}) {
   return res.json();
 }
 
-async function sendDiscordMessage(channelId: string, content: string) {
-  return discordFetch(`/channels/${channelId}/messages`, {
+async function sendDiscordMessage(
+  token: string | undefined,
+  channelId: string,
+  content: string,
+) {
+  return discordFetch(token, `/channels/${channelId}/messages`, {
     method: "POST",
     body: JSON.stringify({ content }),
   });
@@ -76,6 +84,7 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
+  const tenant = resolveTenant(request);
   let pendingId: ObjectId | undefined;
 
   try {
@@ -84,7 +93,7 @@ export async function POST(
       return NextResponse.json({ error: "Upload excede o limite de 25 MB" }, { status: 413 });
     }
 
-    const db = await getDatabase();
+    const db = await getDatabase(tenant.dbName);
     const now = new Date();
     const formData = await request.formData();
     const fileEntries = formData.getAll("file") as File[];
@@ -208,7 +217,7 @@ export async function POST(
       `<:cloud_check:1502789867355115690> **Link:** ${downloadUrl}`,
       `<:action_warning:1502789801949265990> O link expira em **7 dias**.`,
     ].join("\n");
-    await sendDiscordMessage(pending.channelId, channelMsg).catch((error) => {
+    await sendDiscordMessage(tenant.botToken, pending.channelId, channelMsg).catch((error) => {
       console.error("[Upload API] Não foi possível avisar o canal:", error);
     });
 
@@ -231,7 +240,7 @@ export async function POST(
     return NextResponse.json({ success: true, url: downloadUrl, filename: zipFilename });
   } catch (error) {
     if (pendingId) {
-      await getDatabase()
+      await getDatabase(tenant.dbName)
         .then((db) => db.collection<PendingDelivery>("pending_deliveries").updateOne(
           { _id: pendingId, status: "processing" },
           { $set: { status: "pending" } },

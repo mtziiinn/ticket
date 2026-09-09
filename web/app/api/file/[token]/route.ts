@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDatabase } from "@/lib/mongodb";
+import { resolveTenant } from "@/lib/tenant";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
+  const tenant = resolveTenant(request);
 
   try {
-    const db = await getDatabase();
+    const db = await getDatabase(tenant.dbName);
     const file = await db.collection("delivery_files").findOne(
       { token },
       { projection: { fileData: 1, filename: 1, contentType: 1, expiresAt: 1 } },

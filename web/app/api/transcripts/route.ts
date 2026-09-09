@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getDatabase } from "@/lib/mongodb"
+import { resolveTenant } from "@/lib/tenant"
 import type { CreateTranscriptPayload, Transcript } from "@/lib/types"
 
 // POST - Criar novo transcript (chamado pelo bot Discord)
 export async function POST(request: NextRequest) {
   try {
+    const tenant = resolveTenant(request)
+
     // Verificar API Key
     const apiKey = request.headers.get("x-api-key")
-    if (!apiKey || apiKey !== process.env.API_KEY) {
+    if (!apiKey || apiKey !== tenant.apiKey) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -24,7 +27,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const db = await getDatabase()
+    const db = await getDatabase(tenant.dbName)
     const collection = db.collection<Transcript>("transcripts")
 
     // Preparar documento para inserir
@@ -81,8 +84,10 @@ export async function POST(request: NextRequest) {
 // GET - Listar transcripts (opcional, para admin)
 export async function GET(request: NextRequest) {
   try {
+    const tenant = resolveTenant(request)
+
     const apiKey = request.headers.get("x-api-key")
-    if (!apiKey || apiKey !== process.env.API_KEY) {
+    if (!apiKey || apiKey !== tenant.apiKey) {
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
@@ -93,7 +98,7 @@ export async function GET(request: NextRequest) {
     const guildId = searchParams.get("guildId")
     const limit = parseInt(searchParams.get("limit") || "20")
 
-    const db = await getDatabase()
+    const db = await getDatabase(tenant.dbName)
     const collection = db.collection<Transcript>("transcripts")
 
     const query = guildId ? { guildId } : {}
