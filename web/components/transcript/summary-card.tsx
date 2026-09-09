@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,7 +12,6 @@ import {
   Clock,
   Hash,
   HelpCircle,
-  ShieldCheck,
   DownloadCloud,
   ExternalLink,
   CheckCircle,
@@ -233,9 +233,11 @@ export function SummaryCard({ transcript }: SummaryCardProps) {
                       {/\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(delivery.filename || delivery.url || "") && (
                         <div className="mt-3 overflow-hidden rounded-lg border border-border/50 max-w-xs bg-muted/20">
                           <a href={delivery.url} target="_blank" rel="noopener noreferrer" className="block">
-                            <img
+                            <Image
                               src={delivery.url}
                               alt={delivery.filename}
+                              width={400}
+                              height={300}
                               className="max-h-48 w-auto object-contain rounded-lg hover:scale-[1.02] transition-transform cursor-pointer"
                               loading="lazy"
                             />
