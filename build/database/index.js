@@ -11,6 +11,11 @@ try {
     console.log(chalk.blue("Connecting to MongoDB..."));
     await mongoose.connect(env.MONGO_URI, {
         dbName: env.DATABASE_NAME || "database",
+        maxPoolSize: 10,
+        minPoolSize: 1,
+        maxIdleTimeMS: 30000,
+        serverSelectionTimeoutMS: 5000,
+        autoIndex: false,
     });
     console.log(chalk.green("MongoDB connected"));
 }

@@ -183,7 +183,7 @@ createCommand({
             }
             const container = createContainer(constants.colors.azoxo, createSection({
                 content: `## ${getEmojiTag("database")} Limpeza de Cache Concluída\nO cache temporário e a memória RAM foram limpos com sucesso para otimizar o consumo na hospedagem.`,
-                thumbnail: interaction.client.user?.displayAvatarURL(),
+                thumbnail: (emojis.static.prism || interaction.client.user?.displayAvatarURL()),
             }), Separator.Default, `### ${getEmojiTag("clock_check")} Recursos Liberados`, resourcesList.join("\n"), Separator.Default, `### ${getEmojiTag("database_check")} Consumo de Memória`, [
                 `${getEmojiTag("database")} **Heap Utilizado:** \`${result.heapUsedAfterMB} MB\` *(era \`${result.heapUsedBeforeMB} MB\`)*`,
                 `${getEmojiTag("action_check")} **Memória Liberada:** \`${result.heapDiffMB} MB\``,
@@ -206,7 +206,7 @@ createCommand({
             const heapPercent = ((mem.heapUsed / mem.heapTotal) * 100).toFixed(1);
             const container = createContainer(constants.colors.azoxo, createSection({
                 content: `## ${getEmojiTag("database")} Diagnóstico de Memória & Saúde\nMonitoramento de telemetria do processo Node.js na hospedagem.`,
-                thumbnail: interaction.client.user?.displayAvatarURL(),
+                thumbnail: (emojis.static.prism || interaction.client.user?.displayAvatarURL()),
             }), Separator.Default, `### ${getEmojiTag("clock")} Tempo de Atividade (Uptime)`, `| ${getEmojiTag("clock_add")} **Uptime do Processo:** \`${uptimeStr}\`\n| ${getEmojiTag("prism")} **Bot:** \`Prism Tickets\` | **Node.js:** \`${process.version}\` (\`${process.platform}\`)`, Separator.Default, `### ${getEmojiTag("database_check")} Alocação de Memória (RAM)`, [
                 `${getEmojiTag("cloud_check")} **RSS Total do Processo:** \`${toMB(mem.rss)} MB\` *(limite container: 200 MB)*`,
                 `${getEmojiTag("database")} **Heap Utilizado:** \`${toMB(mem.heapUsed)} MB\` / \`${toMB(mem.heapTotal)} MB\` (\`${heapPercent}%\`)`,

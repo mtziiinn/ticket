@@ -1292,6 +1292,10 @@ export async function generateTranscript(
   } finally {
     try {
       channel.messages?.cache?.clear();
+      const globalAny = global as any;
+      if (typeof globalAny.gc === "function") {
+        globalAny.gc();
+      }
     } catch {
       /* ignore */
     }

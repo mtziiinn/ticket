@@ -48,15 +48,18 @@ async function processTicketSubmission(
   // 0. Proteção de Cooldown contra cliques duplos simultâneos
   const now = Date.now();
   const userCooldown = cooldowns.get(user.id);
-  if (userCooldown && userCooldown > now) {
-    const remaining = Math.ceil((userCooldown - now) / 1000);
-    await interaction
-      .reply({
-        content: `<:action_x:1502789802918150206> Aguarde **${remaining}s** antes de tentar abrir outro ticket.`,
-        flags: ["Ephemeral"],
-      })
-      .catch(() => {});
-    return;
+  if (userCooldown) {
+    if (userCooldown > now) {
+      const remaining = Math.ceil((userCooldown - now) / 1000);
+      await interaction
+        .reply({
+          content: `<:action_x:1502789802918150206> Aguarde **${remaining}s** antes de tentar abrir outro ticket.`,
+          flags: ["Ephemeral"],
+        })
+        .catch(() => {});
+      return;
+    }
+    cooldowns.delete(user.id);
   }
   cooldowns.set(user.id, now + 10000); // 10s de cooldown
 

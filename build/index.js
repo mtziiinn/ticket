@@ -4,9 +4,21 @@ import { db } from "#database";
 import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
 import "./constants.js";
 import { GatewayIntentBits, Options, Partials, ButtonBuilder, ButtonStyle, } from "discord.js";
-import { clearBotCache, getCleanAvatarURL, safeSendDM } from "#functions";
+import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM } from "#functions";
+// =======================================================
+// RESILIÊNCIA GLOBAL / HANDLERS ANTI-CRASH PARA PRODUÇÃO
+// =======================================================
+process.on("unhandledRejection", (reason) => {
+    console.error("[Anti-Crash] Rejeição de Promise não tratada detectada:", reason);
+});
+process.on("uncaughtException", (error, origin) => {
+    console.error(`[Anti-Crash] Exceção não capturada (${origin}):`, error);
+});
+process.on("uncaughtExceptionMonitor", (error, origin) => {
+    console.error(`[Anti-Crash Monitor] Erro monitorado (${origin}):`, error);
+});
 console.log("------------------------------------------");
-console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
+console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO (PRISM)");
 console.log("------------------------------------------");
 const { client } = await bootstrap({
     meta: import.meta,
@@ -113,7 +125,7 @@ async function processDmQueue() {
                     ? `<:file_add:1502789905112105071> **${item.fileCount} arquivos compactados em ZIP:** \`${item.filename}\``
                     : `<:file_add:1502789905112105071> **Arquivo:** \`${item.filename}\``;
                 const dmContainer = createContainer(constants.colors.primary, createSection({
-                    content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${user}, o arquivo final do seu pedido foi entregue!`,
+                    content: `### ${getEmojiTag("prism") || "<:prism:1547021658496434246>"} Mídia Entregue!\nOlá ${user}, o arquivo final do seu pedido foi entregue!`,
                     thumbnail: getCleanAvatarURL(staff),
                 }), Separator.Default, fileLine, `<:clipboard:1502789887907205293> **Descrição:** ${item.description || "Mídia entregue"}`, `<:cloud_check:1502789867355115690> **Link:** ${item.downloadUrl}`, Separator.Default, `<:action_warning:1502789801949265990> O link expira em **7 dias**.`, createRow(new ButtonBuilder({
                     label: "Baixar Arquivo",

@@ -932,6 +932,10 @@ export async function generateTranscript(channel, ticket, closer) {
     finally {
         try {
             channel.messages?.cache?.clear();
+            const globalAny = global;
+            if (typeof globalAny.gc === "function") {
+                globalAny.gc();
+            }
         }
         catch {
             /* ignore */

@@ -235,7 +235,7 @@ createCommand({
         constants.colors.azoxo,
         createSection({
           content: `## ${getEmojiTag("database")} Limpeza de Cache Concluída\nO cache temporário e a memória RAM foram limpos com sucesso para otimizar o consumo na hospedagem.`,
-          thumbnail: interaction.client.user?.displayAvatarURL() as any,
+          thumbnail: (emojis.static.prism || interaction.client.user?.displayAvatarURL()) as any,
         }),
         Separator.Default,
         `### ${getEmojiTag("clock_check")} Recursos Liberados`,
@@ -274,7 +274,7 @@ createCommand({
         constants.colors.azoxo,
         createSection({
           content: `## ${getEmojiTag("database")} Diagnóstico de Memória & Saúde\nMonitoramento de telemetria do processo Node.js na hospedagem.`,
-          thumbnail: interaction.client.user?.displayAvatarURL() as any,
+          thumbnail: (emojis.static.prism || interaction.client.user?.displayAvatarURL()) as any,
         }),
         Separator.Default,
         `### ${getEmojiTag("clock")} Tempo de Atividade (Uptime)`,

@@ -204,6 +204,7 @@ createResponder({
     const session = userCaptchas.get(interaction.user.id);
 
     if (!session || session.expires < Date.now()) {
+      userCaptchas.delete(interaction.user.id);
       await interaction.update({
         components: [
           createContainer(

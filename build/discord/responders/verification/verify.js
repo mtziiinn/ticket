@@ -153,6 +153,7 @@ createResponder({
         const selected = interaction.values[0];
         const session = userCaptchas.get(interaction.user.id);
         if (!session || session.expires < Date.now()) {
+            userCaptchas.delete(interaction.user.id);
             await interaction.update({
                 components: [
                     createContainer("#ED4245", `## ${getEmojiTag("clock")} Captcha Expirado`, "O tempo limite para resolver este captcha expirou. Clique no botão **Verificar-se** novamente para gerar um novo desafio."),

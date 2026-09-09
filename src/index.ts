@@ -15,10 +15,25 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
-import { clearBotCache, getCleanAvatarURL, safeSendDM } from "#functions";
+import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM } from "#functions";
+
+// =======================================================
+// RESILIÊNCIA GLOBAL / HANDLERS ANTI-CRASH PARA PRODUÇÃO
+// =======================================================
+process.on("unhandledRejection", (reason: any) => {
+  console.error("[Anti-Crash] Rejeição de Promise não tratada detectada:", reason);
+});
+
+process.on("uncaughtException", (error: Error, origin: string) => {
+  console.error(`[Anti-Crash] Exceção não capturada (${origin}):`, error);
+});
+
+process.on("uncaughtExceptionMonitor", (error: Error, origin: string) => {
+  console.error(`[Anti-Crash Monitor] Erro monitorado (${origin}):`, error);
+});
 
 console.log("------------------------------------------");
-console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO");
+console.log("BOT INICIANDO - SISTEMA DE TICKETS ATIVO (PRISM)");
 console.log("------------------------------------------");
 
 const { client } = await bootstrap({
@@ -147,7 +162,7 @@ async function processDmQueue() {
         const dmContainer = createContainer(
           constants.colors.primary,
           createSection({
-            content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá ${user}, o arquivo final do seu pedido foi entregue!`,
+            content: `### ${getEmojiTag("prism") || "<:prism:1547021658496434246>"} Mídia Entregue!\nOlá ${user}, o arquivo final do seu pedido foi entregue!`,
             thumbnail: getCleanAvatarURL(staff) as any,
           }),
           Separator.Default,
