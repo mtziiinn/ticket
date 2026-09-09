@@ -12,8 +12,8 @@ createEvent({
                 ? `<a:${emoji.name}:${emoji.id}>`
                 : `<:${emoji.name}:${emoji.id}>`;
             const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Emoji Adicionado`, [
-                `| ${emojiDisplay} \`:${emoji.name}:\``,
-                executor ? `| Por: <@${executor.id}>` : "",
+                `| ${getEmojiTag("apps_figma")} ${emojiDisplay} \`:${emoji.name}:\``,
+                executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));
             await sendBotLog(emoji.guild, container);
         }
@@ -29,8 +29,8 @@ createEvent({
         try {
             const executor = await getAuditLogExecutor(emoji.guild, AuditLogEvent.EmojiDelete, emoji.id);
             const container = createContainer("#ef4444", `## ${getEmojiTag("action_x")} Emoji Excluído`, [
-                `| \`:${emoji.name}:\``,
-                executor ? `| Por: <@${executor.id}>` : "",
+                `| ${getEmojiTag("apps_figma")} \`:emoji.name}:\``,
+                executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));
             await sendBotLog(emoji.guild, container);
         }
@@ -51,9 +51,9 @@ createEvent({
                 ? `<a:${newEmoji.name}:${newEmoji.id}>`
                 : `<:${newEmoji.name}:${newEmoji.id}>`;
             const container = createContainer("#eab308", `## ${getEmojiTag("action_info")} Emoji Renomeado`, [
-                `| ${emojiDisplay}`,
+                `| ${getEmojiTag("apps_figma")} ${emojiDisplay}`,
                 `| \`${oldEmoji.name}\` ➔ \`${newEmoji.name}\``,
-                executor ? `| Por: <@${executor.id}>` : "",
+                executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));
             await sendBotLog(newEmoji.guild, container);
         }

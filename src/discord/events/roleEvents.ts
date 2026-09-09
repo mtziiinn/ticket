@@ -18,8 +18,8 @@ createEvent({
         "#38bdf8",
         `## ${getEmojiTag("action_check")} Cargo Criado`,
         [
-          `| <@&${role.id}>`,
-          executor ? `| Por: <@${executor.id}>` : "",
+          `| ${getEmojiTag("user_users")} <@&${role.id}>`,
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 
@@ -45,8 +45,8 @@ createEvent({
         "#ef4444",
         `## ${getEmojiTag("action_x")} Cargo Excluído`,
         [
-          `| \`${role.name}\``,
-          executor ? `| Por: <@${executor.id}>` : "",
+          `| ${getEmojiTag("user_users")} \`${role.name}\``,
+          executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 
@@ -65,23 +65,23 @@ createEvent({
       const changes: string[] = [];
 
       if (oldRole.name !== newRole.name) {
-        changes.push(`• Nome: \`${oldRole.name}\` ➔ \`${newRole.name}\``);
+        changes.push(`• ${getEmojiTag("action_info")} Nome: \`${oldRole.name}\` ➔ \`${newRole.name}\``);
       }
 
       if (oldRole.hexColor !== newRole.hexColor) {
-        changes.push(`• Cor: \`${oldRole.hexColor}\` ➔ \`${newRole.hexColor}\``);
+        changes.push(`• ${getEmojiTag("action_info")} Cor: \`${oldRole.hexColor}\` ➔ \`${newRole.hexColor}\``);
       }
 
       if (oldRole.hoist !== newRole.hoist) {
-        changes.push(`• Exibir: \`${oldRole.hoist ? "Sim" : "Não"}\` ➔ \`${newRole.hoist ? "Sim" : "Não"}\``);
+        changes.push(`• ${getEmojiTag("action_info")} Exibir: \`${oldRole.hoist ? "Sim" : "Não"}\` ➔ \`${newRole.hoist ? "Sim" : "Não"}\``);
       }
 
       if (oldRole.mentionable !== newRole.mentionable) {
-        changes.push(`• Mencionável: \`${oldRole.mentionable ? "Sim" : "Não"}\` ➔ \`${newRole.mentionable ? "Sim" : "Não"}\``);
+        changes.push(`• ${getEmojiTag("action_info")} Mencionável: \`${oldRole.mentionable ? "Sim" : "Não"}\` ➔ \`${newRole.mentionable ? "Sim" : "Não"}\``);
       }
 
       if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) {
-        changes.push(`• Permissões modificadas`);
+        changes.push(`• ${getEmojiTag("shield")} Permissões modificadas`);
       }
 
       if (changes.length === 0) return;
@@ -96,8 +96,8 @@ createEvent({
         "#eab308",
         `## ${getEmojiTag("action_info")} Cargo Atualizado`,
         [
-          `| <@&${newRole.id}>`,
-          executor ? `| Por: <@${executor.id}>` : "",
+          `| ${getEmojiTag("user_users")} <@&${newRole.id}>`,
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
           changes.join("\n"),
         ].filter(Boolean).join("\n"),
       );

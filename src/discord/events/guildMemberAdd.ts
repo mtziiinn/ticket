@@ -12,7 +12,6 @@ createEvent({
       const w = guildData.welcome;
       if (!w) return;
 
-      // Verificação de idade mínima da conta
       const minAge = w.minAccountAgeDays ?? 0;
       if (minAge > 0) {
         const createdMs = member.user.createdTimestamp;
@@ -35,12 +34,10 @@ createEvent({
         }
       }
 
-      // Autorole
       if (w.autoRole) {
         await member.roles.add(w.autoRole).catch(() => {});
       }
 
-      // Boas-vindas
       if (w.channelEntry) {
         const entryChan = member.guild.channels.cache.get(w.channelEntry);
         if (entryChan && entryChan.isTextBased()) {
@@ -56,16 +53,15 @@ createEvent({
         }
       }
 
-      // Log
       const createdTs = Math.floor(member.user.createdTimestamp / 1000);
 
       const logContainer = createContainer(
         "#38bdf8",
         `## ${getEmojiTag("user_add")} Novo Membro`,
         [
-          `| <@${member.id}> (\`${member.user.tag}\`)`,
-          `| Conta criada: <t:${createdTs}:R>`,
-          `| Total: \`${member.guild.memberCount}\``,
+          `| ${getEmojiTag("user")} <@${member.id}> (\`${member.user.tag}\`)`,
+          `| ${getEmojiTag("clock")} Conta criada: <t:${createdTs}:R>`,
+          `| ${getEmojiTag("user_users")} Total: \`${member.guild.memberCount}\``,
         ].join("\n"),
       );
 

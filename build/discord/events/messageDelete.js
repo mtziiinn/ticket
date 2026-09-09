@@ -15,9 +15,9 @@ createEvent({
             const author = message.author;
             const content = message.content?.trim() || "*sem conteúdo*";
             const container = createContainer("#ef4444", `## ${getEmojiTag("action_x")} Mensagem Excluída`, [
-                `| Canal: <#${message.channelId}>`,
-                author ? `| Autor: <@${author.id}>` : "",
-                executor ? `| Por: <@${executor.id}>` : "",
+                `| ${getEmojiTag("folder")} <#${message.channelId}>`,
+                author ? `| ${getEmojiTag("user")} <@${author.id}>` : "",
+                executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
                 `\`\`\`${content.slice(0, 300)}\`\`\``,
             ].filter(Boolean).join("\n"));
             await sendBotLog(message.guild, container);

@@ -36,8 +36,8 @@ createEvent({
         "#ef4444",
         `## ${getEmojiTag("action_x")} Canal Excluído`,
         [
-          `| \`${channel.name}\` (\`${typeName}\`)`,
-          executor ? `| Por: <@${executor.id}>` : "",
+          `| ${getEmojiTag("folder")} \`${channel.name}\` (\`${typeName}\`)`,
+          executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 

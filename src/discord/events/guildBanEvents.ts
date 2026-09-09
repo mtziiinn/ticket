@@ -20,9 +20,9 @@ createEvent({
         "#ef4444",
         `## ${getEmojiTag("action_x")} Membro Banido`,
         [
-          `| <@${ban.user.id}>`,
-          executor ? `| Staff: <@${executor.id}>` : "",
-          `| Motivo: ${reason}`,
+          `| ${getEmojiTag("user")} <@${ban.user.id}>`,
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
+          `| ${getEmojiTag("action_info")} Motivo: ${reason}`,
         ].filter(Boolean).join("\n"),
       );
 
@@ -48,8 +48,8 @@ createEvent({
         "#38bdf8",
         `## ${getEmojiTag("action_check")} Membro Desbanido`,
         [
-          `| <@${ban.user.id}>`,
-          executor ? `| Staff: <@${executor.id}>` : "",
+          `| ${getEmojiTag("user")} <@${ban.user.id}>`,
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 

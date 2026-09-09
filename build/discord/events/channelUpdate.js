@@ -11,24 +11,24 @@ createEvent({
         try {
             const changes = [];
             if (oldChannel.name !== newChannel.name) {
-                changes.push(`• Nome: \`${oldChannel.name}\` ➔ \`${newChannel.name}\``);
+                changes.push(`• ${getEmojiTag("action_info")} Nome: \`${oldChannel.name}\` ➔ \`${newChannel.name}\``);
             }
             if (oldChannel.parentId !== newChannel.parentId) {
                 const oldParent = oldChannel.parent?.name || "Nenhuma";
                 const newParent = newChannel.parent?.name || "Nenhuma";
-                changes.push(`• Categoria: \`${oldParent}\` ➔ \`${newParent}\``);
+                changes.push(`• ${getEmojiTag("folder_open")} Categoria: \`${oldParent}\` ➔ \`${newParent}\``);
             }
             const oldTopic = oldChannel.topic || "";
             const newTopic = newChannel.topic || "";
             if (oldTopic !== newTopic) {
-                changes.push(`• Tópico alterado`);
+                changes.push(`• ${getEmojiTag("clipboard")} Tópico alterado`);
             }
             if (changes.length === 0)
                 return;
             const executor = await getAuditLogExecutor(newChannel.guild, AuditLogEvent.ChannelUpdate, newChannel.id);
             const container = createContainer("#eab308", `## ${getEmojiTag("action_info")} Canal Atualizado`, [
-                `| <#${newChannel.id}>`,
-                executor ? `| Por: <@${executor.id}>` : "",
+                `| ${getEmojiTag("folder")} <#${newChannel.id}>`,
+                executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
                 changes.join("\n"),
             ].filter(Boolean).join("\n"));
             await sendBotLog(newChannel.guild, container);

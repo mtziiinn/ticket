@@ -20,8 +20,8 @@ createEvent({
             const executor = await getAuditLogExecutor(channel.guild, AuditLogEvent.ChannelDelete, channel.id);
             const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
             const container = createContainer("#ef4444", `## ${getEmojiTag("action_x")} Canal Excluído`, [
-                `| \`${channel.name}\` (\`${typeName}\`)`,
-                executor ? `| Por: <@${executor.id}>` : "",
+                `| ${getEmojiTag("folder")} \`${channel.name}\` (\`${typeName}\`)`,
+                executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));
             await sendBotLog(channel.guild, container);
         }

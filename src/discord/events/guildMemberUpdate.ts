@@ -18,7 +18,6 @@ createEvent({
       const changes: string[] = [];
       let auditEvent: AuditLogEvent = AuditLogEvent.MemberUpdate;
 
-      // 1. Cargos Adicionados ou Removidos
       const addedRoles = newMember.roles.cache.filter(
         (role) => !oldMember.roles.cache.has(role.id),
       );
@@ -29,24 +28,23 @@ createEvent({
       if (addedRoles.size > 0) {
         auditEvent = AuditLogEvent.MemberRoleUpdate;
         const roleList = addedRoles.map((r) => `<@&${r.id}>`).join(", ");
-        changes.push(`• **+** ${roleList}`);
+        changes.push(`• ${getEmojiTag("action_add")} + ${roleList}`);
       }
 
       if (removedRoles.size > 0) {
         auditEvent = AuditLogEvent.MemberRoleUpdate;
         const roleList = removedRoles.map((r) => `<@&${r.id}>`).join(", ");
-        changes.push(`• **-** ${roleList}`);
+        changes.push(`• ${getEmojiTag("action_remove")} - ${roleList}`);
       }
 
-      // 2. Timeout / Castigo
       const oldTimeout = oldMember.communicationDisabledUntilTimestamp;
       const newTimeout = newMember.communicationDisabledUntilTimestamp;
       if (oldTimeout !== newTimeout) {
         if (newTimeout && newTimeout > Date.now()) {
           const timeoutDate = Math.floor(newTimeout / 1000);
-          changes.push(`• **Timeout:** até <t:${timeoutDate}:R>`);
+          changes.push(`• ${getEmojiTag("lock")} Timeout: <t:${timeoutDate}:R>`);
         } else {
-          changes.push(`• **Timeout removido**`);
+          changes.push(`• ${getEmojiTag("unlock")} Timeout removido`);
         }
       }
 
@@ -62,8 +60,8 @@ createEvent({
         "#3b82f6",
         `## ${getEmojiTag("user_users")} Membro Atualizado`,
         [
-          `| <@${newMember.id}> (\`${newMember.user.tag}\`)`,
-          executor ? `| Staff: <@${executor.id}>` : "",
+          `| ${getEmojiTag("user")} <@${newMember.id}>`,
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
           changes.join("\n"),
         ].filter(Boolean).join("\n"),
       );

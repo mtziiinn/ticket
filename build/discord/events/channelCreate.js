@@ -20,8 +20,8 @@ createEvent({
             const executor = await getAuditLogExecutor(channel.guild, AuditLogEvent.ChannelCreate, channel.id);
             const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
             const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Canal Criado`, [
-                `| <#${channel.id}> (\`${typeName}\`)`,
-                executor ? `| Por: <@${executor.id}>` : "",
+                `| ${getEmojiTag("folder")} <#${channel.id}> (\`${typeName}\`)`,
+                executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));
             await sendBotLog(channel.guild, container);
         }

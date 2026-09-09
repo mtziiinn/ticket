@@ -31,8 +31,8 @@ createEvent({
         "#38bdf8",
         `## ${getEmojiTag("action_check")} Canal Criado`,
         [
-          `| <#${channel.id}> (\`${typeName}\`)`,
-          executor ? `| Por: <@${executor.id}>` : "",
+          `| ${getEmojiTag("folder")} <#${channel.id}> (\`${typeName}\`)`,
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 

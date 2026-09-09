@@ -23,14 +23,13 @@ createEvent({
         "#ef4444",
         `## ${getEmojiTag("user_remove")} ${isKick ? "Membro Expulso" : "Membro Saiu"}`,
         [
-          `| <@${member.id}>`,
-          isKick ? `| Staff: <@${kickExecutor.id}>` : "",
+          `| ${getEmojiTag("user")} <@${member.id}>`,
+          isKick ? `| ${getEmojiTag("user_check")} <@${kickExecutor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 
       await sendBotLog(member.guild, logContainer);
 
-      // Notificação no Canal de Saída configurado
       const w = guildData.welcome;
       if (w?.channelExit) {
         const exitChan = member.guild.channels.cache.get(w.channelExit);

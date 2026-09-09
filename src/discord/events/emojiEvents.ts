@@ -22,8 +22,8 @@ createEvent({
         "#38bdf8",
         `## ${getEmojiTag("action_check")} Emoji Adicionado`,
         [
-          `| ${emojiDisplay} \`:${emoji.name}:\``,
-          executor ? `| Por: <@${executor.id}>` : "",
+          `| ${getEmojiTag("apps_figma")} ${emojiDisplay} \`:${emoji.name}:\``,
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 
@@ -49,8 +49,8 @@ createEvent({
         "#ef4444",
         `## ${getEmojiTag("action_x")} Emoji Excluído`,
         [
-          `| \`:${emoji.name}:\``,
-          executor ? `| Por: <@${executor.id}>` : "",
+          `| ${getEmojiTag("apps_figma")} \`:emoji.name}:\``,
+          executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 
@@ -82,9 +82,9 @@ createEvent({
         "#eab308",
         `## ${getEmojiTag("action_info")} Emoji Renomeado`,
         [
-          `| ${emojiDisplay}`,
+          `| ${getEmojiTag("apps_figma")} ${emojiDisplay}`,
           `| \`${oldEmoji.name}\` ➔ \`${newEmoji.name}\``,
-          executor ? `| Por: <@${executor.id}>` : "",
+          executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
         ].filter(Boolean).join("\n"),
       );
 
