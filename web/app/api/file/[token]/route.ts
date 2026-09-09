@@ -29,8 +29,9 @@ export async function GET(
     return new NextResponse(buffer, {
       headers: {
         "Content-Type": file.contentType || "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${file.filename}"`,
+        "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent(file.filename || "download")}`,
         "Content-Length": buffer.length.toString(),
+        "Cache-Control": "private, no-store",
       },
     });
   } catch (error) {

@@ -20,6 +20,7 @@ const options = {};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
+let deliveryFilesIndexPromise: Promise<string> | undefined;
 
 declare global {
   // eslint-disable-next-line no-var
@@ -51,5 +52,10 @@ export default function getClient() {
 
 export async function getDatabase(): Promise<Db> {
   const c = await getClientPromise();
-  return c.db(process.env.DATABASE_NAME || "database");
+  const db = c.db(process.env.DATABASE_NAME || "database");
+  deliveryFilesIndexPromise ??= db
+    .collection("delivery_files")
+    .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+  await deliveryFilesIndexPromise;
+  return db;
 }

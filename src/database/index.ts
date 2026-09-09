@@ -56,6 +56,8 @@ export const db = {
   dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
 };
 
+await db.pendingDeliveries.createIndexes();
+
 export type GuildSchema = InferSchemaType<typeof guildSchema>;
 export type MemberSchema = InferSchemaType<typeof memberSchema>;
 export type TicketSchema = InferSchemaType<typeof ticketSchema>;

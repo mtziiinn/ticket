@@ -3,6 +3,13 @@ import { getDatabase } from "@/lib/mongodb";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
+type MercadoPagoWebhookPayload = {
+  data?: { id?: string | number };
+  id?: string | number;
+  type?: string;
+  action?: string;
+};
+
 async function sendDiscordMessage(channelId: string, content: string) {
   const token = process.env.BOT_TOKEN;
   if (!token) return null;
@@ -66,7 +73,7 @@ export async function POST(request: NextRequest) {
     const queryId = searchParams.get("data.id") || searchParams.get("id");
     const queryType = searchParams.get("type") || searchParams.get("topic");
 
-    let bodyData: any = {};
+    let bodyData: MercadoPagoWebhookPayload = {};
     try {
       bodyData = await request.json();
     } catch {
@@ -169,9 +176,12 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[MP Webhook] Erro crítico no processamento:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 },
+    );
   }
 }
 

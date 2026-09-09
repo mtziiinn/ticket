@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, use } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Upload,
-  FileUp,
   CheckCircle2,
   AlertCircle,
   ArrowLeft,
@@ -26,7 +25,6 @@ interface PageProps {
 
 export default function UploadPage({ params }: PageProps) {
   const { token } = use(params);
-  const router = useRouter();
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{
@@ -192,10 +190,10 @@ export default function UploadPage({ params }: PageProps) {
 
         <div className="text-center">
           <Button asChild variant="link" size="sm">
-            <a href="/">
+            <Link href="/">
               <ArrowLeft className="h-4 w-4 mr-1" />
               Voltar ao início
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

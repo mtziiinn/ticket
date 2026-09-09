@@ -142,7 +142,12 @@ async function cleanupPendingDeliveries() {
   }
 }
 
+let isProcessingDmQueue = false;
+
 async function processDmQueue() {
+  if (isProcessingDmQueue) return;
+  isProcessingDmQueue = true;
+
   try {
     const queue = await db.dmQueue
       .find()
@@ -150,6 +155,7 @@ async function processDmQueue() {
       .limit(5)
       .lean();
     for (const item of queue) {
+      let delivered = false;
       try {
         const user = await client.users.fetch(item.ownerId);
         const staff = await client.users.fetch(item.staffId);
@@ -190,6 +196,7 @@ async function processDmQueue() {
           "DM Queue",
         );
         if (sent) {
+          delivered = true;
           console.log(
             `[DM Queue] DM enviada para ${item.ownerId} (${item.filename})`,
           );
@@ -200,6 +207,7 @@ async function processDmQueue() {
               await (channel as any).send(
                 `<@${item.ownerId}> 📬 Sua mídia foi entregue! ${item.downloadUrl}`,
               );
+              delivered = true;
             }
           } catch {
             /* ignora */
@@ -211,10 +219,14 @@ async function processDmQueue() {
           err,
         );
       }
-      await db.dmQueue.deleteOne({ _id: item._id });
+      if (delivered) {
+        await db.dmQueue.deleteOne({ _id: item._id });
+      }
     }
   } catch (error) {
     console.error("[DM Queue] Erro no processamento:", error);
+  } finally {
+    isProcessingDmQueue = false;
   }
 }
 
