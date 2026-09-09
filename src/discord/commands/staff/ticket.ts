@@ -248,7 +248,7 @@ createCommand({
           `${getEmojiTag("cloud_check")} **Processo RSS Total:** \`${result.rssAfterMB} MB\``,
         ].join("\n"),
         Separator.Default,
-        `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 1 hora e varreduras contínuas.*`,
+        `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 20 minutos, mantendo apenas o essencial para as respostas serem rápidas.*`,
       );
 
       await interaction.editReply({

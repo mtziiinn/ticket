@@ -8,35 +8,45 @@ export function clearBotCache(client, forceGuildPurge = false) {
     let usersSwept = 0;
     let membersSwept = 0;
     let voiceStatesSwept = 0;
-    // 1. Limpar mensagens de todos os canais de texto em cache
-    for (const channel of client.channels.cache.values()) {
-        if (channel.isTextBased() && "messages" in channel) {
-            messagesSwept += channel.messages.cache.size;
-            channel.messages.cache.clear();
-        }
-    }
-    // 2. Limpar membros das guildas mantendo apenas o próprio bot, e limpar estados de voz/presença
-    const botId = client.user?.id;
-    for (const guild of client.guilds.cache.values()) {
-        for (const [memberId] of guild.members.cache.entries()) {
-            if (memberId !== botId) {
-                guild.members.cache.delete(memberId);
-                membersSwept++;
+    // A purga agressiva de membros/usuários/mensagens só faz sentido quando
+    // solicitada manualmente (ex: /ticket limpar-cache). Em execuções periódicas
+    // os limites do client (makeCache) e os sweepers do discord.js já mantêm
+    // esses caches sob controle. Purga-los a cada ciclo força re-buscas na
+    // próxima interação, deixando o bot mais lento (menos fluido).
+    if (forceGuildPurge) {
+        // 1. Limpar mensagens de todos os canais de texto em cache
+        for (const channel of client.channels.cache.values()) {
+            if (channel.isTextBased() && "messages" in channel) {
+                messagesSwept += channel.messages.cache.size;
+                channel.messages.cache.clear();
             }
         }
+        // 2. Limpar membros das guildas mantendo apenas o próprio bot
+        const botId = client.user?.id;
+        for (const guild of client.guilds.cache.values()) {
+            for (const [memberId] of guild.members.cache.entries()) {
+                if (memberId !== botId) {
+                    guild.members.cache.delete(memberId);
+                    membersSwept++;
+                }
+            }
+        }
+        // 3. Limpar usuários globais em cache mantendo apenas o bot
+        for (const [userId] of client.users.cache.entries()) {
+            if (userId !== botId) {
+                client.users.cache.delete(userId);
+                usersSwept++;
+            }
+        }
+    }
+    // Presenças e estados de voz (baratos de limpar, não são críticos para o fluxo)
+    for (const guild of client.guilds.cache.values()) {
         if (guild.voiceStates?.cache) {
             voiceStatesSwept += guild.voiceStates.cache.size;
             guild.voiceStates.cache.clear();
         }
         if (guild.presences?.cache) {
             guild.presences.cache.clear();
-        }
-    }
-    // 3. Limpar usuários globais em cache mantendo apenas o bot
-    for (const [userId] of client.users.cache.entries()) {
-        if (userId !== botId) {
-            client.users.cache.delete(userId);
-            usersSwept++;
         }
     }
     // 4. Limpar caches internos (Guild TTL, Cooldowns, Captchas e Webhook Vault)

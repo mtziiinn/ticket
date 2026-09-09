@@ -188,7 +188,7 @@ createCommand({
                 `${getEmojiTag("database")} **Heap Utilizado:** \`${result.heapUsedAfterMB} MB\` *(era \`${result.heapUsedBeforeMB} MB\`)*`,
                 `${getEmojiTag("action_check")} **Memória Liberada:** \`${result.heapDiffMB} MB\``,
                 `${getEmojiTag("cloud_check")} **Processo RSS Total:** \`${result.rssAfterMB} MB\``,
-            ].join("\n"), Separator.Default, `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 1 hora e varreduras contínuas.*`);
+            ].join("\n"), Separator.Default, `${getEmojiTag("action_info")} *O sistema também executa limpezas automáticas de cache a cada 20 minutos, mantendo apenas o essencial para as respostas serem rápidas.*`);
             await interaction.editReply({
                 components: [container],
                 flags: ["IsComponentsV2"],

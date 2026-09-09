@@ -73,8 +73,7 @@ async function processTicketSubmission(interaction, routeCategory) {
         const description = data.description || "Nenhuma descrição.";
         const ticketId = Math.random().toString(36).substring(2, 9).toUpperCase();
         const openedAt = new Date().toLocaleString("pt-BR");
-        // 1. Buscar as configurações de categorias no banco
-        const guildData = await db.guilds.get(guild.id);
+        // 1. Buscar as configurações no banco (apenas uma chamada - cache TTL 60s)
         const dynamicCategories = guildData.channels?.ticketCategories || [];
         const selectedCategory = dynamicCategories.find((c) => c.value === category);
         // Pega o ID da categoria baseado no assunto escolhido
