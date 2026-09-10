@@ -62,7 +62,7 @@ function getTypeEmoji(type: string): string {
 }
 
 export async function sendErrorWebhook(report: ErrorReport): Promise<void> {
-  const webhookUrl = brand.errorWebhook?.url;
+  const webhookUrl = process.env.ERROR_WEBHOOK_URL || brand.errorWebhook?.url;
   if (!webhookUrl) return;
 
   try {

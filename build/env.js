@@ -7,4 +7,5 @@ export const env = await validateEnv(z.looseObject({
     DATABASE_NAME: z.string().optional(),
     WEB_URL: z.string().url().default("http://localhost:3000"),
     MP_ACCESS_TOKEN: z.string().optional(),
+    ERROR_WEBHOOK_URL: z.string().url().optional(),
 }));
