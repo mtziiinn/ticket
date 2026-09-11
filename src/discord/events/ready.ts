@@ -2,6 +2,7 @@ import { createEvent } from "#base";
 import { ActivityType } from "discord.js";
 import { db } from "#database";
 import { finishGiveaway } from "../commands/staff/giveaway.js";
+import { checkAndProcessMonthlyBillings } from "#functions";
 
 createEvent({
   name: "ready",
@@ -53,5 +54,16 @@ createEvent({
     } catch (err) {
       console.error("[Ready] Erro ao sincronizar bio do bot:", err);
     }
+
+    // Verificação periódica de cobranças mensais (a cada 1 hora)
+    checkAndProcessMonthlyBillings(client).catch((err) =>
+      console.error("[Ready] Erro na checagem inicial de cobrança mensal:", err),
+    );
+    setInterval(() => {
+      checkAndProcessMonthlyBillings(client).catch((err) =>
+        console.error("[Interval] Erro na checagem de cobrança mensal:", err),
+      );
+    }, 60 * 60 * 1000);
   },
 });
+

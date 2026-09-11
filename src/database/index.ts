@@ -9,6 +9,10 @@ import { ticketSchema } from "./schemas/ticket.js";
 import { transcriptSchema } from "./schemas/transcript.js";
 import { pendingDeliverySchema } from "./schemas/pendingDelivery.js";
 import { giveawaySchema } from "./schemas/giveaway.js";
+import {
+  monthlyBillingSchema,
+  IMonthlyBilling,
+} from "./schemas/monthlyBilling.js";
 import { env } from "#env";
 import chalk from "chalk";
 
@@ -54,14 +58,22 @@ export const db = {
   ),
   giveaways: model("giveaway", giveawaySchema, "giveaways"),
   dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
+  monthlyBillings: model<IMonthlyBilling>(
+    "monthlyBilling",
+    monthlyBillingSchema,
+    "monthly_billings",
+  ),
 };
 
 await db.pendingDeliveries.createIndexes();
+await db.monthlyBillings.createIndexes().catch(() => {});
 
 export type GuildSchema = InferSchemaType<typeof guildSchema>;
 export type MemberSchema = InferSchemaType<typeof memberSchema>;
 export type TicketSchema = InferSchemaType<typeof ticketSchema>;
 export type TranscriptSchema = InferSchemaType<typeof transcriptSchema>;
 export type GiveawaySchema = InferSchemaType<typeof giveawaySchema>;
+export type MonthlyBillingSchema = InferSchemaType<typeof monthlyBillingSchema>;
 
 export { cleanupGuildCache } from "./schemas/guild.js";
+

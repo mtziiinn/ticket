@@ -71,7 +71,7 @@ export function crc16(data) {
     }
     return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
 }
-export function generatePixPayload(key, name = "TICKETS", city = "SAO PAULO") {
+export function generatePixPayload(key, name = "TICKETS", city = "SAO PAULO", amount) {
     // Limpar a chave (remover espaços, traços, etc)
     const cleanKey = key
         .replace(/\s+/g, "")
@@ -85,12 +85,21 @@ export function generatePixPayload(key, name = "TICKETS", city = "SAO PAULO") {
     // Additional Data Field Template (TXID) - Obrigatório em muitos bancos
     const txid = "***"; // TXID padrão
     const additionalData = `05${txid.length.toString().padStart(2, "0")}${txid}`;
+    const sanitizedName = name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toUpperCase()
+        .substring(0, 25);
     let payload = "000201"; // Payload Format Indicator
     payload += `26${merchantAccount.length.toString().padStart(2, "0")}${merchantAccount}`;
     payload += "52040000"; // Merchant Category Code
     payload += "5303986"; // Transaction Currency (986 = Real)
+    if (amount && amount > 0) {
+        const formattedAmount = amount.toFixed(2);
+        payload += `54${formattedAmount.length.toString().padStart(2, "0")}${formattedAmount}`;
+    }
     payload += "5802BR"; // Country Code
-    payload += `59${name.length.toString().padStart(2, "0")}${name}`; // Merchant Name
+    payload += `59${sanitizedName.length.toString().padStart(2, "0")}${sanitizedName}`; // Merchant Name
     payload += `60${city.length.toString().padStart(2, "0")}${city}`; // Merchant City
     payload += `62${additionalData.length.toString().padStart(2, "0")}${additionalData}`; // Additional Data
     payload += "6304"; // CRC16
@@ -104,3 +113,4 @@ export * from "./panelJson.js";
 export * from "./vault.js";
 export * from "./errorWebhook.js";
 export * from "./logger.js";
+export * from "./monthlyBilling.js";

@@ -5,6 +5,7 @@ import { ticketSchema } from "./schemas/ticket.js";
 import { transcriptSchema } from "./schemas/transcript.js";
 import { pendingDeliverySchema } from "./schemas/pendingDelivery.js";
 import { giveawaySchema } from "./schemas/giveaway.js";
+import { monthlyBillingSchema, } from "./schemas/monthlyBilling.js";
 import { env } from "#env";
 import chalk from "chalk";
 try {
@@ -43,6 +44,8 @@ export const db = {
     pendingDeliveries: model("pendingDelivery", pendingDeliverySchema, "pending_deliveries"),
     giveaways: model("giveaway", giveawaySchema, "giveaways"),
     dmQueue: model("dmQueue", dmQueueSchema, "dm_queue"),
+    monthlyBillings: model("monthlyBilling", monthlyBillingSchema, "monthly_billings"),
 };
 await db.pendingDeliveries.createIndexes();
+await db.monthlyBillings.createIndexes().catch(() => { });
 export { cleanupGuildCache } from "./schemas/guild.js";
