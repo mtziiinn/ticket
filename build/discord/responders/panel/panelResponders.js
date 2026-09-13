@@ -386,6 +386,145 @@ createResponder({
         await updatePanelResponse(interaction, container);
     },
 });
+// 2.4.1 Modal Editar Opção de Abertura (seleção -> formulário pré-preenchido)
+createResponder({
+    customId: "panel/ticket/edit_category",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const categories = guildData.channels?.ticketCategories || [];
+        if (categories.length === 0) {
+            await interaction.reply({
+                content: `${getEmojiTag("action_warning")} Nenhuma opção de categoria cadastrada para editar.`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const modal = new ModalBuilder()
+            .setCustomId("panel/ticket/modal/edit_category_select")
+            .setTitle("Editar Opção de Abertura");
+        const select = new StringSelectMenuBuilder()
+            .setCustomId("category_to_edit")
+            .setPlaceholder("Selecione a opção que deseja editar")
+            .addOptions(categories.map((c) => new StringSelectMenuOptionBuilder()
+            .setLabel(c.name || "Opção")
+            .setValue(c.value || c.name)
+            .setDescription(c.description?.slice(0, 100) || "Sem descrição")));
+        const label = new LabelBuilder()
+            .setLabel("Selecione a categoria para editar:")
+            .setStringSelectMenuComponent(select);
+        modal.addComponents(label);
+        await interaction.showModal(modal);
+    },
+});
+createResponder({
+    customId: "panel/ticket/modal/edit_category_select",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction) {
+        const selected = interaction.fields.getStringSelectValues("category_to_edit")?.[0];
+        if (!selected) {
+            await interaction.reply({
+                content: "Nenhuma opção foi selecionada.",
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const cat = guildData.channels?.ticketCategories?.find((c) => (c.value || c.name) === selected);
+        if (!cat) {
+            await interaction.reply({
+                content: "Categoria não encontrada (pode ter sido removida).",
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const modal = new ModalBuilder()
+            .setCustomId(`panel/ticket/modal/edit_category_submit/${cat.value || cat.name}`)
+            .setTitle("Editar Opção de Abertura");
+        const nameLabel = new LabelBuilder()
+            .setLabel("Nome da Opção:")
+            .setTextInputComponent(new TextInputBuilder()
+            .setCustomId("name")
+            .setValue(cat.name || "")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true));
+        const descLabel = new LabelBuilder()
+            .setLabel("Descrição da Opção:")
+            .setTextInputComponent(new TextInputBuilder()
+            .setCustomId("description")
+            .setValue(cat.description || "")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true));
+        const emojiLabel = new LabelBuilder()
+            .setLabel("Emoji do Menu:")
+            .setTextInputComponent(new TextInputBuilder()
+            .setCustomId("emoji")
+            .setValue(cat.emoji || "")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true));
+        const chEmojiLabel = new LabelBuilder()
+            .setLabel("Emoji Padrão Windows (para o canal):")
+            .setTextInputComponent(new TextInputBuilder()
+            .setCustomId("channelEmoji")
+            .setValue(cat.channelEmoji || "")
+            .setStyle(TextInputStyle.Short)
+            .setRequired(true));
+        const parentSelect = new ChannelSelectMenuBuilder()
+            .setCustomId("parent")
+            .setPlaceholder("Selecione a categoria de destino")
+            .setChannelTypes(ChannelType.GuildCategory);
+        if (cat.parentId)
+            parentSelect.setDefaultChannels(cat.parentId);
+        const parentLabel = new LabelBuilder()
+            .setLabel("Categoria do Discord:")
+            .setDescription("Categoria onde os canais serão criados.")
+            .setChannelSelectMenuComponent(parentSelect);
+        modal.addComponents(nameLabel, descLabel, emojiLabel, chEmojiLabel, parentLabel);
+        // showModal em resposta a um Modal Submit (encadeamento de modal) tem
+        // suporte em runtime (discord.js aplica via mixin), mas o typing oficial
+        // de ModalSubmitInteraction ainda não declara o método.
+        await interaction.showModal(modal);
+    },
+});
+createResponder({
+    customId: "panel/ticket/modal/edit_category_submit/:oldValue",
+    types: [ResponderType.Modal, ResponderType.ModalComponent],
+    cache: "cached",
+    async run(interaction, { oldValue }) {
+        const name = interaction.fields.getTextInputValue("name");
+        const description = interaction.fields.getTextInputValue("description");
+        const emoji = interaction.fields.getTextInputValue("emoji");
+        const channelEmoji = interaction.fields.getTextInputValue("channelEmoji");
+        const parentChannel = interaction.fields
+            .getSelectedChannels("parent")
+            ?.first();
+        const parentId = parentChannel?.id;
+        const guildData = await db.guilds.get(interaction.guild.id);
+        const list = guildData.channels?.ticketCategories || [];
+        const index = list.findIndex((c) => (c.value || c.name) === oldValue);
+        if (index === -1) {
+            await interaction.reply({
+                content: "Categoria não encontrada (pode ter sido removida).",
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        list[index] = {
+            ...list[index],
+            name,
+            description,
+            emoji,
+            channelEmoji,
+            parentId: parentId || list[index].parentId,
+        };
+        guildData.markModified("channels");
+        await guildData.save();
+        const container = await renderTab("ticket", interaction.guild, interaction.client, guildData);
+        await updatePanelResponse(interaction, container);
+    },
+});
 // 2.5 Modal Remover Opção de Abertura
 createResponder({
     customId: "panel/ticket/remove_category",

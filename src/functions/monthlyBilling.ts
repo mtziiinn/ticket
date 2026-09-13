@@ -34,9 +34,7 @@ export const MONTHLY_BILLING_CONFIG = {
   // de qualquer um deles ja cancela o desligamento.
   shutdownDay: 10,
   developerId: "1061397602916126771",
-  mpAccessToken:
-    process.env.DEV_MP_ACCESS_TOKEN ||
-    "APP_USR-8906508407129967-091101-f4ddb32062bcb9a43470ee7c7470db7f-2469747689",
+  mpAccessToken: process.env.DEV_MP_ACCESS_TOKEN,
   clients: [
     {
       id: "403271714437595137",
@@ -292,9 +290,7 @@ export async function generateMonthlyPixPayment(
   }
 
   const token =
-    MONTHLY_BILLING_CONFIG.mpAccessToken ||
-    process.env.DEV_MP_ACCESS_TOKEN ||
-    "APP_USR-8906508407129967-091101-f4ddb32062bcb9a43470ee7c7470db7f-2469747689";
+    MONTHLY_BILLING_CONFIG.mpAccessToken || process.env.DEV_MP_ACCESS_TOKEN;
 
   const [year, month] = monthYear.split("-");
   const formattedPeriod = `${month}/${year}`;
@@ -405,9 +401,7 @@ export async function verifyMonthlyPayment(
   billing?: any;
 }> {
   const token =
-    MONTHLY_BILLING_CONFIG.mpAccessToken ||
-    process.env.DEV_MP_ACCESS_TOKEN ||
-    "APP_USR-8906508407129967-091101-f4ddb32062bcb9a43470ee7c7470db7f-2469747689";
+    MONTHLY_BILLING_CONFIG.mpAccessToken || process.env.DEV_MP_ACCESS_TOKEN;
 
   try {
     const res = await fetch(

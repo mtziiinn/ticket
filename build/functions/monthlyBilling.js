@@ -18,8 +18,7 @@ export const MONTHLY_BILLING_CONFIG = {
     // de qualquer um deles ja cancela o desligamento.
     shutdownDay: 10,
     developerId: "1061397602916126771",
-    mpAccessToken: process.env.DEV_MP_ACCESS_TOKEN ||
-        "APP_USR-8906508407129967-091101-f4ddb32062bcb9a43470ee7c7470db7f-2469747689",
+    mpAccessToken: process.env.DEV_MP_ACCESS_TOKEN,
     clients: [
         {
             id: "403271714437595137",
@@ -167,9 +166,7 @@ export async function generateMonthlyPixPayment(userId, monthYear = getCurrentMo
             error: "Você não está registrado na lista de clientes de mensalidade deste bot.",
         };
     }
-    const token = MONTHLY_BILLING_CONFIG.mpAccessToken ||
-        process.env.DEV_MP_ACCESS_TOKEN ||
-        "APP_USR-8906508407129967-091101-f4ddb32062bcb9a43470ee7c7470db7f-2469747689";
+    const token = MONTHLY_BILLING_CONFIG.mpAccessToken || process.env.DEV_MP_ACCESS_TOKEN;
     const [year, month] = monthYear.split("-");
     const formattedPeriod = `${month}/${year}`;
     const idempotencyKey = `monthly_${userId}_${monthYear}_${Date.now()}`;
@@ -256,9 +253,7 @@ export async function generateMonthlyPixPayment(userId, monthYear = getCurrentMo
  * Em caso de aprovação, atualiza o banco e notifica cliente e desenvolvedor.
  */
 export async function verifyMonthlyPayment(paymentId, client) {
-    const token = MONTHLY_BILLING_CONFIG.mpAccessToken ||
-        process.env.DEV_MP_ACCESS_TOKEN ||
-        "APP_USR-8906508407129967-091101-f4ddb32062bcb9a43470ee7c7470db7f-2469747689";
+    const token = MONTHLY_BILLING_CONFIG.mpAccessToken || process.env.DEV_MP_ACCESS_TOKEN;
     try {
         const res = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
             headers: {

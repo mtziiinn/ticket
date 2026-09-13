@@ -297,6 +297,12 @@ export async function renderTicketTab(guildData: any) {
         .setStyle(ButtonStyle.Secondary)
         .setEmoji(getEmojiId("action_add") || "➕"),
       new ButtonBuilder()
+        .setCustomId("panel/ticket/edit_category")
+        .setLabel("Editar Opção")
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji(getEmojiId("action_add") || "✏️")
+        .setDisabled(categories.length === 0),
+      new ButtonBuilder()
         .setCustomId("panel/ticket/remove_category")
         .setLabel("Remover Opção")
         .setStyle(ButtonStyle.Secondary)
