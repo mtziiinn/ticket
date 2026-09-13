@@ -5,7 +5,7 @@ import { db } from "#database";
 import { MONTHLY_BILLING_CONFIG, getCurrentMonthYear, getBrasiliaDate, sendMonthlyBillingDM, getEmojiTag, } from "#functions";
 createCommand({
     name: "mensalidade",
-    description: "📅 Gerencia e testa as cobranças automáticas mensais dos clientes.",
+    description: "📅 Gerencia e dispara as cobranças mensais dos clientes.",
     type: ApplicationCommandType.ChatInput,
     defaultMemberPermissions: PermissionFlagsBits.Administrator,
     options: [
@@ -16,7 +16,7 @@ createCommand({
         },
         {
             name: "disparar",
-            description: "Envia a cobrança de teste na DM de um cliente ou de você mesmo.",
+            description: "Envia a cobrança oficial na DM de um cliente ou de você mesmo.",
             type: ApplicationCommandOptionType.Subcommand,
             options: [
                 {
@@ -51,9 +51,18 @@ createCommand({
                     userId: c.id,
                     monthYear: currentMonthYear,
                 });
-                const statusTag = billed
-                    ? `${getEmojiTag("action_check") || "✅"} Cobrado em ${billed.sentAt.toLocaleDateString("pt-BR")}`
-                    : `${getEmojiTag("clock") || "⏳"} Pendente para ${nextDateFormatted}`;
+                let statusTag = `${getEmojiTag("clock") || "⏳"} Pendente para ${nextDateFormatted}`;
+                if (billed) {
+                    if (billed.status === "paid") {
+                        statusTag = `${getEmojiTag("action_check") || "✅"} **Pago** em ${billed.paidAt ? billed.paidAt.toLocaleDateString("pt-BR") : "confirmado"}`;
+                    }
+                    else if (billed.status === "pending") {
+                        statusTag = `${getEmojiTag("other_card") || "💳"} **PIX Gerado** (Aguardando Pagamento)`;
+                    }
+                    else {
+                        statusTag = `${getEmojiTag("clock") || "📨"} **Fatura Enviada** em ${billed.sentAt.toLocaleDateString("pt-BR")}`;
+                    }
+                }
                 clientStatuses.push(`| • <@${c.id}> (**${c.name}**)\n| ↳ Status (${currentMonthYear}): ${statusTag}`);
             }
             const container = createContainer(brandColor, `## ${getEmojiTag("other_dollar") || "🟢"} Cobrança Automática Mensal • Status`, Separator.Default, [
@@ -62,7 +71,7 @@ createCommand({
                 `| **Valor Mensal:** \`R$ ${MONTHLY_BILLING_CONFIG.amount.toFixed(2).replace(".", ",")}\``,
                 `| **Dia do Vencimento:** Todo dia 06`,
                 `| **Próximo Disparo Automático:** **${nextDateFormatted}**`,
-            ].join("\n"), Separator.Default, `### Clientes Cadastrados:\n${clientStatuses.join("\n\n")}`, Separator.Default, `*Use \`/mensalidade disparar\` para enviar uma cobrança de teste na DM.*`);
+            ].join("\n"), Separator.Default, `### Clientes Cadastrados:\n${clientStatuses.join("\n\n")}`, Separator.Default, `*Use \`/mensalidade disparar\` para enviar a cobrança oficial na DM.*`);
             await interaction.editReply({
                 components: [container],
                 flags: ["IsComponentsV2"],
@@ -78,7 +87,7 @@ createCommand({
                 name: targetUser.username,
             };
             const result = await sendMonthlyBillingDM(interaction.client, clientConfig, {
-                isTest: true,
+                isTest: false,
             });
             if (!result.success) {
                 await interaction.editReply({
@@ -87,7 +96,7 @@ createCommand({
                 return;
             }
             await interaction.editReply({
-                content: `${getEmojiTag("action_check") || "✅"} Cobrança de teste enviada com sucesso para a DM de <@${targetUser.id}>!`,
+                content: `${getEmojiTag("action_check") || "✅"} Cobrança enviada com sucesso para a DM de <@${targetUser.id}>!`,
             });
         }
     },

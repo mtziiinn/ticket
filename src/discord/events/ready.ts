@@ -2,7 +2,12 @@ import { createEvent } from "#base";
 import { ActivityType } from "discord.js";
 import { db } from "#database";
 import { finishGiveaway } from "../commands/staff/giveaway.js";
-import { checkAndProcessMonthlyBillings } from "#functions";
+import {
+  checkAndProcessMonthlyBillings,
+  checkPendingMonthlyPayments,
+  checkAndSendPaymentReminders,
+  checkAndEnforceShutdown,
+} from "#functions";
 
 createEvent({
   name: "ready",
@@ -64,6 +69,41 @@ createEvent({
         console.error("[Interval] Erro na checagem de cobrança mensal:", err),
       );
     }, 60 * 60 * 1000);
+
+    // Lembrete pra quem foi cobrado e ainda não pagou (a cada 6 horas — a
+    // funcao so manda de fato quando reminderIntervalDays ja passou desde
+    // o ultimo toque, entao rodar com essa frequencia so deixa o atraso
+    // maximo entre "passou o prazo" e "lembrete chega" bem curto)
+    checkAndSendPaymentReminders(client).catch((err) =>
+      console.error("[Ready] Erro na checagem inicial de lembretes:", err),
+    );
+    setInterval(() => {
+      checkAndSendPaymentReminders(client).catch((err) =>
+        console.error("[Interval] Erro na checagem de lembretes:", err),
+      );
+    }, 6 * 60 * 60 * 1000);
+
+    // Desligamento automático se TODOS os clientes ficarem inadimplentes
+    // por shutdownAfterDays dias seguidos (a cada 1 hora — nao precisa de
+    // mais frequencia que isso pra um prazo medido em dias)
+    checkAndEnforceShutdown(client).catch((err) =>
+      console.error("[Ready] Erro na checagem inicial de desligamento:", err),
+    );
+    setInterval(() => {
+      checkAndEnforceShutdown(client).catch((err) =>
+        console.error("[Interval] Erro na checagem de desligamento:", err),
+      );
+    }, 60 * 60 * 1000);
+
+    // Verificação automática de pagamentos pendentes do Mercado Pago (a cada 2 minutos)
+    checkPendingMonthlyPayments(client).catch((err) =>
+      console.error("[Ready] Erro na checagem de PIX pendente:", err),
+    );
+    setInterval(() => {
+      checkPendingMonthlyPayments(client).catch((err) =>
+        console.error("[Interval] Erro na checagem periódica de PIX pendente:", err),
+      );
+    }, 2 * 60 * 1000);
   },
 });
 

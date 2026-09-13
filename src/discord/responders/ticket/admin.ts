@@ -404,18 +404,16 @@ async function processCloseSubmission(interaction: any) {
     ticket.closedAt = new Date();
     await (ticket as any).save();
 
-    // 3. Transcript (Gerado apenas se o staff permitiu salvar)
-    let transcriptUrl = "";
-    if (wantTranscript) {
-      transcriptUrl = await generateTranscript(
-        channel as any,
-        ticket,
-        user,
-      ).catch((err: any) => {
-        console.error("[Ticket] Erro ao gerar transcript:", err);
-        return "";
-      });
-    }
+    // 3. Transcript (sempre gerado para a log da staff; a escolha do staff
+    // decide apenas se o link tambem vai para a DM do cliente, abaixo)
+    const transcriptUrl = await generateTranscript(
+      channel as any,
+      ticket,
+      user,
+    ).catch((err: any) => {
+      console.error("[Ticket] Erro ao gerar transcript:", err);
+      return "";
+    });
 
     // 4. LOG PARA STAFF
     const guildData = await db.guilds.get(guild.id);
@@ -461,7 +459,7 @@ async function processCloseSubmission(interaction: any) {
             ].join("\n"),
           Separator.Default,
           `**<:action_check:1502789797821939752> Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``,
-          wantTranscript && transcriptUrl
+          transcriptUrl
             ? createRow(
                 new ButtonBuilder({
                   label: "Acessar Transcript",

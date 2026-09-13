@@ -16,7 +16,7 @@ import {
 
 createCommand({
   name: "mensalidade",
-  description: "📅 Gerencia e testa as cobranças automáticas mensais dos clientes.",
+  description: "📅 Gerencia e dispara as cobranças mensais dos clientes.",
   type: ApplicationCommandType.ChatInput,
   defaultMemberPermissions: PermissionFlagsBits.Administrator,
   options: [
@@ -27,7 +27,7 @@ createCommand({
     },
     {
       name: "disparar",
-      description: "Envia a cobrança de teste na DM de um cliente ou de você mesmo.",
+      description: "Envia a cobrança oficial na DM de um cliente ou de você mesmo.",
       type: ApplicationCommandOptionType.Subcommand,
       options: [
         {
@@ -68,9 +68,16 @@ createCommand({
           monthYear: currentMonthYear,
         });
 
-        const statusTag = billed
-          ? `${getEmojiTag("action_check") || "✅"} Cobrado em ${billed.sentAt.toLocaleDateString("pt-BR")}`
-          : `${getEmojiTag("clock") || "⏳"} Pendente para ${nextDateFormatted}`;
+        let statusTag = `${getEmojiTag("clock") || "⏳"} Pendente para ${nextDateFormatted}`;
+        if (billed) {
+          if (billed.status === "paid") {
+            statusTag = `${getEmojiTag("action_check") || "✅"} **Pago** em ${billed.paidAt ? billed.paidAt.toLocaleDateString("pt-BR") : "confirmado"}`;
+          } else if (billed.status === "pending") {
+            statusTag = `${getEmojiTag("other_card") || "💳"} **PIX Gerado** (Aguardando Pagamento)`;
+          } else {
+            statusTag = `${getEmojiTag("clock") || "📨"} **Fatura Enviada** em ${billed.sentAt.toLocaleDateString("pt-BR")}`;
+          }
+        }
 
         clientStatuses.push(
           `| • <@${c.id}> (**${c.name}**)\n| ↳ Status (${currentMonthYear}): ${statusTag}`,
@@ -91,7 +98,7 @@ createCommand({
         Separator.Default,
         `### Clientes Cadastrados:\n${clientStatuses.join("\n\n")}`,
         Separator.Default,
-        `*Use \`/mensalidade disparar\` para enviar uma cobrança de teste na DM.*`,
+        `*Use \`/mensalidade disparar\` para enviar a cobrança oficial na DM.*`,
       );
 
       await interaction.editReply({
@@ -115,7 +122,7 @@ createCommand({
       };
 
       const result = await sendMonthlyBillingDM(interaction.client, clientConfig, {
-        isTest: true,
+        isTest: false,
       });
 
       if (!result.success) {
@@ -126,7 +133,7 @@ createCommand({
       }
 
       await interaction.editReply({
-        content: `${getEmojiTag("action_check") || "✅"} Cobrança de teste enviada com sucesso para a DM de <@${targetUser.id}>!`,
+        content: `${getEmojiTag("action_check") || "✅"} Cobrança enviada com sucesso para a DM de <@${targetUser.id}>!`,
       });
     }
   },
