@@ -2,12 +2,13 @@ import { createEvent } from "#base";
 import { ActivityType } from "discord.js";
 import { db } from "#database";
 import { finishGiveaway } from "../commands/staff/giveaway.js";
-import { checkAndProcessMonthlyBillings, checkPendingMonthlyPayments, checkAndSendPaymentReminders, checkAndEnforceShutdown, } from "#functions";
+import { checkAndProcessMonthlyBillings, checkPendingMonthlyPayments, checkAndSendPaymentReminders, checkAndEnforceShutdown, sendStartupWebhook, } from "#functions";
 createEvent({
     name: "ready",
     event: "ready",
     once: true,
     async run(client) {
+        sendStartupWebhook(client).catch(() => { });
         const statuses = brand.presence?.length > 0
             ? brand.presence
             : [`💻 Desenvolvido para ${brand.brandName}`];

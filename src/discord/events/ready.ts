@@ -7,6 +7,7 @@ import {
   checkPendingMonthlyPayments,
   checkAndSendPaymentReminders,
   checkAndEnforceShutdown,
+  sendStartupWebhook,
 } from "#functions";
 
 createEvent({
@@ -14,6 +15,8 @@ createEvent({
   event: "ready",
   once: true,
   async run(client) {
+    sendStartupWebhook(client).catch(() => {});
+
     const statuses =
       brand.presence?.length > 0
         ? brand.presence

@@ -134,3 +134,47 @@ export function reportError(type, error, context) {
         context,
     }).catch(() => { });
 }
+/**
+ * Aviso de "bot iniciado", disparado no evento ready. Cobre reinícios por
+ * QUALQUER motivo — crash, deploy manual, ou o Discloud matando e subindo
+ * de novo por estourar o limite de RAM — já que todos passam por aqui,
+ * mesmo os que o handler de uncaughtException/unhandledRejection não
+ * consegue enxergar (kill externo do host não é um evento do processo).
+ */
+export async function sendStartupWebhook(client) {
+    const webhookUrl = process.env.ERROR_WEBHOOK_URL || brand.errorWebhook?.url;
+    if (!webhookUrl)
+        return;
+    try {
+        const rawPing = Math.round(client.ws?.ping);
+        const ping = isNaN(rawPing) || rawPing <= 0 ? 0 : rawPing;
+        const guildsCount = client.guilds?.cache?.size || 0;
+        const memoryMB = (process.memoryUsage().rss / 1024 / 1024).toFixed(1);
+        const unixTime = Math.floor(Date.now() / 1000);
+        const embed = {
+            color: 0x22c55e,
+            title: `🟢 ${brand.brandName} Online — Bot Iniciado`,
+            description: "O bot foi inicializado (ou reiniciado) e está operando normalmente.",
+            fields: [
+                { name: "Servidores", value: `\`${guildsCount}\``, inline: true },
+                { name: "Latência", value: `\`${ping}ms\``, inline: true },
+                { name: "Memória (RSS)", value: `\`${memoryMB} MB\``, inline: true },
+                { name: "Horário", value: `<t:${unixTime}:F> (<t:${unixTime}:R>)`, inline: false },
+            ],
+            footer: { text: `${brand.brandName} Bot • ${env.NODE_ENV || "production"}` },
+            timestamp: new Date().toISOString(),
+        };
+        await fetch(webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: brand.errorWebhook?.name || `${brand.brandName} Error Logs`,
+                avatar_url: brand.avatarUrl,
+                embeds: [embed],
+            }),
+        });
+    }
+    catch (err) {
+        console.error("[ErrorWebhook] Falha ao enviar webhook de inicialização:", err);
+    }
+}
