@@ -2,6 +2,7 @@ import { cleanupGuildCache } from "#database";
 import { cleanupCooldowns } from "../discord/responders/ticket/submit.js";
 import { cleanupCaptchaCache } from "../discord/responders/verification/verify.js";
 import { cleanupVaultWebhookCache } from "../discord/responders/ticket/manage.js";
+import { cleanupPendingAnnounces } from "../discord/responders/anunciar/anunciar.js";
 export function clearBotCache(client, forceGuildPurge = false) {
     const memBefore = process.memoryUsage();
     let messagesSwept = 0;
@@ -54,6 +55,7 @@ export function clearBotCache(client, forceGuildPurge = false) {
     const cooldownsSwept = cleanupCooldowns();
     const captchasSwept = cleanupCaptchaCache();
     cleanupVaultWebhookCache();
+    const pendingAnnouncesSwept = cleanupPendingAnnounces();
     // 5. Acionar Garbage Collection do V8 se exposto (--expose-gc)
     const globalAny = global;
     if (typeof globalAny.gc === "function") {
@@ -86,5 +88,6 @@ export function clearBotCache(client, forceGuildPurge = false) {
         captchasSwept,
         guildConfigsSwept,
         cooldownsSwept,
+        pendingAnnouncesSwept,
     };
 }

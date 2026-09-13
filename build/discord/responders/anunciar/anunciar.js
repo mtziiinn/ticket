@@ -6,6 +6,22 @@ import { db } from "#database";
 import { getEmojiTag, sendChannelAnnouncement, sendDMAnnouncement, } from "#functions";
 import { formatHexColor, getBannerUrl } from "../panel/panelView.js";
 const pending = new Map();
+// Se o staff abrir /anunciar (as vezes com um anexo real em memória) e
+// abandonar o fluxo sem enviar nem cancelar, a entrada ficava presa pra
+// sempre — nunca havia limpeza. TTL de 30min (bem acima do tempo de vida de
+// uma interação efêmera) + varredura chamada pelo cacheCleaner.
+const PENDING_TTL_MS = 30 * 60 * 1000;
+export function cleanupPendingAnnounces() {
+    const now = Date.now();
+    let swept = 0;
+    for (const [userId, state] of pending) {
+        if (now - state.createdAt > PENDING_TTL_MS) {
+            pending.delete(userId);
+            swept++;
+        }
+    }
+    return swept;
+}
 function isValidUrl(raw) {
     try {
         const url = new URL(raw);
@@ -137,6 +153,7 @@ createResponder({
             file: file ?? undefined,
             fileName,
             roleIds: [],
+            createdAt: Date.now(),
         });
         const container = renderConfirm(interaction.user.id, interaction.guild);
         await interaction.reply({
@@ -155,6 +172,7 @@ createResponder({
         const state = pending.get(interaction.user.id);
         if (!state)
             return;
+        state.createdAt = Date.now();
         state.channelId = interaction.values[0];
         const container = renderConfirm(interaction.user.id, interaction.guild);
         await interaction.update({
@@ -173,6 +191,7 @@ createResponder({
         const state = pending.get(interaction.user.id);
         if (!state)
             return;
+        state.createdAt = Date.now();
         state.roleIds = interaction.values;
         const container = renderConfirm(interaction.user.id, interaction.guild);
         await interaction.update({
@@ -263,6 +282,7 @@ createResponder({
             });
             return;
         }
+        state.createdAt = Date.now();
         const videoRaw = interaction.fields.getTextInputValue("video_url").trim();
         const arquivoRaw = interaction.fields.getTextInputValue("arquivo_url").trim();
         if (videoRaw) {

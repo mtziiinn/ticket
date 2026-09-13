@@ -178,6 +178,9 @@ createCommand({
             if (result.captchasSwept > 0) {
                 resourcesList.push(`${getEmojiTag("clock_check")} **Captchas expirados eliminados:** \`${result.captchasSwept}\``);
             }
+            if (result.pendingAnnouncesSwept > 0) {
+                resourcesList.push(`${getEmojiTag("other_megaphone")} **Rascunhos de anúncio abandonados:** \`${result.pendingAnnouncesSwept}\``);
+            }
             if (result.guildConfigsSwept > 0) {
                 resourcesList.push(`${getEmojiTag("database_check")} **Configurações de servidores recicladas:** \`${result.guildConfigsSwept}\``);
             }
