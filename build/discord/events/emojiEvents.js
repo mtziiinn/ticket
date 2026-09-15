@@ -11,7 +11,7 @@ createEvent({
             const emojiDisplay = emoji.animated
                 ? `<a:${emoji.name}:${emoji.id}>`
                 : `<:${emoji.name}:${emoji.id}>`;
-            const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Emoji Adicionado`, [
+            const container = createContainer(constants.colors.primary, `## ${getEmojiTag("action_check")} Emoji Adicionado`, [
                 `| ${getEmojiTag("apps_figma")} ${emojiDisplay} \`:${emoji.name}:\``,
                 executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));

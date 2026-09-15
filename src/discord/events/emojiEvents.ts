@@ -19,7 +19,7 @@ createEvent({
         : `<:${emoji.name}:${emoji.id}>`;
 
       const container = createContainer(
-        "#38bdf8",
+        constants.colors.primary,
         `## ${getEmojiTag("action_check")} Emoji Adicionado`,
         [
           `| ${getEmojiTag("apps_figma")} ${emojiDisplay} \`:${emoji.name}:\``,

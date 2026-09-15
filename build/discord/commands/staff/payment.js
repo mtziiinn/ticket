@@ -185,7 +185,7 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
             : pixName
                 ? `*Loja Oficial (Padrão)* • **${pixName}**`
                 : `*Loja Oficial (Padrão)*`;
-        const container = createContainer("#38bdf8", `## ${getEmojiTag("other_dollar")} Cobrança Gerada`, Separator.Default, [
+        const container = createContainer(constants.colors.primary, `## ${getEmojiTag("other_dollar")} Cobrança Gerada`, Separator.Default, [
             `| **Cliente:** ${clientMention}`,
             `| **Recebedor:** ${receiverTag}`,
             `| **Valor:** \`${formattedAmount}\``,
@@ -277,7 +277,7 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
         if (actionButtons.length > 0) {
             rows.push(createRow(...actionButtons));
         }
-        const container = createContainer("#38bdf8", `## ${getEmojiTag("other_dollar")} Cobrança Gerada (Mercado Pago)`, Separator.Default, sections.join("\n"), Separator.Default, ...mediaItems, mediaItems.length > 0 ? Separator.Default : [], ...rows, rows.length > 0 ? Separator.Default : [], `*O pagamento é verificado automaticamente pelo sistema assim que for aprovado.*`);
+        const container = createContainer(constants.colors.primary, `## ${getEmojiTag("other_dollar")} Cobrança Gerada (Mercado Pago)`, Separator.Default, sections.join("\n"), Separator.Default, ...mediaItems, mediaItems.length > 0 ? Separator.Default : [], ...rows, rows.length > 0 ? Separator.Default : [], `*O pagamento é verificado automaticamente pelo sistema assim que for aprovado.*`);
         const msg = await interaction.editReply({
             components: [container],
             flags: ["IsComponentsV2"],
@@ -349,7 +349,7 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
     const receiverTagStripe = isIndividualStripe
         ? `<@${interaction.user.id}> *(Conta Stripe Pessoal)*`
         : `*Loja Oficial (Padrão)*`;
-    const container = createContainer("#38bdf8", `## ${getEmojiTag("other_card")} Cobrança Gerada (Stripe)`, Separator.Default, [
+    const container = createContainer(constants.colors.primary, `## ${getEmojiTag("other_card")} Cobrança Gerada (Stripe)`, Separator.Default, [
         `| **Cliente:** ${clientMention}`,
         `| **Recebedor:** ${receiverTagStripe}`,
         `| **Valor:** \`${formattedAmount}\``,

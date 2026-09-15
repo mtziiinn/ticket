@@ -27,7 +27,7 @@ createEvent({
     async run(ban) {
         try {
             const executor = await getAuditLogExecutor(ban.guild, AuditLogEvent.MemberBanRemove, ban.user.id);
-            const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Membro Desbanido`, [
+            const container = createContainer(constants.colors.primary, `## ${getEmojiTag("action_check")} Membro Desbanido`, [
                 `| ${getEmojiTag("user")} <@${ban.user.id}>`,
                 executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));

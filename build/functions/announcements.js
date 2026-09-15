@@ -5,7 +5,7 @@ import { formatHexColor } from "../discord/responders/panel/panelView.js";
 export function announcementContainer(options) {
     const finalColor = options.color && /^#?[0-9a-fA-F]{3,8}$/.test(options.color)
         ? formatHexColor(options.color)
-        : formatHexColor("#38bdf8");
+        : formatHexColor(constants.colors.primary);
     const prismEmoji = getEmojiTag(options.headerEmoji || "prism") || "💎";
     const descFormatted = (options.message || "").replace(/\\n/g, "\n");
     const authorLine = options.authorName ? ` | Enviado por: **${options.authorName}**` : "";
@@ -42,7 +42,7 @@ export function announcementContainer(options) {
 export function announcementDMContainer(options) {
     const finalColor = options.color && /^#?[0-9a-fA-F]{3,8}$/.test(options.color)
         ? formatHexColor(options.color)
-        : formatHexColor("#38bdf8");
+        : formatHexColor(constants.colors.primary);
     const prismEmoji = getEmojiTag(options.headerEmoji || "prism") || "💎";
     const descFormatted = (options.message || "").replace(/\\n/g, "\n");
     const authorLine = options.authorName ? ` | Enviado por: **${options.authorName}**` : "";

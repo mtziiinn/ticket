@@ -28,7 +28,7 @@ createEvent({
       const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
 
       const container = createContainer(
-        "#38bdf8",
+        constants.colors.primary,
         `## ${getEmojiTag("action_check")} Canal Criado`,
         [
           `| ${getEmojiTag("folder")} <#${channel.id}> (\`${typeName}\`)`,

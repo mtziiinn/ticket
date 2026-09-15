@@ -28,8 +28,8 @@ export function formatHexColor(color: string): `#${string}` {
   return `#${cleaned}` as `#${string}`;
 }
 
-export const PANEL_COLOR = formatHexColor("#38bdf8");
-export const TICKET_EMBED_COLOR = formatHexColor("#38bdf8");
+export const PANEL_COLOR = formatHexColor(brand.primaryColor);
+export const TICKET_EMBED_COLOR = formatHexColor(brand.primaryColor);
 export const BANNER_URL = "";
 
 export function getPanelColor(guildData?: any): `#${string}` {

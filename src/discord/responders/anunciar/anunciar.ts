@@ -91,7 +91,7 @@ function renderConfirm(userId: string, guild?: Guild) {
   const state = pending.get(userId);
   if (!state) {
     return createContainer(
-      formatHexColor("#38bdf8"),
+      formatHexColor(constants.colors.primary),
       `${getEmojiTag("action_warning")} Este comunicado expirou. Use \`/anunciar\` novamente.`,
     );
   }
@@ -122,7 +122,7 @@ function renderConfirm(userId: string, guild?: Guild) {
   ].filter((line) => line !== "");
 
   return (createContainer as any)(
-    formatHexColor("#38bdf8"),
+    formatHexColor(constants.colors.primary),
     header,
     Separator.Default,
     lines.join("\n"),
@@ -572,7 +572,7 @@ createResponder({
     pending.delete(interaction.user.id);
 
     const container = createContainer(
-      formatHexColor("#38bdf8"),
+      formatHexColor(constants.colors.primary),
       `${getEmojiTag("action_x")} Comunicado **cancelado**.`,
     );
 

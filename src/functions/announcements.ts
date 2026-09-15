@@ -33,7 +33,7 @@ export function announcementContainer(options: AnnouncementContainerOptions) {
   const finalColor =
     options.color && /^#?[0-9a-fA-F]{3,8}$/.test(options.color)
       ? formatHexColor(options.color)
-      : formatHexColor("#38bdf8");
+      : formatHexColor(constants.colors.primary);
 
   const prismEmoji = getEmojiTag((options.headerEmoji as any) || "prism") || "💎";
   const descFormatted = (options.message || "").replace(/\\n/g, "\n");
@@ -107,7 +107,7 @@ export function announcementDMContainer(options: AnnouncementDMOptions) {
   const finalColor =
     options.color && /^#?[0-9a-fA-F]{3,8}$/.test(options.color)
       ? formatHexColor(options.color)
-      : formatHexColor("#38bdf8");
+      : formatHexColor(constants.colors.primary);
 
   const prismEmoji = getEmojiTag((options.headerEmoji as any) || "prism") || "💎";
   const descFormatted = (options.message || "").replace(/\\n/g, "\n");

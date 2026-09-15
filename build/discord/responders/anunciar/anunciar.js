@@ -51,7 +51,7 @@ export function isVideoUrl(raw) {
 function renderConfirm(userId, guild) {
     const state = pending.get(userId);
     if (!state) {
-        return createContainer(formatHexColor("#38bdf8"), `${getEmojiTag("action_warning")} Este comunicado expirou. Use \`/anunciar\` novamente.`);
+        return createContainer(formatHexColor(constants.colors.primary), `${getEmojiTag("action_warning")} Este comunicado expirou. Use \`/anunciar\` novamente.`);
     }
     const channelName = state.channelId
         ? guild?.channels.cache.get(state.channelId)?.name ?? `cargo`
@@ -75,7 +75,7 @@ function renderConfirm(userId, guild) {
         `**Canal de envio:** ${channelName === "cargo" ? `<#${state.channelId}>` : (state.channelId ? `<#${state.channelId}>` : channelName)}`,
         `**Cargos por DM:** ${rolesText}`,
     ].filter((line) => line !== "");
-    return createContainer(formatHexColor("#38bdf8"), header, Separator.Default, lines.join("\n"), Separator.Default, new ActionRowBuilder().addComponents(new ChannelSelectMenuBuilder()
+    return createContainer(formatHexColor(constants.colors.primary), header, Separator.Default, lines.join("\n"), Separator.Default, new ActionRowBuilder().addComponents(new ChannelSelectMenuBuilder()
         .setCustomId("anunciar/canal")
         .setPlaceholder("Selecionar canal de envio...")
         .setChannelTypes(ChannelType.GuildText)), new ActionRowBuilder().addComponents(new RoleSelectMenuBuilder()
@@ -462,7 +462,7 @@ createResponder({
         if (!interaction.inCachedGuild())
             return;
         pending.delete(interaction.user.id);
-        const container = createContainer(formatHexColor("#38bdf8"), `${getEmojiTag("action_x")} Comunicado **cancelado**.`);
+        const container = createContainer(formatHexColor(constants.colors.primary), `${getEmojiTag("action_x")} Comunicado **cancelado**.`);
         await interaction.update({
             components: [container],
             flags: ["IsComponentsV2"],

@@ -25,7 +25,7 @@ function getTypeColor(type) {
         case "warning":
             return 0xfbbd23; // yellow
         default:
-            return 0x38bdf8; // primary
+            return parseInt(brand.primaryColor.replace("#", ""), 16) || 0x38bdf8; // primary
     }
 }
 function getTypeEmoji(type) {

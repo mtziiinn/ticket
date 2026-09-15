@@ -262,7 +262,7 @@ async function handlePaymentModalSubmit(
           : `*Loja Oficial (Padrão)*`;
 
       const container = createContainer(
-        "#38bdf8",
+        constants.colors.primary,
         `## ${getEmojiTag("other_dollar")} Cobrança Gerada`,
         Separator.Default,
         [
@@ -392,7 +392,7 @@ async function handlePaymentModalSubmit(
       }
 
       const container = createContainer(
-        "#38bdf8",
+        constants.colors.primary,
         `## ${getEmojiTag("other_dollar")} Cobrança Gerada (Mercado Pago)`,
         Separator.Default,
         sections.join("\n"),
@@ -499,7 +499,7 @@ async function handlePaymentModalSubmit(
       : `*Loja Oficial (Padrão)*`;
 
     const container = createContainer(
-      "#38bdf8",
+      constants.colors.primary,
       `## ${getEmojiTag("other_card")} Cobrança Gerada (Stripe)`,
       Separator.Default,
       [

@@ -187,7 +187,7 @@ createResponder({
       });
 
       const successContainer = createContainer(
-        formatHexColor("#38bdf8"),
+        formatHexColor(constants.colors.primary),
         `## ${getEmojiTag("action_check")} Anúncio Publicado com Sucesso`,
         Separator.Default,
         `O comunicado oficial foi enviado com sucesso para <#${targetChannel.id}>!`,
@@ -348,7 +348,7 @@ createResponder({
       }
 
       const reportContainer = createContainer(
-        formatHexColor("#38bdf8"),
+        formatHexColor(constants.colors.primary),
         `## ${getEmojiTag("action_check")} Disparo de DM Finalizado`,
         Separator.Default,
         `O comunicado oficial foi processado para os membros dos cargos ${roles
@@ -527,7 +527,7 @@ createResponder({
       await targetChannel.send(payload);
 
       const successContainer = createContainer(
-        formatHexColor("#38bdf8"),
+        formatHexColor(constants.colors.primary),
         `## ${getEmojiTag("action_check")} Anúncio Publicado (JSON)`,
         Separator.Default,
         `O comunicado via JSON foi enviado com sucesso para <#${targetChannel.id}>!`,
@@ -695,7 +695,7 @@ createResponder({
       }
 
       const reportContainer = createContainer(
-        formatHexColor("#38bdf8"),
+        formatHexColor(constants.colors.primary),
         `## ${getEmojiTag("action_check")} Disparo de DM Finalizado (JSON)`,
         Separator.Default,
         `O comunicado via JSON foi processado para os membros dos cargos ${roles

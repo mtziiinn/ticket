@@ -778,7 +778,7 @@ createResponder({
                 `• Na seção **Eventos**, é obrigatório marcar a opção \`Pagamentos\`.`,
                 `• Clique em **Salvar** no final da página para finalizar a integração.`,
             ].join("\n"),
-            color: "#38bdf8",
+            color: constants.colors.primary,
         });
         const row = createRow(new ButtonBuilder({
             label: "Painel do Desenvolvedor",
@@ -820,7 +820,7 @@ createResponder({
                 `• Na seção **Eventos para enviar**, selecione \`checkout.session.completed\`.`,
                 `• Copie o **Segredo de assinatura** (começa com \`whsec_\`) e salve nas configurações.`,
             ].join("\n"),
-            color: "#38bdf8",
+            color: constants.colors.primary,
         });
         const row = createRow(new ButtonBuilder({
             label: "Dashboard Stripe",
@@ -1362,7 +1362,7 @@ createResponder({
     cache: "cached",
     async run(interaction) {
         const guildData = await db.guilds.get(interaction.guild.id);
-        const currentColor = guildData.identity?.primaryColor || "#38bdf8";
+        const currentColor = guildData.identity?.primaryColor || constants.colors.primary;
         const modal = new ModalBuilder()
             .setCustomId("panel/identity/modal/color")
             .setTitle("Editar Cor das Embeds");

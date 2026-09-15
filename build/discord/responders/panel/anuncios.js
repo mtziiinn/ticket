@@ -137,7 +137,7 @@ createResponder({
                 authorId: interaction.user.id,
                 barImage,
             });
-            const successContainer = createContainer(formatHexColor("#38bdf8"), `## ${getEmojiTag("action_check")} Anúncio Publicado com Sucesso`, Separator.Default, `O comunicado oficial foi enviado com sucesso para <#${targetChannel.id}>!`);
+            const successContainer = createContainer(formatHexColor(constants.colors.primary), `## ${getEmojiTag("action_check")} Anúncio Publicado com Sucesso`, Separator.Default, `O comunicado oficial foi enviado com sucesso para <#${targetChannel.id}>!`);
             await interaction.editReply({
                 components: [successContainer],
                 flags: ["IsComponentsV2"],
@@ -255,7 +255,7 @@ createResponder({
                 });
                 return;
             }
-            const reportContainer = createContainer(formatHexColor("#38bdf8"), `## ${getEmojiTag("action_check")} Disparo de DM Finalizado`, Separator.Default, `O comunicado oficial foi processado para os membros dos cargos ${roles
+            const reportContainer = createContainer(formatHexColor(constants.colors.primary), `## ${getEmojiTag("action_check")} Disparo de DM Finalizado`, Separator.Default, `O comunicado oficial foi processado para os membros dos cargos ${roles
                 .map((r) => `<@&${r.id}>`)
                 .join(", ")}:\n\n` +
                 `• ${getEmojiTag("action_check")} **Entregues com Sucesso:** \`${success}\`\n` +
@@ -401,7 +401,7 @@ createResponder({
             const parseResult = parsePanelJson(extracted.content);
             const payload = buildCustomOrFallbackPayload(parseResult.data, null, []);
             await targetChannel.send(payload);
-            const successContainer = createContainer(formatHexColor("#38bdf8"), `## ${getEmojiTag("action_check")} Anúncio Publicado (JSON)`, Separator.Default, `O comunicado via JSON foi enviado com sucesso para <#${targetChannel.id}>!`);
+            const successContainer = createContainer(formatHexColor(constants.colors.primary), `## ${getEmojiTag("action_check")} Anúncio Publicado (JSON)`, Separator.Default, `O comunicado via JSON foi enviado com sucesso para <#${targetChannel.id}>!`);
             await interaction.editReply({
                 components: [successContainer],
                 flags: ["IsComponentsV2"],
@@ -529,7 +529,7 @@ createResponder({
                     interaction.guild.members.cache.delete(memberId);
                 }
             }
-            const reportContainer = createContainer(formatHexColor("#38bdf8"), `## ${getEmojiTag("action_check")} Disparo de DM Finalizado (JSON)`, Separator.Default, `O comunicado via JSON foi processado para os membros dos cargos ${roles
+            const reportContainer = createContainer(formatHexColor(constants.colors.primary), `## ${getEmojiTag("action_check")} Disparo de DM Finalizado (JSON)`, Separator.Default, `O comunicado via JSON foi processado para os membros dos cargos ${roles
                 .map((r) => `<@&${r.id}>`)
                 .join(", ")}:\n\n` +
                 `• ${getEmojiTag("action_check")} **Entregues com Sucesso:** \`${success}\`\n` +

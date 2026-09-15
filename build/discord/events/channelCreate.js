@@ -19,7 +19,7 @@ createEvent({
         try {
             const executor = await getAuditLogExecutor(channel.guild, AuditLogEvent.ChannelCreate, channel.id);
             const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
-            const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Canal Criado`, [
+            const container = createContainer(constants.colors.primary, `## ${getEmojiTag("action_check")} Canal Criado`, [
                 `| ${getEmojiTag("folder")} <#${channel.id}> (\`${typeName}\`)`,
                 executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));

@@ -45,7 +45,7 @@ createEvent({
       );
 
       const container = createContainer(
-        "#38bdf8",
+        constants.colors.primary,
         `## ${getEmojiTag("action_check")} Membro Desbanido`,
         [
           `| ${getEmojiTag("user")} <@${ban.user.id}>`,

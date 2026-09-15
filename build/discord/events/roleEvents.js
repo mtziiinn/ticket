@@ -8,7 +8,7 @@ createEvent({
     async run(role) {
         try {
             const executor = await getAuditLogExecutor(role.guild, AuditLogEvent.RoleCreate, role.id);
-            const container = createContainer("#38bdf8", `## ${getEmojiTag("action_check")} Cargo Criado`, [
+            const container = createContainer(constants.colors.primary, `## ${getEmojiTag("action_check")} Cargo Criado`, [
                 `| ${getEmojiTag("user_users")} <@&${role.id}>`,
                 executor ? `| ${getEmojiTag("user_check")} <@${executor.id}>` : "",
             ].filter(Boolean).join("\n"));
