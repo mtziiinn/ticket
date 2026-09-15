@@ -143,6 +143,7 @@ createResponder({
       ].join("\n"),
       Separator.Default,
       "> Caso ocorra algum problema, contate a administração.",
+      Separator.Default,
       actionRow,
     ];
 
