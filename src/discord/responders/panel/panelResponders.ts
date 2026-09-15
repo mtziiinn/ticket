@@ -504,7 +504,16 @@ createResponder({
   },
 });
 
-// 2.4.1 Modal Editar Opção de Abertura (seleção -> formulário pré-preenchido)
+// 2.4.1 Editar Opção de Abertura (select menu real -> formulário pré-preenchido)
+//
+// Antes o select ficava DENTRO de um modal (Label + StringSelectMenuComponent)
+// e, ao submeter, o codigo tentava abrir um SEGUNDO modal a partir do
+// ModalSubmitInteraction (encadeamento de modal). Isso quebrava em producao
+// com "interaction.showModal is not a function" — o runtime do discord.js
+// nao expoe showModal em ModalSubmitInteraction nesta versao, apesar do
+// mixin existir na classe base. Agora o select e uma mensagem efemera
+// normal: StringSelectMenuInteraction suporta showModal nativamente, sem
+// gambiarra nenhuma.
 createResponder({
   customId: "panel/ticket/edit_category",
   types: [ResponderType.Button],
@@ -521,12 +530,8 @@ createResponder({
       return;
     }
 
-    const modal = new ModalBuilder()
-      .setCustomId("panel/ticket/modal/edit_category_select")
-      .setTitle("Editar Opção de Abertura");
-
     const select = new StringSelectMenuBuilder()
-      .setCustomId("category_to_edit")
+      .setCustomId("panel/ticket/select/edit_category")
       .setPlaceholder("Selecione a opção que deseja editar")
       .addOptions(
         categories.map((c: any) =>
@@ -537,23 +542,20 @@ createResponder({
         ),
       );
 
-    const label = new LabelBuilder()
-      .setLabel("Selecione a categoria para editar:")
-      .setStringSelectMenuComponent(select);
-
-    modal.addComponents(label);
-    await interaction.showModal(modal);
+    await interaction.reply({
+      content: "Selecione a categoria que deseja editar:",
+      components: [createRow(select)],
+      flags: ["Ephemeral"],
+    });
   },
 });
 
 createResponder({
-  customId: "panel/ticket/modal/edit_category_select",
-  types: [ResponderType.Modal, ResponderType.ModalComponent],
+  customId: "panel/ticket/select/edit_category",
+  types: [ResponderType.StringSelect],
   cache: "cached",
   async run(interaction) {
-    const selected = interaction.fields.getStringSelectValues(
-      "category_to_edit",
-    )?.[0];
+    const selected = interaction.values?.[0];
     if (!selected) {
       await interaction.reply({
         content: "Nenhuma opção foi selecionada.",
@@ -637,10 +639,7 @@ createResponder({
       chEmojiLabel,
       parentLabel,
     );
-    // showModal em resposta a um Modal Submit (encadeamento de modal) tem
-    // suporte em runtime (discord.js aplica via mixin), mas o typing oficial
-    // de ModalSubmitInteraction ainda não declara o método.
-    await (interaction as any).showModal(modal);
+    await interaction.showModal(modal);
   },
 });
 
