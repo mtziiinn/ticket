@@ -1687,7 +1687,7 @@ createResponder({
       .setRequired(false);
 
     const label = new LabelBuilder()
-      .setLabel("URL da Imagem (vazio para foto padrão do bot):")
+      .setLabel("URL da imagem (vazio p/ foto padrão):")
       .setTextInputComponent(input);
 
     modal.addComponents(label);
