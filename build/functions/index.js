@@ -15,6 +15,15 @@ export function formatEmoji(emojiRaw) {
     if (/^\d+$/.test(emojiRaw)) {
         return { id: emojiRaw };
     }
+    // Tag completa (ex: <:nome:id> ou <a:nome:id>), como fica salvo quando o
+    // usuário cola o emoji direto no modal — .setEmoji() do discord.js não
+    // entende essa string, só um objeto {id, name, animated} ou um emoji
+    // unicode puro. Sem isso, categorias salvas com a tag completa mostravam
+    // um ícone genérico/quebrado no menu de abertura de ticket.
+    const tagMatch = emojiRaw.match(/^<(a)?:(\w+):(\d+)>$/);
+    if (tagMatch) {
+        return { animated: Boolean(tagMatch[1]), name: tagMatch[2], id: tagMatch[3] };
+    }
     return emojiRaw;
 }
 export function getCleanAvatarURL(user) {
