@@ -26,6 +26,8 @@ import {
   generatePixPayload,
   getEmojiId,
   getEmojiTag,
+  getPixCode,
+  registerPixCode,
 } from "#functions";
 import { sendActionLog } from "../../responders/ticket/logger.js";
 
@@ -249,9 +251,16 @@ async function handlePaymentModalSubmit(
       const qrSections: any[] = [];
       const pixPayload = generatePixPayload(pixKey);
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
+      const pixCodeId = registerPixCode(pixPayload);
       qrSections.push(
         createMediaGallery(qrCodeUrl),
-        `| **Código PIX Copia e Cola:**\n\`\`\`text\n${pixPayload}\n\`\`\``,
+        createRow(
+          new ButtonBuilder()
+            .setCustomId(`payment/pix_copy/${pixCodeId}`)
+            .setLabel("Copiar Código PIX")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("clipboard") || "📋"),
+        ),
         Separator.Default,
       );
 
@@ -358,15 +367,20 @@ async function handlePaymentModalSubmit(
       ];
 
       const mediaItems: any[] = [];
+      const actionButtons = [];
       if (chargeResult.pix?.qrCode) {
         const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(chargeResult.pix.qrCode)}`;
         mediaItems.push(createMediaGallery(qrImageUrl));
-        sections.push(
-          `| **Código PIX Copia e Cola:**\n\`\`\`text\n${chargeResult.pix.qrCode}\n\`\`\``,
+        const mpPixCodeId = registerPixCode(chargeResult.pix.qrCode);
+        actionButtons.push(
+          new ButtonBuilder()
+            .setCustomId(`payment/pix_copy/${mpPixCodeId}`)
+            .setLabel("Copiar Código PIX")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("clipboard") || "📋"),
         );
       }
 
-      const actionButtons = [];
       if (chargeResult.cardCheckout?.initPoint) {
         actionButtons.push(
           new ButtonBuilder()
@@ -559,5 +573,28 @@ createResponder({
   cache: "cached",
   async run(interaction) {
     await handlePaymentModalSubmit(interaction);
+  },
+});
+
+// Botão "Copiar Código PIX" — manda o copia-e-cola como mensagem de texto
+// normal, em vez de deixar o código cru dentro do Container (mais fácil de
+// selecionar tudo com um toque no celular).
+createResponder({
+  customId: "payment/pix_copy/:id",
+  types: [ResponderType.Button],
+  cache: "cached",
+  async run(interaction, { id }) {
+    const pixPayload = getPixCode(id);
+    if (!pixPayload) {
+      await interaction.reply({
+        content: `${getEmojiTag("action_x")} Esse código expirou. Gere a cobrança novamente.`,
+        flags: ["Ephemeral"],
+      });
+      return;
+    }
+
+    await interaction.reply({
+      content: `\`\`\`\n${pixPayload}\n\`\`\``,
+    });
   },
 });

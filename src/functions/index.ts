@@ -169,6 +169,7 @@ export function generatePixPayload(
   return payload + crc16(payload);
 }
 
+export * from "./pixCodes.js";
 export * from "./cacheCleaner.js";
 export * from "./mercadopago.js";
 export * from "./botLogs.js";

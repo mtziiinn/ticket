@@ -7,7 +7,7 @@ import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
 import { sendActionLog } from "./logger.js";
-import { createMercadoPagoCharge, generatePixPayload, getCleanAvatarURL, getEmojiTag, safeSendDM, } from "#functions";
+import { createMercadoPagoCharge, generatePixPayload, getCleanAvatarURL, getEmojiId, getEmojiTag, registerPixCode, safeSendDM, } from "#functions";
 // Função compartilhada para renomear
 async function processRename(interaction) {
     const { channel, fields } = interaction;
@@ -228,12 +228,17 @@ async function processChargeSubmission(interaction) {
             }
             const pixPayload = generatePixPayload(pixKey);
             const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
+            const pixCodeId = registerPixCode(pixPayload);
             const fallbackContainer = createContainer(constants.colors.success, createSection({
                 content: `## <:other_dollar:1502789953334280345> Informações de Pagamento (PIX Manual)\nOlá, utilize a chave Copia e Cola ou escaneie o QR Code abaixo para efetuar o pagamento.`,
                 thumbnail: emojis.static.other_dollar,
             }), Separator.Default, `**Informações do Pedido**\n` +
                 `> <:action_info:1502789798983766016> **Descrição:** \`${description}\`\n` +
-                `> <:other_wallet:1502789960355283055> **Valor Combinado:** \`${formattedAmount}\``, Separator.Default, createMediaGallery(qrCodeUrl), `**Código PIX Copia e Cola:**\n\`\`\`\n${pixPayload}\n\`\`\``, Separator.Default, `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no canal para que a equipe confirme o recebimento. *(Para baixa automática, configure o \`MP_ACCESS_TOKEN\` no .env)*`);
+                `> <:other_wallet:1502789960355283055> **Valor Combinado:** \`${formattedAmount}\``, Separator.Default, createMediaGallery(qrCodeUrl), createRow(new ButtonBuilder()
+                .setCustomId(`payment/pix_copy/${pixCodeId}`)
+                .setLabel("Copiar Código PIX")
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji(getEmojiId("clipboard") || "📋")), Separator.Default, `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no canal para que a equipe confirme o recebimento. *(Para baixa automática, configure o \`MP_ACCESS_TOKEN\` no .env)*`);
             await channel.send({
                 components: [fallbackContainer],
                 flags: ["IsComponentsV2"],

@@ -18,7 +18,9 @@ import {
   createMercadoPagoCharge,
   generatePixPayload,
   getCleanAvatarURL,
+  getEmojiId,
   getEmojiTag,
+  registerPixCode,
   safeSendDM,
 } from "#functions";
 
@@ -298,6 +300,7 @@ async function processChargeSubmission(interaction: any) {
 
       const pixPayload = generatePixPayload(pixKey);
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
+      const pixCodeId = registerPixCode(pixPayload);
 
       const fallbackContainer = createContainer(
         constants.colors.success,
@@ -311,7 +314,13 @@ async function processChargeSubmission(interaction: any) {
           `> <:other_wallet:1502789960355283055> **Valor Combinado:** \`${formattedAmount}\``,
         Separator.Default,
         createMediaGallery(qrCodeUrl),
-        `**Código PIX Copia e Cola:**\n\`\`\`\n${pixPayload}\n\`\`\``,
+        createRow(
+          new ButtonBuilder()
+            .setCustomId(`payment/pix_copy/${pixCodeId}`)
+            .setLabel("Copiar Código PIX")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("clipboard") || "📋"),
+        ),
         Separator.Default,
         `<:action_warning:1502789801949265990> **Aviso:** Após realizar o pagamento, envie o comprovante aqui no canal para que a equipe confirme o recebimento. *(Para baixa automática, configure o \`MP_ACCESS_TOKEN\` no .env)*`,
       );

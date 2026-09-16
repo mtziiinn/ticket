@@ -144,6 +144,7 @@ export function generatePixPayload(key, name = "TICKETS", city = "SAO PAULO", am
     payload += "6304"; // CRC16
     return payload + crc16(payload);
 }
+export * from "./pixCodes.js";
 export * from "./cacheCleaner.js";
 export * from "./mercadopago.js";
 export * from "./botLogs.js";

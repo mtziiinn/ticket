@@ -230,6 +230,11 @@ createCommand({
           `${getEmojiTag("other_megaphone")} **Rascunhos de anúncio abandonados:** \`${result.pendingAnnouncesSwept}\``,
         );
       }
+      if (result.pendingPixCodesSwept > 0) {
+        resourcesList.push(
+          `${getEmojiTag("other_dollar")} **Códigos PIX expirados:** \`${result.pendingPixCodesSwept}\``,
+        );
+      }
       if (result.guildConfigsSwept > 0) {
         resourcesList.push(
           `${getEmojiTag("database_check")} **Configurações de servidores recicladas:** \`${result.guildConfigsSwept}\``,
