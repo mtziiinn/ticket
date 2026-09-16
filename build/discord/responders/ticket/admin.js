@@ -234,7 +234,7 @@ async function processChargeSubmission(interaction) {
                 thumbnail: emojis.static.other_dollar,
             }), Separator.Default, `**Informações do Pedido**\n` +
                 `> <:action_info:1502789798983766016> **Descrição:** \`${description}\`\n` +
-                `> <:other_wallet:1502789960355283055> **Valor Combinado:** \`${formattedAmount}\``, Separator.Default, createMediaGallery(qrCodeUrl), createRow(new ButtonBuilder()
+                `> <:other_wallet:1502789960355283055> **Valor Combinado:** \`${formattedAmount}\``, Separator.Default, createMediaGallery(qrCodeUrl), Separator.Default, createRow(new ButtonBuilder()
                 .setCustomId(`payment/pix_copy/${pixCodeId}`)
                 .setLabel("Copiar Código PIX")
                 .setStyle(ButtonStyle.Secondary)

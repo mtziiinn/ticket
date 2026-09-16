@@ -180,7 +180,7 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
         const pixPayload = generatePixPayload(pixKey);
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
         const pixCodeId = registerPixCode(pixPayload);
-        qrSections.push(createMediaGallery(qrCodeUrl), createRow(new ButtonBuilder()
+        qrSections.push(createMediaGallery(qrCodeUrl), Separator.Default, createRow(new ButtonBuilder()
             .setCustomId(`payment/pix_copy/${pixCodeId}`)
             .setLabel("Copiar Código PIX")
             .setStyle(ButtonStyle.Secondary)

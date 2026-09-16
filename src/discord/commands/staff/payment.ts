@@ -254,6 +254,7 @@ async function handlePaymentModalSubmit(
       const pixCodeId = registerPixCode(pixPayload);
       qrSections.push(
         createMediaGallery(qrCodeUrl),
+        Separator.Default,
         createRow(
           new ButtonBuilder()
             .setCustomId(`payment/pix_copy/${pixCodeId}`)

@@ -314,6 +314,7 @@ async function processChargeSubmission(interaction: any) {
           `> <:other_wallet:1502789960355283055> **Valor Combinado:** \`${formattedAmount}\``,
         Separator.Default,
         createMediaGallery(qrCodeUrl),
+        Separator.Default,
         createRow(
           new ButtonBuilder()
             .setCustomId(`payment/pix_copy/${pixCodeId}`)
