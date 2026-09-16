@@ -86,18 +86,56 @@ export function crc16(data: string): string {
   return (crc & 0xffff).toString(16).toUpperCase().padStart(4, "0");
 }
 
+/**
+ * Normaliza a chave PIX conforme o TIPO dela.
+ *
+ * Antes isso era um `.replace(/-/g, "")` cego em cima de qualquer chave, o
+ * que gerava um copia e cola que o banco recusa como invalido em dois casos:
+ * chave aleatoria (os hifens do UUID fazem parte da chave) e e-mail com
+ * hifen no endereco. Cada tipo tem sua regra propria:
+ *
+ * - e-mail: vai como esta (so minusculo, sem espacos ao redor);
+ * - aleatoria (EVP/UUID): mantem os hifens;
+ * - telefone: so digitos, sempre com +55 na frente;
+ * - CPF/CNPJ: so digitos.
+ */
+export function normalizePixKey(rawKey: string): string {
+  const key = rawKey.trim().replace(/\s+/g, " ");
+
+  if (key.includes("@")) {
+    return key.replace(/\s+/g, "").toLowerCase();
+  }
+
+  const uuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const compact = key.replace(/\s+/g, "");
+  if (uuid.test(compact)) {
+    return compact.toLowerCase();
+  }
+
+  const digits = compact.replace(/\D/g, "");
+
+  // Telefone: so conta como telefone quando veio explicito (+55...) ou quando
+  // o tamanho so fecha como telefone. 11 digitos secos ficam como CPF, que e
+  // o caso muito mais comum aqui (celular como chave PIX exige o +55).
+  const isPhone =
+    compact.startsWith("+") ||
+    (digits.length === 13 && digits.startsWith("55")) ||
+    (digits.length === 12 && digits.startsWith("55"));
+  if (isPhone) {
+    return `+${digits}`;
+  }
+
+  return digits || compact;
+}
+
 export function generatePixPayload(
   key: string,
   name: string = "TICKETS",
   city: string = "SAO PAULO",
   amount?: number,
 ) {
-  // Limpar a chave (remover espaços, traços, etc)
-  const cleanKey = key
-    .replace(/\s+/g, "")
-    .replace(/-/g, "")
-    .replace(/\(/g, "")
-    .replace(/\)/g, "");
+  const cleanKey = normalizePixKey(key);
 
   // Merchant Account Information - Pix
   const gui = "br.gov.bcb.pix";
