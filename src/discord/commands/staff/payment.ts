@@ -596,6 +596,7 @@ createResponder({
 
     await interaction.reply({
       content: `\`\`\`\n${pixPayload}\n\`\`\``,
+      flags: ["Ephemeral"],
     });
   },
 });
