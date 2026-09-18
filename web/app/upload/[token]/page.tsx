@@ -9,6 +9,7 @@ import {
   ArrowLeft,
   Loader2,
   Files,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +26,11 @@ interface PageProps {
 
 export default function UploadPage({ params }: PageProps) {
   const { token } = use(params);
-  const [files, setFiles] = useState<FileList | null>(null);
+  // Fila acumulada: cada seleção via input soma ao array em vez de
+  // substituir (o <input type="file"> por padrão troca o FileList inteiro
+  // a cada escolha — por isso mandar "uma imagem por vez" antes perdia as
+  // anteriores). A fila só é de fato enviada ao clicar em "Finalizar Envio".
+  const [fileArray, setFileArray] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{
     success: boolean;
@@ -34,11 +39,18 @@ export default function UploadPage({ params }: PageProps) {
     error?: string;
   } | null>(null);
 
-  const fileArray = files ? Array.from(files) : [];
+  const handleFilesSelected = (selected: FileList | null) => {
+    if (!selected || selected.length === 0) return;
+    setFileArray((prev) => [...prev, ...Array.from(selected)]);
+  };
+
+  const removeFile = (index: number) => {
+    setFileArray((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!files || files.length === 0) return;
+    if (fileArray.length === 0) return;
 
     setUploading(true);
     const formData = new FormData();
@@ -130,7 +142,11 @@ export default function UploadPage({ params }: PageProps) {
                   id="file"
                   multiple
                   className="hidden"
-                  onChange={(e) => setFiles(e.target.files)}
+                  // value="" permite escolher o MESMO arquivo de novo depois
+                  // de removê-lo da fila — sem isso o navegador não dispara
+                  // onChange na segunda vez.
+                  value=""
+                  onChange={(e) => handleFilesSelected(e.target.files)}
                 />
                 <label
                   htmlFor="file"
@@ -139,34 +155,49 @@ export default function UploadPage({ params }: PageProps) {
                   <Files className="h-8 w-8 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">
                     {fileArray.length > 0
-                      ? `${fileArray.length} arquivo(s) selecionado(s)`
+                      ? "Clique para adicionar mais arquivos à fila"
                       : "Clique para selecionar os arquivos"}
                   </span>
                 </label>
-                {fileArray.length > 0 && (
-                  <ul className="mt-4 text-left text-sm text-muted-foreground space-y-1 max-h-40 overflow-y-auto">
-                    {fileArray.map((f, i) => (
-                      <li key={i} className="truncate">
-                        {f.name} ({(f.size / 1048576).toFixed(1)} MB)
-                      </li>
-                    ))}
-                    {fileArray.length > 1 && (
-                      <li className="text-xs text-primary pt-1 border-t border-border mt-1">
-                        Total:{" "}
-                        {(
-                          fileArray.reduce((s, f) => s + f.size, 0) / 1048576
-                        ).toFixed(1)}{" "}
-                        MB — serão compactados em ZIP
-                      </li>
-                    )}
-                  </ul>
-                )}
               </div>
+
+              {fileArray.length > 0 && (
+                <ul className="text-left text-sm text-muted-foreground space-y-1 max-h-48 overflow-y-auto">
+                  {fileArray.map((f, i) => (
+                    <li
+                      key={`${f.name}-${f.lastModified}-${i}`}
+                      className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-1.5"
+                    >
+                      <span className="truncate">
+                        {f.name} ({(f.size / 1048576).toFixed(1)} MB)
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(i)}
+                        className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                        aria-label={`Remover ${f.name} da fila`}
+                        disabled={uploading}
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </li>
+                  ))}
+                  {fileArray.length > 1 && (
+                    <li className="text-xs text-primary pt-1 border-t border-border mt-1 px-1">
+                      Total:{" "}
+                      {(
+                        fileArray.reduce((s, f) => s + f.size, 0) / 1048576
+                      ).toFixed(1)}{" "}
+                      MB — serão compactados em ZIP ao finalizar
+                    </li>
+                  )}
+                </ul>
+              )}
 
               <Button
                 type="submit"
                 className="w-full gap-2"
-                disabled={!files || files.length === 0 || uploading}
+                disabled={fileArray.length === 0 || uploading}
               >
                 {uploading ? (
                   <>
@@ -179,7 +210,7 @@ export default function UploadPage({ params }: PageProps) {
                   <>
                     <Upload className="h-4 w-4" />
                     {fileArray.length > 0
-                      ? `Enviar ${fileArray.length} arquivo(s)`
+                      ? `Finalizar Envio (${fileArray.length})`
                       : "Selecione os arquivos"}
                   </>
                 )}
