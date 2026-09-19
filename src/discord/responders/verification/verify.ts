@@ -11,7 +11,6 @@ import {
   StringSelectMenuBuilder,
   StringSelectMenuOptionBuilder,
 } from "discord.js";
-import { createCanvas } from "@napi-rs/canvas";
 import { db } from "#database";
 import { getEmojiTag } from "#functions";
 import { getVerifyEmbedColor } from "../panel/panelView.js";
@@ -51,7 +50,10 @@ function generateDecoyCode(correct: string): string {
   return decoy === correct ? generateDecoyCode(correct) : decoy;
 }
 
-function generateCaptchaImage(code: string): Buffer {
+// @napi-rs/canvas (Skia nativo) custa ~14MB de RAM só por ser importado; como o
+// captcha raramente é usado, só carrega na primeira verificação.
+async function generateCaptchaImage(code: string): Promise<Buffer> {
+  const { createCanvas } = await import("@napi-rs/canvas");
   const width = 420;
   const height = 150;
   const canvas = createCanvas(width, height);
@@ -161,7 +163,7 @@ createResponder({
       () => Math.random() - 0.5,
     );
 
-    const imageBuffer = generateCaptchaImage(code);
+    const imageBuffer = await generateCaptchaImage(code);
     const attachment = new AttachmentBuilder(imageBuffer, { name: "captcha.png" });
 
     const select = new StringSelectMenuBuilder()

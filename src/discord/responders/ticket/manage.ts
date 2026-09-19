@@ -1030,13 +1030,58 @@ createResponder({
 // Re-export das funções do cofre centralizadas em #functions
 export { cleanupVaultWebhookCache, getOrCreateVaultWebhook };
 
+function toTranscriptMessage(msg: any) {
+  const attachments = [];
+  if (msg.attachments?.size > 0) {
+    for (const att of msg.attachments.values()) {
+      attachments.push({
+        url: att.url,
+        filename: att.name,
+        contentType: att.contentType || undefined,
+        width: att.width || undefined,
+        height: att.height || undefined,
+      });
+    }
+  }
+
+  return {
+    createdTimestamp: msg.createdTimestamp as number,
+    messageId: msg.id,
+    authorId: msg.author?.id || "0",
+    authorUsername: msg.author?.username || "Desconhecido",
+    authorAvatar:
+      msg.author?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
+      "https://cdn.discordapp.com/embed/avatars/0.png",
+    authorBot: Boolean(msg.author?.bot),
+    isStaff: Boolean(
+      msg.member?.permissions?.has?.(PermissionFlagsBits.ManageChannels),
+    ),
+    content: msg.content || "",
+    timestamp: msg.createdAt
+      ? msg.createdAt.toISOString()
+      : new Date().toISOString(),
+    attachments,
+    embeds: (msg.embeds || []).map((emb: any) => ({
+      title: emb.title || undefined,
+      description: emb.description || undefined,
+      color: typeof emb.color === "number" ? emb.color : undefined,
+      image: emb.image?.url || undefined,
+      thumbnail: emb.thumbnail?.url || undefined,
+    })),
+  };
+}
+
 export async function generateTranscript(
   channel: TextChannel,
   ticket: any,
   closer: any,
 ) {
   try {
-    const allMessages: any[] = [];
+    // Cada lote de 100 é convertido na hora para dados simples e os objetos
+    // Message do discord.js (pesados: autor, membro, embeds...) são descartados.
+    // Antes acumulava até 2000 Messages inteiras e só depois convertia — os dois
+    // ficavam na memória juntos, um pico que ajudava a estourar o container.
+    const plainMessages: any[] = [];
     let lastId: string | undefined = undefined;
 
     while (true) {
@@ -1050,14 +1095,16 @@ export async function generateTranscript(
 
       if (!fetched || fetched.size === 0) break;
 
-      allMessages.push(...fetched.values());
+      for (const msg of fetched.values()) {
+        plainMessages.push(toTranscriptMessage(msg));
+      }
       lastId = fetched.lastKey();
 
       // Limite de segurança de 2000 mensagens para evitar gargalo
-      if (allMessages.length >= 2000) break;
+      if (plainMessages.length >= 2000) break;
     }
 
-    const sortedMessages = allMessages.sort(
+    const sortedMessages = plainMessages.sort(
       (a, b) => a.createdTimestamp - b.createdTimestamp,
     );
 
@@ -1086,49 +1133,12 @@ export async function generateTranscript(
       ticket.ticketId ||
       Math.random().toString(36).substring(2, 9).toUpperCase();
 
-    const messagesData = [];
-
-    for (const msg of sortedMessages) {
-      const attachments = [];
-
-      if (msg.attachments?.size > 0) {
-        for (const att of msg.attachments.values()) {
-          attachments.push({
-            url: att.url,
-            filename: att.name,
-            contentType: att.contentType || undefined,
-            width: att.width || undefined,
-            height: att.height || undefined,
-          });
-        }
-      }
-
-      messagesData.push({
-        id: `${transcriptId}-${messagesData.length}`,
-        messageId: msg.id,
-        authorId: msg.author?.id || "0",
-        authorUsername: msg.author?.username || "Desconhecido",
-        authorAvatar:
-          msg.author?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
-          "https://cdn.discordapp.com/embed/avatars/0.png",
-        authorBot: Boolean(msg.author?.bot),
-        isStaff: Boolean(
-          msg.member?.permissions?.has?.(PermissionFlagsBits.ManageChannels),
-        ),
-        content: msg.content || "",
-        timestamp: msg.createdAt
-          ? msg.createdAt.toISOString()
-          : new Date().toISOString(),
-        attachments,
-        embeds: (msg.embeds || []).map((emb: any) => ({
-          title: emb.title || undefined,
-          description: emb.description || undefined,
-          color: typeof emb.color === "number" ? emb.color : undefined,
-          image: emb.image?.url || undefined,
-          thumbnail: emb.thumbnail?.url || undefined,
-        })),
-      });
-    }
+    const messagesData = sortedMessages.map(
+      ({ createdTimestamp: _ts, ...data }, index) => ({
+        id: `${transcriptId}-${index}`,
+        ...data,
+      }),
+    );
 
     const transcriptData = {
       id: transcriptId,

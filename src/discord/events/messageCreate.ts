@@ -50,6 +50,7 @@ createEvent({
                   url: a.url,
                   name: a.name,
                   contentType: a.contentType || undefined,
+                  size: a.size,
                 }),
               );
 

@@ -57,6 +57,20 @@ export async function getOrCreateVaultWebhook(
   }
 }
 
+// Reenviar um anexo por URL faz o discord.js baixar o arquivo INTEIRO pra
+// memória (e o corpo do upload vira outra cópia) — um arquivo de 20MB custa
+// ~40MB de pico, fora do heap. Sem limite, várias mensagens com anexo ao mesmo
+// tempo estouravam o container (OOM). Por isso: um upload por vez no processo
+// inteiro, e arquivos grandes demais nem são baixados (fica o link original).
+const MAX_VAULT_FILE_BYTES = 8 * 1024 * 1024;
+let vaultQueue: Promise<unknown> = Promise.resolve();
+
+function enqueueVault<T>(task: () => Promise<T>): Promise<T> {
+  const run = vaultQueue.then(task, task);
+  vaultQueue = run.catch(() => undefined);
+  return run;
+}
+
 export async function sendMediaToVault(options: {
   vaultChannel: any;
   clientUser?: any;
@@ -68,7 +82,12 @@ export async function sendMediaToVault(options: {
   };
   ticketId: string;
   channelId?: string;
-  attachments: Array<{ url: string; name?: string; contentType?: string }>;
+  attachments: Array<{
+    url: string;
+    name?: string;
+    contentType?: string;
+    size?: number;
+  }>;
 }): Promise<string[]> {
   const { vaultChannel, clientUser, author, ticketId, channelId, attachments } =
     options;
@@ -85,8 +104,38 @@ export async function sendMediaToVault(options: {
   const backupUrls: string[] = [];
 
   for (const att of attachments) {
-    let permanentUrl = att.url;
     const fileName = att.name || "arquivo";
+
+    if (att.size && att.size > MAX_VAULT_FILE_BYTES) {
+      console.warn(
+        `[Vault] "${fileName}" tem ${(att.size / 1048576).toFixed(1)}MB — acima do limite, backup ignorado (mantém o link original).`,
+      );
+      backupUrls.push(att.url);
+      continue;
+    }
+
+    backupUrls.push(
+      await enqueueVault(() =>
+        uploadOneToVault({ vaultChannel, clientUser, author, ticketId, channelRef, webhook, att, fileName }),
+      ),
+    );
+  }
+
+  return backupUrls;
+}
+
+async function uploadOneToVault(params: {
+  vaultChannel: any;
+  clientUser?: any;
+  author: { id: string; username: string; displayName?: string; avatarURL?: string };
+  ticketId: string;
+  channelRef: string;
+  webhook: any;
+  att: { url: string };
+  fileName: string;
+}): Promise<string> {
+  const { vaultChannel, clientUser, author, ticketId, channelRef, webhook, att, fileName } = params;
+  let permanentUrl = att.url;
 
     // 1. Tentar via Webhook com identidade do autor
     if (webhook && webhook.token) {
@@ -154,8 +203,5 @@ export async function sendMediaToVault(options: {
       }
     }
 
-    backupUrls.push(permanentUrl);
-  }
-
-  return backupUrls;
+  return permanentUrl;
 }
