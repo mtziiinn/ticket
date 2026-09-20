@@ -173,25 +173,3 @@ export async function createMercadoPagoCharge(
     };
   }
 }
-
-export async function getMercadoPagoPayment(paymentId: string | number) {
-  const token = env.MP_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN;
-  if (!token) return null;
-
-  try {
-    const res = await fetch(
-      `https://api.mercadopago.com/v1/payments/${paymentId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
-
-    if (!res.ok) return null;
-    return await res.json();
-  } catch (error) {
-    console.error("[MercadoPago] Erro ao buscar pagamento:", error);
-    return null;
-  }
-}

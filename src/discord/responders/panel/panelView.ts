@@ -29,8 +29,6 @@ export function formatHexColor(color: string): `#${string}` {
 }
 
 export const PANEL_COLOR = formatHexColor(brand.primaryColor);
-export const TICKET_EMBED_COLOR = formatHexColor(brand.primaryColor);
-export const BANNER_URL = "";
 
 export function getPanelColor(guildData?: any): `#${string}` {
   if (guildData?.identity?.primaryColor) {

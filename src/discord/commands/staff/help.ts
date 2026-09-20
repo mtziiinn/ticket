@@ -22,7 +22,7 @@ createCommand({
       `${getEmojiTag("file_check")} **\`/ticket limpar-cache\`** — Limpa o cache e a memória do bot.`,
       `${getEmojiTag("lock")} **\`/chat\`** — Moderação do chat: \`bloquear\`, \`desbloquear\` e \`limpar\`.`,
       `${getEmojiTag("other_megaphone")} **\`/anunciar\`** — Cria e publica um comunicado oficial (canal e/ou DM).`,
-      `${getEmojiTag("calendar_check")} **\`/giveaway\`** — Inicia um sorteio interativo no canal.`,
+      `${getEmojiTag("calendar_check")} **\`/criar-sorteio\`** — Inicia um sorteio interativo no canal.`,
     ].join("\n");
 
     const container = createContainer(

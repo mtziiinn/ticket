@@ -9,19 +9,6 @@ import {
 } from "discord.js";
 
 /**
- * Retorna o ID do canal de logs configurado ou null se desativado.
- * Permite checagem antecipada para evitar alocação inútil de componentes.
- */
-export async function getBotLogChannelId(guildId: string): Promise<string | null> {
-  try {
-    const guildData = await db.guilds.get(guildId);
-    return guildData?.botLogsChannel || null;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Envia uma mensagem de log formatada para o canal de logs configurado no servidor (botLogsChannel).
  * Suporta contêiner estático ou factory function para alocação lazy.
  */

@@ -68,11 +68,6 @@ export const db = {
 await db.pendingDeliveries.createIndexes();
 await db.monthlyBillings.createIndexes().catch(() => {});
 
-export type GuildSchema = InferSchemaType<typeof guildSchema>;
-export type MemberSchema = InferSchemaType<typeof memberSchema>;
-export type TicketSchema = InferSchemaType<typeof ticketSchema>;
-export type TranscriptSchema = InferSchemaType<typeof transcriptSchema>;
-export type GiveawaySchema = InferSchemaType<typeof giveawaySchema>;
 export type MonthlyBillingSchema = InferSchemaType<typeof monthlyBillingSchema>;
 
 export { cleanupGuildCache } from "./schemas/guild.js";

@@ -464,13 +464,3 @@ createResponder({
     await processTicketSubmission(interaction);
   },
 });
-
-// 4. Responder de backup legado
-createResponder({
-  customId: "Abertura de Ticket",
-  types: [ResponderType.Modal, ResponderType.ModalComponent],
-  cache: "cached",
-  async run(interaction) {
-    await processTicketSubmission(interaction);
-  },
-});
