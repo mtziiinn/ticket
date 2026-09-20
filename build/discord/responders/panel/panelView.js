@@ -10,8 +10,6 @@ export function formatHexColor(color) {
     return `#${cleaned}`;
 }
 export const PANEL_COLOR = formatHexColor(brand.primaryColor);
-export const TICKET_EMBED_COLOR = formatHexColor(brand.primaryColor);
-export const BANNER_URL = "";
 export function getPanelColor(guildData) {
     if (guildData?.identity?.primaryColor) {
         return formatHexColor(guildData.identity.primaryColor);

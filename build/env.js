@@ -8,4 +8,6 @@ export const env = await validateEnv(z.looseObject({
     WEB_URL: z.string().url().default("http://localhost:3000"),
     MP_ACCESS_TOKEN: z.string().optional(),
     ERROR_WEBHOOK_URL: z.string().url().optional(),
+    DISCLOUD_TOKEN: z.string().optional(),
+    DISCLOUD_APP_ID: z.string().optional(),
 }));

@@ -4,7 +4,7 @@ import { db } from "#database";
 import { createContainer, createSection, Separator, createRow, } from "@magicyan/discord";
 import "./constants.js";
 import { GatewayIntentBits, Options, Partials, ButtonBuilder, ButtonStyle, } from "discord.js";
-import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM, sendErrorWebhook, log, } from "#functions";
+import { clearBotCache, getCleanAvatarURL, getEmojiTag, safeSendDM, sendErrorWebhook, log, startAutoRestart, } from "#functions";
 // =======================================================
 // RESILIÊNCIA GLOBAL / HANDLERS ANTI-CRASH PARA PRODUÇÃO
 // =======================================================
@@ -219,3 +219,4 @@ function runPeriodicCacheCleanup() {
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000); // A cada 6 horas
 setInterval(processDmQueue, 60 * 1000); // A cada 60 segundos (reduz queries de polling desnecessárias)
 setInterval(runPeriodicCacheCleanup, 20 * 60 * 1000); // A cada 20 minutos para manter RSS estável na Discloud
+startAutoRestart(); // Reinicia o bot a cada 6h via API da Discloud
