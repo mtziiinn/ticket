@@ -27,7 +27,7 @@ export default function NotFound() {
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-muted-foreground">
-              Nao encontramos entregas para este codigo de ticket. O codigo pode estar incorreto, ou as entregas ja foram removidas (apos 30 dias).
+              Não encontramos entregas para este código de ticket. O código pode estar incorreto, ou o registro das entregas já foi removido (os registros são apagados 30 dias após a entrega, e os arquivos expiram 7 dias após a entrega).
             </p>
             <Button asChild variant="outline">
               <Link href="/">Voltar ao inicio</Link>
