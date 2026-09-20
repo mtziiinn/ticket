@@ -1,16 +1,48 @@
 import { createEvent } from "#base";
 import { createContainer } from "@magicyan/discord";
 import { AuditLogEvent, } from "discord.js";
-import { getAuditLogExecutor, getEmojiTag, sendBotLog } from "#functions";
+import { getAuditLogExecutor, getEmojiTag, getMemberChangesFromAuditLog, sendBotLog, } from "#functions";
+// Membro antigo fora do cache: sem diff confiável, remonta cargos e apelido
+// pelo audit log em vez de perder o registro.
+async function logChangesFromAuditLog(newMember) {
+    const audit = await getMemberChangesFromAuditLog(newMember.guild, newMember.id);
+    if (!audit)
+        return;
+    const changes = [];
+    if (audit.added.length > 0) {
+        const roleList = audit.added.map((r) => `\`${r.name}\``).join(", ");
+        changes.push(`• ${getEmojiTag("action_add")} **Cargos adicionados:** ${roleList}`);
+    }
+    if (audit.removed.length > 0) {
+        const roleList = audit.removed.map((r) => `\`${r.name}\``).join(", ");
+        changes.push(`• ${getEmojiTag("action_remove")} **Cargos removidos:** ${roleList}`);
+    }
+    if (audit.nick) {
+        const before = audit.nick.before ? `\`${audit.nick.before}\`` : "*nenhum*";
+        const after = audit.nick.after ? `\`${audit.nick.after}\`` : "*nenhum*";
+        changes.push(`• ${getEmojiTag("user")} **Apelido:** ${before} ➔ ${after}`);
+    }
+    if (changes.length === 0)
+        return;
+    const headerLines = [
+        `| ${getEmojiTag("user")} <@${newMember.id}> (\`${newMember.user.tag}\`)`,
+        audit.executor
+            ? `| ${getEmojiTag("user_check")} **Alterado por:** <@${audit.executor.id}>`
+            : "",
+    ].filter(Boolean);
+    const container = createContainer("#3b82f6", `## ${getEmojiTag("user_users")} Membro Atualizado`, [...headerLines, "", "### O que mudou:", changes.join("\n")].join("\n"));
+    await sendBotLog(newMember.guild, container);
+}
 createEvent({
     name: "guildMemberUpdate",
     event: "guildMemberUpdate",
     async run(oldMember, newMember) {
         try {
-            // Sem o estado antigo confiável não dá para dizer "o que mudou".
-            // Membro parcial (não estava em cache) => abortar em vez de logar algo errado.
-            if (oldMember.partial)
+            // Sem o estado antigo no cache não dá para comparar: usa o audit log.
+            if (oldMember.partial) {
+                await logChangesFromAuditLog(newMember);
                 return;
+            }
             const changes = [];
             let auditEvent = AuditLogEvent.MemberUpdate;
             // Cargos adicionados / removidos (nome, sem menção para não gerar ping)

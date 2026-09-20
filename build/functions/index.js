@@ -155,3 +155,4 @@ export * from "./errorWebhook.js";
 export * from "./logger.js";
 export * from "./monthlyBilling.js";
 export * from "./autoRestart.js";
+export * from "./auditMemberChanges.js";
