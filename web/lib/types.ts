@@ -66,6 +66,8 @@ export interface Delivery {
   description: string;
   deliveredBy: string;
   deliveredAt: string;
+  expired?: boolean;
+  expiresAt?: string;
 }
 
 export interface PendingDelivery {

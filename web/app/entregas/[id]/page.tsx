@@ -12,7 +12,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileDown, Package, ArrowLeft, Download } from "lucide-react";
+import { FileDown, Package, ArrowLeft, Download, TimerOff } from "lucide-react";
+
+// Mesmo prazo aplicado em app/api/upload/[token]/route.ts ao gravar o arquivo.
+const FILE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const FILE_URL_PATTERN = /\/api\/file\/([^/?#]+)/;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -46,20 +50,57 @@ async function getTicketDeliveries(id: string): Promise<TicketWithDeliveries | n
       return null;
     }
 
+    // O arquivo mora em delivery_files e o MongoDB apaga o documento quando
+    // expiresAt passa. Sem documento (ou com prazo vencido) a entrega expirou.
+    // Links que não são do nosso /api/file/ não têm como ser checados: seguem disponíveis.
+    const tokens = ticket.deliveries
+      .map((d) => d.url?.match(FILE_URL_PATTERN)?.[1])
+      .filter((t): t is string => Boolean(t));
+    const files = tokens.length
+      ? await db
+          .collection("delivery_files")
+          .find({ token: { $in: tokens } }, { projection: { token: 1, expiresAt: 1 } })
+          .toArray()
+      : [];
+    const expiresByToken = new Map(files.map((f) => [f.token as string, f.expiresAt as Date | undefined]));
+    const now = Date.now();
+
     return {
       ticketId: ticket.ticketId,
       category: ticket.category || "Suporte",
       description: ticket.description || "Não informado.",
       createdAt: ticket.openedAt?.toISOString() || new Date().toISOString(),
-      deliveries: ticket.deliveries.map((d) => ({
-        url: d.url,
-        filename: d.filename,
-        description: d.description,
-        deliveredBy: d.deliveredBy,
-        deliveredAt: d.deliveredAt instanceof Date
+      deliveries: ticket.deliveries.map((d) => {
+        const deliveredAt = d.deliveredAt instanceof Date
           ? d.deliveredAt.toISOString()
-          : String(d.deliveredAt),
-      })),
+          : String(d.deliveredAt);
+        const token = d.url?.match(FILE_URL_PATTERN)?.[1];
+        let expired = false;
+        let expiresAt: string | undefined;
+        if (token) {
+          const hasFile = expiresByToken.has(token);
+          const fileExpiresAt = expiresByToken.get(token);
+          if (hasFile && !fileExpiresAt) {
+            // Documento sem prazo gravado: a rota de download serve sem checar validade.
+            expired = false;
+          } else {
+            const expiresMs = fileExpiresAt
+              ? new Date(fileExpiresAt).getTime()
+              : new Date(deliveredAt).getTime() + FILE_TTL_MS;
+            expired = !hasFile || expiresMs <= now;
+            if (Number.isFinite(expiresMs)) expiresAt = new Date(expiresMs).toISOString();
+          }
+        }
+        return {
+          url: d.url,
+          filename: d.filename,
+          description: d.description,
+          deliveredBy: d.deliveredBy,
+          deliveredAt,
+          expired,
+          expiresAt,
+        };
+      }),
     };
   } catch (error) {
     console.error("Error fetching ticket deliveries:", error);
@@ -144,7 +185,10 @@ export default async function DeliveriesPage({ params }: PageProps) {
                   <FileDown className="h-5 w-5 text-primary" />
                   {delivery.filename}
                 </CardTitle>
-                <span className="text-xs text-muted-foreground">
+                <span className="flex items-center gap-2 text-xs text-muted-foreground">
+                  {delivery.expired && (
+                    <Badge variant="destructive" className="text-[10px]">Expirado</Badge>
+                  )}
                   {new Date(delivery.deliveredAt).toLocaleDateString("pt-BR", {
                     day: "numeric",
                     month: "long",
@@ -161,12 +205,36 @@ export default async function DeliveriesPage({ params }: PageProps) {
                   {delivery.description}
                 </p>
               )}
-              <Button asChild className="w-full gap-2">
-                <a href={delivery.url} target="_blank" rel="noopener noreferrer">
-                  <Download className="h-4 w-4" />
-                  Baixar {delivery.filename}
-                </a>
-              </Button>
+              {delivery.expired ? (
+                <div
+                  role="status"
+                  className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm"
+                >
+                  <TimerOff className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-medium text-foreground">
+                      Este arquivo expirou{delivery.expiresAt
+                        ? ` em ${new Date(delivery.expiresAt).toLocaleDateString("pt-BR", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            timeZone: "America/Sao_Paulo",
+                          })}`
+                        : ""}.
+                    </p>
+                    <p className="text-muted-foreground">
+                      Os arquivos ficam disponíveis por 7 dias após a entrega. Fale com a equipe pelo ticket para solicitar uma nova entrega.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <Button asChild className="w-full gap-2">
+                  <a href={delivery.url} target="_blank" rel="noopener noreferrer">
+                    <Download className="h-4 w-4" />
+                    Baixar {delivery.filename}
+                  </a>
+                </Button>
+              )}
             </CardContent>
           </Card>
         ))}
