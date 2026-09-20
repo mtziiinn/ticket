@@ -22,6 +22,7 @@ import {
   safeSendDM,
   sendErrorWebhook,
   log,
+  startAutoRestart,
 } from "#functions";
 
 // =======================================================
@@ -285,3 +286,4 @@ function runPeriodicCacheCleanup() {
 setInterval(runAllCleanups, 6 * 60 * 60 * 1000); // A cada 6 horas
 setInterval(processDmQueue, 60 * 1000); // A cada 60 segundos (reduz queries de polling desnecessárias)
 setInterval(runPeriodicCacheCleanup, 20 * 60 * 1000); // A cada 20 minutos para manter RSS estável na Discloud
+startAutoRestart(); // Reinicia o bot a cada 6h via API da Discloud
