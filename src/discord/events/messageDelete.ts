@@ -11,14 +11,20 @@ createEvent({
     if (message.author?.bot) return;
 
     try {
-      const executor = await getAuditLogExecutor(
-        message.guild,
-        AuditLogEvent.MessageDelete,
-        message.author?.id,
-      );
+      // Sem o autor (mensagem fora do cache) o audit log não tem como confirmar
+      // quem apagou: buscar sem alvo poderia creditar outra exclusão.
+      const executor = message.author
+        ? await getAuditLogExecutor(
+            message.guild,
+            AuditLogEvent.MessageDelete,
+            message.author.id,
+          )
+        : null;
 
       const author = message.author;
-      const content = message.content?.trim() || "*sem conteúdo*";
+      const content = message.partial
+        ? "*indisponível (mensagem fora do cache)*"
+        : message.content?.trim() || "*sem conteúdo*";
 
       const container = createContainer(
         "#ef4444",

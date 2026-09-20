@@ -13,6 +13,13 @@ createEvent({
     if (!newMessage.guild) return;
     if (newMessage.author?.bot) return;
 
+    // Sem a versão antiga no cache não dá para saber se houve edição: só segue
+    // se a edição é recente (evita logar atualização de prévia de link).
+    if (oldMessage.partial) {
+      const editedAt = newMessage.editedTimestamp;
+      if (!editedAt || Date.now() - editedAt > 30_000) return;
+    }
+
     const oldContent = oldMessage.content?.trim();
     const newContent = newMessage.content?.trim();
 
@@ -21,7 +28,9 @@ createEvent({
 
     try {
       const author = newMessage.author;
-      const beforeText = oldContent || "*vazio*";
+      const beforeText = oldMessage.partial
+        ? "*indisponível (mensagem fora do cache)*"
+        : oldContent || "*vazio*";
       const afterText = newContent || "*vazio*";
 
       const container = createContainer(
