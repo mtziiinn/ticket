@@ -133,9 +133,9 @@ export default function HomePage() {
           </div>
           <div className="p-4 rounded-xl border border-border bg-card/30 flex flex-col items-center text-center space-y-2">
             <Clock className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-sm">30 Dias</span>
+            <span className="font-semibold text-sm">7 Dias</span>
             <p className="text-xs text-muted-foreground">
-              Arquivos disponíveis por 30 dias após a entrega.
+              Arquivos disponíveis por 7 dias após a entrega.
             </p>
           </div>
           <div className="p-4 rounded-xl border border-border bg-card/30 flex flex-col items-center text-center space-y-2">
