@@ -117,3 +117,14 @@ export async function resolveTenantFromHeaders(): Promise<Tenant> {
   const h = await headers();
   return pickByHost(hostFrom((k) => h.get(k)));
 }
+
+/** Todos os bancos conhecidos (um por tenant + o fallback do ambiente), sem duplicatas. */
+export function listAllDbNames(): string[] {
+  const names = new Set<string>();
+  const fallback = envFallback().dbName;
+  if (fallback) names.add(fallback);
+  for (const tenant of Object.values(parseTenants())) {
+    if (tenant.dbName) names.add(tenant.dbName);
+  }
+  return [...names];
+}

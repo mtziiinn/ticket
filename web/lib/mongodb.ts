@@ -20,7 +20,6 @@ const options = {};
 
 let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
-const deliveryFilesIndexDone = new Set<string>();
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
@@ -51,14 +50,9 @@ export default function getClient() {
 
 export async function getDatabase(dbName?: string): Promise<Db> {
   const c = await getClientPromise();
-  const db = c.db(dbName || process.env.DATABASE_NAME || "database");
-
-  if (!deliveryFilesIndexDone.has(db.databaseName)) {
-    await db
-      .collection("delivery_files")
-      .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-    deliveryFilesIndexDone.add(db.databaseName);
-  }
-
-  return db;
+  // delivery_files não tem mais índice TTL: agora guarda a URL do Vercel Blob,
+  // e apagar o documento sem apagar o blob deixaria arquivo órfão no storage.
+  // A limpeza roda pelo cron em app/api/cron/cleanup-deliveries, que apaga o
+  // blob e o documento juntos.
+  return c.db(dbName || process.env.DATABASE_NAME || "database");
 }

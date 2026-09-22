@@ -13,10 +13,10 @@ export async function GET(
     const db = await getDatabase(tenant.dbName);
     const file = await db.collection("delivery_files").findOne(
       { token },
-      { projection: { fileData: 1, filename: 1, contentType: 1, expiresAt: 1 } },
+      { projection: { fileData: 1, blobUrl: 1, filename: 1, contentType: 1, expiresAt: 1 } },
     );
 
-    if (!file?.fileData) {
+    if (!file || (!file.blobUrl && !file.fileData)) {
       return NextResponse.json({ error: "Arquivo não encontrado" }, { status: 404 });
     }
 
@@ -24,6 +24,15 @@ export async function GET(
       return NextResponse.json({ error: "Link expirado" }, { status: 410 });
     }
 
+    // Entregas novas: os bytes moram no Vercel Blob, só redireciona (evita o
+    // limite de ~4,5 MB de resposta das funções serverless da Vercel).
+    if (file.blobUrl) {
+      const downloadName = encodeURIComponent(file.filename || "download");
+      return NextResponse.redirect(`${file.blobUrl}?download=${downloadName}`);
+    }
+
+    // Compat: entregas feitas antes da migração para o Blob, com os bytes
+    // salvos direto no documento. Continuam servindo do jeito antigo até expirar.
     const buffer = file.fileData.buffer
       ? Buffer.from(file.fileData.buffer)
       : Buffer.from(file.fileData);

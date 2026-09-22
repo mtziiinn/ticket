@@ -2,6 +2,8 @@
 
 import { useState, use } from "react";
 import Link from "next/link";
+import { upload } from "@vercel/blob/client";
+import { zipSync } from "fflate";
 import {
   Upload,
   CheckCircle2,
@@ -24,6 +26,19 @@ interface PageProps {
   params: Promise<{ token: string }>;
 }
 
+const MAX_FILES = 10;
+// Mesmo teto aplicado no servidor (maximumSizeInBytes em app/api/upload/[token]/route.ts).
+const MAX_TOTAL_BYTES = 100 * 1024 * 1024;
+
+// Empacota a fila em um único ZIP no navegador. Zipar aqui em vez de no
+// servidor é o que permite o upload ir direto para o Vercel Blob como um
+// único arquivo, sem precisar de uma função serverless remontando tudo.
+function buildZip(files: File[]): Promise<Uint8Array> {
+  return Promise.all(files.map(async (f) => [f.name, new Uint8Array(await f.arrayBuffer())] as const)).then(
+    (entries) => zipSync(Object.fromEntries(entries), { level: 5 }),
+  );
+}
+
 export default function UploadPage({ params }: PageProps) {
   const { token } = use(params);
   // Fila acumulada: cada seleção via input soma ao array em vez de
@@ -41,7 +56,10 @@ export default function UploadPage({ params }: PageProps) {
 
   const handleFilesSelected = (selected: FileList | null) => {
     if (!selected || selected.length === 0) return;
-    setFileArray((prev) => [...prev, ...Array.from(selected)]);
+    setFileArray((prev) => {
+      const next = [...prev, ...Array.from(selected)].slice(0, MAX_FILES);
+      return next;
+    });
   };
 
   const removeFile = (index: number) => {
@@ -52,26 +70,40 @@ export default function UploadPage({ params }: PageProps) {
     e.preventDefault();
     if (fileArray.length === 0) return;
 
-    setUploading(true);
-    const formData = new FormData();
-    for (const file of fileArray) {
-      formData.append("file", file);
+    const totalBytes = fileArray.reduce((s, f) => s + f.size, 0);
+    if (totalBytes > MAX_TOTAL_BYTES) {
+      setResult({
+        success: false,
+        error: `Total de ${(totalBytes / 1048576).toFixed(1)} MB excede o limite de ${MAX_TOTAL_BYTES / 1048576} MB.`,
+      });
+      return;
     }
 
+    setUploading(true);
     try {
-      const res = await fetch(`/api/upload/${token}`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
+      const isMulti = fileArray.length > 1;
+      const filename = isMulti ? `entregaveis_${token}.zip` : fileArray[0].name;
+      const contentType = isMulti ? "application/zip" : fileArray[0].type || "application/octet-stream";
+      // Multi-arquivo vira um único ZIP no navegador; single-arquivo vai como está.
+      const body: Blob = isMulti ? new Blob([await buildZip(fileArray)], { type: contentType }) : fileArray[0];
 
-      if (res.ok) {
-        setResult({ success: true, url: data.url, filename: data.filename });
-      } else {
-        setResult({ success: false, error: data.error || "Erro ao fazer upload" });
-      }
-    } catch {
-      setResult({ success: false, error: "Erro de conexão" });
+      // upload() manda os bytes direto para o Vercel Blob (não passa pela
+      // função serverless, então não esbarra no limite de ~4,5 MB por
+      // requisição). O backend só entra depois, via onUploadCompleted em
+      // app/api/upload/[token]/route.ts, para gravar no Mongo e avisar o Discord.
+      const blob = await upload(filename, body, {
+        access: "public",
+        contentType,
+        handleUploadUrl: `/api/upload/${token}`,
+        clientPayload: JSON.stringify({ fileNames: fileArray.map((f) => f.name) }),
+      });
+
+      setResult({ success: true, url: blob.url, filename });
+    } catch (err) {
+      setResult({
+        success: false,
+        error: err instanceof Error && err.message ? err.message : "Erro de conexão",
+      });
     } finally {
       setUploading(false);
     }

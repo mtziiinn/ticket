@@ -28,3 +28,4 @@
 /RELEMBRE.txt
 .vercel
 .env*.local
+.env*
