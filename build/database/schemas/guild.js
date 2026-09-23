@@ -24,6 +24,7 @@ export const guildSchema = new Schema({
                 emoji: String,
                 channelEmoji: String,
                 parentId: String,
+                available: { type: Boolean, default: true },
             },
         ],
     },

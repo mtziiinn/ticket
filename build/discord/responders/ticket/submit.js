@@ -76,6 +76,16 @@ async function processTicketSubmission(interaction, routeCategory) {
         // 1. Buscar as configurações no banco (apenas uma chamada - cache TTL 60s)
         const dynamicCategories = guildData.channels?.ticketCategories || [];
         const selectedCategory = dynamicCategories.find((c) => c.value === category);
+        // Trava de segurança: se a categoria foi desativada entre a escolha e o
+        // envio do formulário (ex: modal que já estava aberto), não deixa criar
+        // o ticket mesmo assim.
+        if (selectedCategory && selectedCategory.available === false) {
+            cooldowns.delete(user.id);
+            await interaction.editReply({
+                content: `<:action_x:1502789802918150206> Essa opção não está mais disponível no momento. Abra um novo ticket e selecione outra categoria.`,
+            });
+            return;
+        }
         // Pega o ID da categoria baseado no assunto escolhido
         let parentId = selectedCategory?.parentId;
         // Emojis customizados para o tópico
@@ -255,7 +265,9 @@ createResponder({
         }
         cooldowns.set(user.id, now + 5000);
         const guildData = await db.guilds.get(guild.id);
-        const dynamicCategories = guildData.channels?.ticketCategories || [];
+        // Categorias desativadas (available === false) somem do menu sem perder a
+        // configuração salva — reativa via /ticket categorias.
+        const dynamicCategories = (guildData.channels?.ticketCategories || []).filter((c) => c.available !== false);
         if (guildData.channels?.closed) {
             await interaction.reply({
                 content: `<:action_x:1502789802918150206> Desculpe, o setor de atendimentos está temporariamente **fechado**. Tente novamente mais tarde!`,
@@ -312,6 +324,14 @@ createResponder({
         if (guildData.channels?.closed) {
             await interaction.reply({
                 content: `<:action_x:1502789802918150206> Desculpe, o setor de atendimentos está temporariamente **fechado**. Tente novamente mais tarde!`,
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const chosenCategory = guildData.channels?.ticketCategories?.find((c) => c.value === category);
+        if (chosenCategory && chosenCategory.available === false) {
+            await interaction.reply({
+                content: `<:action_x:1502789802918150206> Essa opção não está mais disponível no momento. Selecione outra categoria.`,
                 flags: ["Ephemeral"],
             });
             return;

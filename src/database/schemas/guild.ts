@@ -24,6 +24,8 @@ export interface IGuild {
       emoji?: string;
       channelEmoji?: string;
       parentId?: string;
+      /** false = desativada: some do menu de abertura sem perder a configuração. Ausente/true = disponível. */
+      available?: boolean;
     }>;
   };
   welcome?: {
@@ -96,6 +98,7 @@ export const guildSchema = new Schema<IGuild, GuildModel>({
         emoji: String,
         channelEmoji: String,
         parentId: String,
+        available: { type: Boolean, default: true },
       },
     ],
   },

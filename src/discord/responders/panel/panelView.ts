@@ -229,7 +229,8 @@ export async function renderTicketTab(guildData: any) {
           .map((cat: any, idx: number) => {
             const emoji = cat.emoji || "🎫";
             const parent = cat.parentId ? `<#${cat.parentId}>` : "Nenhuma";
-            return `\`${idx + 1}.\` ${emoji} **${cat.name}** (Categoria: ${parent})`;
+            const status = cat.available === false ? " — ⏸️ Desativada" : "";
+            return `\`${idx + 1}.\` ${emoji} **${cat.name}** (Categoria: ${parent})${status}`;
           })
           .join("\n")
       : "*Nenhuma opção de categoria cadastrada.*";

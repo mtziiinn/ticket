@@ -334,6 +334,35 @@ createResponder({
         });
     },
 });
+// Ativar/Desativar Categoria - Seleção (acionado por /ticket categorias)
+createResponder({
+    customId: "ticket/config/cat_toggle_select",
+    types: [ResponderType.StringSelect],
+    cache: "cached",
+    async run(interaction) {
+        const { values, guildId } = interaction;
+        const slug = values[0];
+        const guildData = await db.guilds.get(guildId);
+        const cat = guildData.channels?.ticketCategories?.find((c) => c.value === slug);
+        if (!cat) {
+            await interaction.reply({
+                content: "Categoria não encontrada.",
+                flags: ["Ephemeral"],
+            });
+            return;
+        }
+        const wasAvailable = cat.available !== false;
+        cat.available = !wasAvailable;
+        guildData.markModified("channels");
+        await guildData.save();
+        await interaction.reply({
+            content: wasAvailable
+                ? `<:action_x:1502789802918150206> **${cat.name}** foi desativada — some do menu de abertura até ser reativada (mesmo comando).`
+                : `<:action_check:1502789797821939752> **${cat.name}** está disponível novamente — já aparece no menu de abertura.`,
+            flags: ["Ephemeral"],
+        });
+    },
+});
 // Editar Categoria - Lista
 createResponder({
     customId: "ticket/config/cat_edit_list",

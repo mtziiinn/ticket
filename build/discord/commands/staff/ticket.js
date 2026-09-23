@@ -1,8 +1,8 @@
 import { createCommand } from "#base";
-import { createContainer, createSection, Separator, } from "@magicyan/discord";
-import { ApplicationCommandOptionType, ApplicationCommandType, } from "discord.js";
+import { createContainer, createSection, createRow, Separator, } from "@magicyan/discord";
+import { ApplicationCommandOptionType, ApplicationCommandType, StringSelectMenuBuilder, } from "discord.js";
 import { db } from "#database";
-import { clearBotCache, getEmojiTag } from "#functions";
+import { clearBotCache, formatEmoji, getEmojiTag } from "#functions";
 function startOfDay() {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -125,6 +125,11 @@ createCommand({
             description: "Exibe diagnóstico detalhado de consumo de memória RAM e uptime",
             type: ApplicationCommandOptionType.Subcommand,
         },
+        {
+            name: "categorias",
+            description: "Ativa ou desativa uma categoria de atendimento sem apagar a configuração",
+            type: ApplicationCommandOptionType.Subcommand,
+        },
     ],
     async run(interaction) {
         const { options, guildId, member } = interaction;
@@ -222,6 +227,30 @@ createCommand({
             await interaction.editReply({
                 components: [container],
                 flags: ["IsComponentsV2"],
+            });
+        }
+        if (subcommand === "categorias") {
+            const cats = guildData.channels?.ticketCategories || [];
+            if (cats.length === 0) {
+                await interaction.reply({
+                    content: `${getEmojiTag("action_x")} Nenhuma categoria de atendimento foi configurada ainda. Adicione uma pelo \`/painel\`.`,
+                    flags: ["Ephemeral"],
+                });
+                return;
+            }
+            const menu = new StringSelectMenuBuilder()
+                .setCustomId("ticket/config/cat_toggle_select")
+                .setPlaceholder("Selecione a categoria para ativar/desativar...")
+                .addOptions(...cats.map((c) => ({
+                label: c.name,
+                value: c.value,
+                description: c.available === false ? "⏸️ Desativada" : "✅ Disponível",
+                emoji: formatEmoji(c.emoji),
+            })));
+            await interaction.reply({
+                content: `${getEmojiTag("folder_open")} Selecione abaixo a categoria que deseja ativar ou desativar. Uma categoria desativada some do menu de abertura de ticket, mas mantém toda a configuração salva.`,
+                components: [createRow(menu)],
+                flags: ["Ephemeral"],
             });
         }
     },
