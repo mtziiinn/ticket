@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { getDatabase } from "@/lib/mongodb";
-import { resolveTenant, resolveTenantByDbName, emojiTag } from "@/lib/tenant";
+import { resolveTenant, resolveTenantByDbName, emojiTag, type Tenant } from "@/lib/tenant";
 import type { ObjectId } from "mongodb";
 
 const DISCORD_API = "https://discord.com/api/v10";
@@ -58,14 +58,94 @@ async function discordFetch(
   return res.json();
 }
 
-async function sendDiscordMessage(
-  token: string | undefined,
+// IS_COMPONENTS_V2 — obrigatória para mandar um Container (o mesmo formato
+// visual usado no embed de DM em src/index.ts de cada bot).
+const IS_COMPONENTS_V2 = 1 << 15;
+
+function hexToInt(hex: string): number {
+  return parseInt(hex.replace("#", ""), 16);
+}
+
+/** Avatar "limpo" (PNG estático) do usuário, com fallback pro avatar padrão do Discord. */
+async function getDiscordAvatarUrl(
+  botToken: string | undefined,
+  userId: string,
+): Promise<string> {
+  const user = await discordFetch(botToken, `/users/${userId}`).catch(() => null);
+  if (user?.avatar) {
+    return `https://cdn.discordapp.com/avatars/${userId}/${user.avatar}.png?size=256`;
+  }
+  // Sistema de username novo: índice do avatar padrão = (id >> 22) % 6.
+  const defaultIndex = Number((BigInt(userId) >> BigInt(22)) % BigInt(6));
+  return `https://cdn.discordapp.com/embed/avatars/${defaultIndex}.png`;
+}
+
+/**
+ * Monta o mesmo container (Components V2) usado na DM de entrega de mídia
+ * (src/index.ts de cada bot), pra a mensagem no canal do ticket sair
+ * visualmente idêntica — só troca a saudação de "Olá {cliente}" continua
+ * igual, já que o canal do ticket também pertence ao cliente.
+ */
+function buildDeliveryContainer(params: {
+  tenant: Tenant;
+  ownerId?: string;
+  staffAvatarUrl: string;
+  fileNames: string[];
+  filename: string;
+  description: string;
+  downloadUrl: string;
+}) {
+  const { tenant, ownerId, staffAvatarUrl, fileNames, filename, description, downloadUrl } = params;
+  const emo = (n: string, f: string) => emojiTag(tenant, n, f);
+  const isMulti = fileNames.length > 1;
+  const fileLine = isMulti
+    ? `${emo("file_add", "📎")} **${fileNames.length} arquivos compactados em ZIP:** \`${filename}\``
+    : `${emo("file_add", "📎")} **Arquivo:** \`${filename}\``;
+  const greeting = ownerId
+    ? `Olá <@${ownerId}>, o arquivo final do seu pedido foi entregue!`
+    : "O arquivo final do pedido foi entregue!";
+
+  return {
+    type: 17, // Container
+    accent_color: hexToInt(tenant.primaryColor || "#38bdf8"),
+    components: [
+      {
+        type: 9, // Section
+        components: [
+          { type: 10, content: `### ${emo("prism", "📦")} Mídia Entregue!\n${greeting}` },
+        ],
+        accessory: { type: 11, media: { url: staffAvatarUrl } },
+      },
+      { type: 14, divider: true, spacing: 1 }, // Separator.Default
+      { type: 10, content: fileLine },
+      { type: 10, content: `${emo("clipboard", "📋")} **Descrição:** ${description}` },
+      { type: 10, content: `${emo("cloud_check", "🔗")} **Link:** ${downloadUrl}` },
+      { type: 14, divider: true, spacing: 1 },
+      { type: 10, content: `${emo("action_warning", "⚠️")} O link expira em **7 dias**.` },
+      {
+        type: 1, // Action Row
+        components: [
+          {
+            type: 2, // Button
+            style: 5, // Link
+            label: "Baixar Arquivo",
+            emoji: tenant.emojis?.download ? { id: tenant.emojis.download } : { name: "⬇️" },
+            url: downloadUrl,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+async function sendDeliveryContainerMessage(
+  botToken: string | undefined,
   channelId: string,
-  content: string,
+  container: ReturnType<typeof buildDeliveryContainer>,
 ) {
-  return discordFetch(token, `/channels/${channelId}/messages`, {
+  return discordFetch(botToken, `/channels/${channelId}/messages`, {
     method: "POST",
-    body: JSON.stringify({ content }),
+    body: JSON.stringify({ components: [container], flags: IS_COMPONENTS_V2 }),
   });
 }
 
@@ -207,19 +287,19 @@ export async function POST(
 
         await db.collection("pending_deliveries").deleteOne({ _id: pending._id });
 
-        const isMulti = fileNames.length > 1;
-        const sizeInfo = isMulti ? ` (${fileNames.length} arquivos compactados em ZIP)` : "";
-        const staffMention = pending.staffId ? `<@${pending.staffId}>` : "Staff";
-        const emo = (n: string, f: string) => emojiTag(tenant, n, f);
-        const channelMsg = [
-          `${emo("action_check", "✅")} ${staffMention} entregou a mídia!${sizeInfo}`,
-          `${emo("file_add", "📎")} **Arquivo:** \`${blob.pathname}\``,
-          `${emo("file_add", "📎")} **Arquivos:** ${fileNames.join(", ")}`,
-          `${emo("clipboard", "📋")} **Descrição:** ${pending.description || "Mídia entregue"}`,
-          `${emo("cloud_check", "🔗")} **Link:** ${downloadUrl}`,
-          `${emo("action_warning", "⚠️")} O link expira em **7 dias**.`,
-        ].join("\n");
-        await sendDiscordMessage(tenant.botToken, pending.channelId, channelMsg).catch((error) => {
+        // Mesmo container (Components V2) da DM de entrega — só troca o
+        // "Olá {cliente}" continua igual, já que o canal do ticket também é do cliente.
+        const staffAvatarUrl = await getDiscordAvatarUrl(tenant.botToken, pending.staffId);
+        const container = buildDeliveryContainer({
+          tenant,
+          ownerId: ticket.ownerId,
+          staffAvatarUrl,
+          fileNames,
+          filename: blob.pathname,
+          description: pending.description || "Mídia entregue",
+          downloadUrl,
+        });
+        await sendDeliveryContainerMessage(tenant.botToken, pending.channelId, container).catch((error) => {
           console.error("[Upload API] Não foi possível avisar o canal:", error);
         });
 

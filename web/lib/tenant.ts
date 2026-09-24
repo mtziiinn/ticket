@@ -15,15 +15,28 @@ export interface Tenant {
   mpAccessToken?: string;
   /** Emojis customizados da aplicação daquele bot: nome -> id do emoji. */
   emojis?: Record<string, string>;
+  /** Cor de marca estática do bot (brand.config.json), usada nos embeds V2. */
+  primaryColor?: string;
 }
 
 /**
  * Emojis embutidos por domínio (fallback quando o TENANTS não traz `emojis`).
  * São emojis da APLICAÇÃO de cada bot — só renderizam no bot dono deles, por
  * isso ficam por tenant. Domínios sem entrada aqui usam o unicode de fallback.
+ * IDs conferidos com o mesmo container de entrega usado na DM (src/index.ts
+ * de cada bot), para o embed do canal do ticket sair idêntico ao da DM.
  */
 const BUILTIN_TENANT_EMOJIS: Record<string, Record<string, string>> = {
+  "ticket-mts.vercel.app": {
+    prism: "1547021658496434246",
+    action_warning: "1502789801949265990",
+    file_add: "1502789905112105071",
+    clipboard: "1502789887907205293",
+    cloud_check: "1502789867355115690",
+    download: "1502789906122936431",
+  },
   "ticket-dusk.vercel.app": {
+    prism: "1549537783293681674",
     action_check: "1547357156079050935",
     action_warning: "1547357165423956081",
     action_info: "1547357158126002229",
@@ -34,7 +47,14 @@ const BUILTIN_TENANT_EMOJIS: Record<string, Record<string, string>> = {
     clock_check: "1547357333837979689",
     user_check: "1547357523881754665",
     database: "1547357311717220442",
+    download: "1547357364896661625",
   },
+};
+
+/** Cores de marca estáticas por domínio (brand.config.json de cada bot). */
+const BUILTIN_TENANT_COLORS: Record<string, string> = {
+  "ticket-mts.vercel.app": "#38bdf8",
+  "ticket-dusk.vercel.app": "#C8B8E8",
 };
 
 /** `<:nome:id>` se o tenant tiver o emoji custom; senão o fallback unicode. */
@@ -49,6 +69,8 @@ function envFallback(): Tenant {
     botToken: process.env.BOT_TOKEN,
     apiKey: process.env.API_KEY,
     mpAccessToken: process.env.MP_ACCESS_TOKEN,
+    emojis: BUILTIN_TENANT_EMOJIS["ticket-mts.vercel.app"],
+    primaryColor: BUILTIN_TENANT_COLORS["ticket-mts.vercel.app"],
   };
 }
 
@@ -97,6 +119,11 @@ function pickByHost(host: string | null | undefined): Tenant {
       match.emojis ??
       BUILTIN_TENANT_EMOJIS[full] ??
       BUILTIN_TENANT_EMOJIS[noPort],
+    primaryColor:
+      match.primaryColor ??
+      BUILTIN_TENANT_COLORS[full] ??
+      BUILTIN_TENANT_COLORS[noPort] ??
+      fallback.primaryColor,
   };
   console.log(`[tenant] host "${noPort}" -> db=${resolved.dbName}`);
   return resolved;
@@ -140,6 +167,7 @@ export function resolveTenantByDbName(dbName: string): Tenant {
         apiKey: match.apiKey ?? fallback.apiKey,
         mpAccessToken: match.mpAccessToken ?? fallback.mpAccessToken,
         emojis: match.emojis ?? BUILTIN_TENANT_EMOJIS[host],
+        primaryColor: match.primaryColor ?? BUILTIN_TENANT_COLORS[host] ?? fallback.primaryColor,
       };
     }
   }
