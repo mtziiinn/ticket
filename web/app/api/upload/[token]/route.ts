@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { getDatabase } from "@/lib/mongodb";
-import { resolveTenant, emojiTag } from "@/lib/tenant";
+import { resolveTenant, resolveTenantByDbName, emojiTag } from "@/lib/tenant";
 import type { ObjectId } from "mongodb";
 
 const DISCORD_API = "https://discord.com/api/v10";
@@ -74,7 +74,6 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> },
 ) {
   const { token } = await params;
-  const tenant = resolveTenant(request);
   const body = (await request.json()) as HandleUploadBody;
 
   try {
@@ -84,7 +83,17 @@ export async function POST(
       // Só confirma que o link ainda é válido; quem grava os dados de fato
       // é onUploadCompleted, chamado pela Vercel depois que os bytes já
       // estão salvos no Blob (o link só é consumido em caso de sucesso real).
-      onBeforeGenerateToken: async () => {
+      //
+      // IMPORTANTE: a chamada de onUploadCompleted é um webhook feito pelo
+      // backend do Vercel Blob, não pelo navegador — na prática ela pode
+      // chegar por um domínio diferente do que o usuário realmente usou
+      // (já observado batendo no domínio "canônico" de produção em vez do
+      // domínio do tenant), o que quebraria resolveTenant(request) ali
+      // dentro. Por isso o tenant (dbName) e a baseUrl são resolvidos AQUI,
+      // onde o host ainda é confiável, e viajam dentro do tokenPayload
+      // assinado — não recalculados a partir da segunda requisição.
+      onBeforeGenerateToken: async (_pathname, clientPayload) => {
+        const tenant = resolveTenant(request);
         const db = await getDatabase(tenant.dbName);
         const pending = await db.collection<PendingDelivery>("pending_deliveries").findOne({
           token,
@@ -94,13 +103,50 @@ export async function POST(
         if (!pending) {
           throw new Error("Link inválido, expirado ou já utilizado");
         }
+
+        const reqHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
+        const reqProto = request.headers.get("x-forwarded-proto") || "https";
+        const baseUrl = reqHost
+          ? `${reqProto}://${reqHost}`
+          : process.env.WEB_URL || request.nextUrl.origin;
+
+        let fileNames: string[] = [];
+        try {
+          const parsed = clientPayload ? (JSON.parse(clientPayload) as { fileNames?: string[] }) : null;
+          if (Array.isArray(parsed?.fileNames)) fileNames = parsed.fileNames;
+        } catch {
+          /* payload do cliente ausente ou inválido */
+        }
+
         return {
           addRandomSuffix: true,
           maximumSizeInBytes: MAX_UPLOAD_BYTES,
+          tokenPayload: JSON.stringify({ dbName: tenant.dbName, baseUrl, fileNames }),
         };
       },
       onUploadCompleted: async ({ blob, tokenPayload }) => {
-        const db = await getDatabase(tenant.dbName);
+        let dbName = resolveTenant(request).dbName;
+        let baseUrl: string | undefined;
+        let fileNames: string[] = [blob.pathname];
+        try {
+          if (tokenPayload) {
+            const parsed = JSON.parse(tokenPayload) as {
+              dbName?: string;
+              baseUrl?: string;
+              fileNames?: string[];
+            };
+            if (parsed.dbName) dbName = parsed.dbName;
+            if (parsed.baseUrl) baseUrl = parsed.baseUrl;
+            if (Array.isArray(parsed.fileNames) && parsed.fileNames.length > 0) {
+              fileNames = parsed.fileNames;
+            }
+          }
+        } catch {
+          /* payload ausente ou inválido: cai no fallback do host desta chamada */
+        }
+
+        const tenant = resolveTenantByDbName(dbName);
+        const db = await getDatabase(dbName);
         const now = new Date();
 
         // Atômico: garante que um retry do webhook da Vercel não processe a
@@ -112,23 +158,11 @@ export async function POST(
         );
         if (!pending) return;
 
-        let fileNames: string[] = [blob.pathname];
-        try {
-          if (tokenPayload) {
-            const parsed = JSON.parse(tokenPayload) as { fileNames?: string[] };
-            if (Array.isArray(parsed.fileNames) && parsed.fileNames.length > 0) {
-              fileNames = parsed.fileNames;
-            }
-          }
-        } catch {
-          /* payload ausente ou inválido: usa o nome do blob mesmo */
+        if (!baseUrl) {
+          const reqHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
+          const reqProto = request.headers.get("x-forwarded-proto") || "https";
+          baseUrl = reqHost ? `${reqProto}://${reqHost}` : process.env.WEB_URL || request.nextUrl.origin;
         }
-
-        const reqHost = request.headers.get("x-forwarded-host") || request.headers.get("host");
-        const reqProto = request.headers.get("x-forwarded-proto") || "https";
-        const baseUrl = reqHost
-          ? `${reqProto}://${reqHost}`
-          : process.env.WEB_URL || request.nextUrl.origin;
         const downloadUrl = `${baseUrl}/api/file/${token}`;
         const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 

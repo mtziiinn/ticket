@@ -118,6 +118,34 @@ export async function resolveTenantFromHeaders(): Promise<Tenant> {
   return pickByHost(hostFrom((k) => h.get(k)));
 }
 
+/**
+ * Resolve o tenant pelo dbName em vez do host. Existe porque o callback
+ * onUploadCompleted do Vercel Blob (@vercel/blob/client) nem sempre chega na
+ * mesma URL/domínio da requisição original que gerou o token — na prática já
+ * foi observado chegando pelo domínio de produção "canônico" do projeto em
+ * vez do domínio do tenant que o usuário realmente usou. Nesse callback,
+ * resolveTenant(request) resolveria para o tenant errado; o dbName (que veio
+ * do tokenPayload, gravado no momento em que o host ainda era confiável)
+ * resolve para o tenant certo independente de qual domínio o Blob chamou.
+ */
+export function resolveTenantByDbName(dbName: string): Tenant {
+  const fallback = envFallback();
+  if (dbName === fallback.dbName) return fallback;
+
+  for (const [host, match] of Object.entries(parseTenants())) {
+    if (match.dbName === dbName) {
+      return {
+        dbName,
+        botToken: match.botToken ?? fallback.botToken,
+        apiKey: match.apiKey ?? fallback.apiKey,
+        mpAccessToken: match.mpAccessToken ?? fallback.mpAccessToken,
+        emojis: match.emojis ?? BUILTIN_TENANT_EMOJIS[host],
+      };
+    }
+  }
+  return fallback;
+}
+
 /** Todos os bancos conhecidos (um por tenant + o fallback do ambiente), sem duplicatas. */
 export function listAllDbNames(): string[] {
   const names = new Set<string>();
