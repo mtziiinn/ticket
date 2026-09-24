@@ -27,6 +27,14 @@ createEvent({
     if (message.author.bot) return;
     if (!message.guild || !message.member) return;
 
+    // message.guild e message.member são getters que resolvem contra o cache
+    // a cada acesso (não uma referência fixa) — com os awaits abaixo, a
+    // limpeza periódica de cache pode remover o membro no meio do caminho e
+    // um acesso posterior via message.member viraria null. Capturar uma vez
+    // aqui evita o crash mesmo se isso acontecer.
+    const guild = message.guild;
+    const member = message.member;
+
     // ==========================================
     // 1. COFRE DE MÍDIA (VAULT) EM TEMPO REAL
     // ==========================================
@@ -34,13 +42,13 @@ createEvent({
       try {
         const ticket = await db.tickets.getByChannel(message.channelId);
         if (ticket && !ticket.closed) {
-          const guildData = await db.guilds.get(message.guild.id);
+          const guildData = await db.guilds.get(guild.id);
           const vaultChannelId =
             guildData?.channels?.vault || guildData?.channels?.logs;
           if (vaultChannelId) {
             const vaultChannel =
-              message.guild.channels.cache.get(vaultChannelId) ||
-              (await message.guild.channels
+              guild.channels.cache.get(vaultChannelId) ||
+              (await guild.channels
                 .fetch(vaultChannelId)
                 .catch(() => null));
 
@@ -60,7 +68,7 @@ createEvent({
                 author: {
                   id: message.author.id,
                   username: message.author.username,
-                  displayName: message.member?.displayName,
+                  displayName: member?.displayName,
                   avatarURL: message.author.displayAvatarURL({
                     extension: "png",
                     forceStatic: true,
@@ -80,14 +88,14 @@ createEvent({
 
     // Ignorar Administradores e quem tem permissão de gerenciar mensagens para anti-flood
     if (
-      message.member.permissions.has(PermissionFlagsBits.Administrator) ||
-      message.member.permissions.has(PermissionFlagsBits.ManageMessages)
+      member.permissions.has(PermissionFlagsBits.Administrator) ||
+      member.permissions.has(PermissionFlagsBits.ManageMessages)
     ) {
       return;
     }
 
     try {
-      const guildData = await db.guilds.get(message.guild.id);
+      const guildData = await db.guilds.get(guild.id);
       const af = guildData?.antiflood;
 
       // Se o anti-flood estiver desligado, ignora
@@ -96,7 +104,7 @@ createEvent({
       const staffRoleId = guildData.channels?.staffRole;
 
       // Se o próprio autor tiver o cargo da equipe, ignora
-      if (staffRoleId && message.member.roles.cache.has(staffRoleId)) {
+      if (staffRoleId && member.roles.cache.has(staffRoleId)) {
         return;
       }
 
@@ -133,7 +141,7 @@ createEvent({
 
       // Controle de Flood / Janela de Tempo
       const now = Date.now();
-      const key = `${message.guild.id}:${message.author.id}`;
+      const key = `${guild.id}:${message.author.id}`;
       const windowSeconds = af.windowSeconds ?? 10;
       const windowMs = windowSeconds * 1000;
       const maxMentions = af.maxMentions ?? 3;
@@ -152,7 +160,7 @@ createEvent({
         const timeoutMs = timeoutMinutes * 60 * 1000;
 
         // Tentar aplicar o timeout no membro
-        const timeoutApplied = await message.member
+        const timeoutApplied = await member
           .timeout(
             timeoutMs,
             `[Anti-Flood] Menções excessivas à equipe (${timestamps.length} em ${windowSeconds}s)`,
@@ -193,7 +201,7 @@ createEvent({
           .catch(() => {});
 
         // Log do evento
-        await sendBotLog(message.guild, () =>
+        await sendBotLog(guild, () =>
           createContainer(
             "#ef4444",
             createSection({
