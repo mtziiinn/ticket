@@ -1,6 +1,6 @@
 import { createEvent } from "#base";
 import { createContainer } from "@magicyan/discord";
-import { AuditLogEvent, } from "discord.js";
+import { AuditLogEvent, AutoModerationActionType, } from "discord.js";
 import { getAuditLogExecutor, getEmojiTag, sendBotLog } from "#functions";
 createEvent({
     name: "autoModerationRuleCreate",
@@ -85,6 +85,12 @@ createEvent({
     name: "autoModerationActionExecution",
     event: "autoModerationActionExecution",
     async run(execution) {
+        // Uma regra pode ter várias ações (bloquear + alertar + timeout), e o
+        // discord.js dispara esse evento uma vez POR AÇÃO — sem esse filtro,
+        // um único bloqueio virava até 3 logs, todos dizendo "Bloqueou uma
+        // Mensagem" mesmo quando a ação era só um alerta ou um timeout.
+        if (execution.action.type !== AutoModerationActionType.BlockMessage)
+            return;
         try {
             const container = createContainer("#eab308", `## ${getEmojiTag("shield_x")} AutoMod Bloqueou uma Mensagem`, [
                 `| ${getEmojiTag("user")} <@${execution.userId}>`,

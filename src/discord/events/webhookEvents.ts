@@ -18,6 +18,10 @@ const WEBHOOK_LOG_TYPES = [
   { type: AuditLogEvent.WebhookUpdate, label: "Atualizado", emoji: "action_info" as const, color: "#eab308" },
 ];
 
+// Dedup por id de entrada do audit log — evita logar duas vezes se
+// webhookUpdate disparar mais de uma vez pra mesma mudança.
+const loggedWebhookEntries = new Set<string>();
+
 // webhookUpdate só avisa "algo mudou nos webhooks desse canal", sem dizer o
 // quê — usa o audit log pra descobrir se foi criação, edição ou exclusão.
 createEvent({
@@ -32,16 +36,26 @@ createEvent({
       let best: { entry: any; label: string; emoji: "action_add" | "action_remove" | "action_info"; color: string } | null = null;
 
       for (const t of WEBHOOK_LOG_TYPES) {
-        const logs = await guild.fetchAuditLogs({ type: t.type, limit: 1 }).catch(() => null);
-        const entry = logs?.entries.first();
+        const logs = await guild.fetchAuditLogs({ type: t.type, limit: 5 }).catch(() => null);
+        // Sem filtrar por canal, um webhook criado/editado em OUTRO canal ao
+        // mesmo tempo podia ser escolhido aqui por engano. O target nem
+        // sempre traz o channelId (ex.: às vezes falta no delete) — nesse
+        // caso não filtra, só quando o dado está presente e diverge.
+        const entry = logs?.entries.find((e: any) => {
+          if (now - e.createdTimestamp > 10_000) return false;
+          const targetChannelId = e.target?.channelId ?? e.target?.channel_id;
+          return !targetChannelId || targetChannelId === channel.id;
+        });
         if (!entry) continue;
-        if (now - entry.createdTimestamp > 10_000) continue;
         if (!best || entry.createdTimestamp > best.entry.createdTimestamp) {
           best = { entry, label: t.label, emoji: t.emoji, color: t.color };
         }
       }
 
       if (!best) return;
+      if (loggedWebhookEntries.has(best.entry.id)) return;
+      loggedWebhookEntries.add(best.entry.id);
+      if (loggedWebhookEntries.size > 200) loggedWebhookEntries.clear();
 
       const targetName = (best.entry.target as any)?.name || "Webhook";
       const executor = best.entry.executor;

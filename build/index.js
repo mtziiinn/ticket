@@ -48,8 +48,22 @@ const { client } = await bootstrap({
         GatewayIntentBits.GuildModeration,
         GatewayIntentBits.GuildEmojisAndStickers,
         GatewayIntentBits.GuildVoiceStates,
+        // Sem privilégio no Developer Portal (só GuildMembers/GuildPresences/
+        // MessageContent exigem isso, e já estão habilitadas). Necessárias pros
+        // logs de convite, webhook, evento agendado e automod.
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildWebhooks,
+        GatewayIntentBits.GuildScheduledEvents,
+        GatewayIntentBits.AutoModerationConfiguration,
+        GatewayIntentBits.AutoModerationExecution,
     ],
-    partials: [Partials.Message, Partials.Channel, Partials.User, Partials.GuildMember],
+    partials: [
+        Partials.Message,
+        Partials.Channel,
+        Partials.User,
+        Partials.GuildMember,
+        Partials.GuildScheduledEvent,
+    ],
     makeCache: Options.cacheWithLimits({
         ...Options.DefaultMakeCacheSettings,
         MessageManager: 5,
@@ -58,14 +72,16 @@ const { client } = await bootstrap({
         PresenceManager: 0,
         ReactionManager: 0,
         ThreadManager: 0,
-        VoiceStateManager: 5,
         ApplicationCommandManager: 0,
         BaseGuildEmojiManager: 0,
         GuildEmojiManager: 0,
         GuildInviteManager: 0,
-        GuildStickerManager: 0,
-        GuildScheduledEventManager: 0,
-        StageInstanceManager: 0,
+        // VoiceStateManager, GuildStickerManager, GuildScheduledEventManager e
+        // StageInstanceManager NÃO entram com limite 0/baixo: os logs desses
+        // eventos comparam contra o estado antigo em cache (voiceStateUpdate,
+        // stickerUpdate/Delete, guildScheduledEventUpdate, stageInstanceUpdate) —
+        // com cache raso, o "antes" sempre vem vazio/null e o log sai errado ou
+        // nunca dispara. São objetos pequenos, o custo de manter é baixo.
     }),
     sweepers: {
         ...Options.DefaultSweeperSettings,

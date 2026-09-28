@@ -26,6 +26,21 @@ function diffPermissionOverwrites(oldChannel: any, newChannel: any): number {
   return diffCount;
 }
 
+// Mudança só de permissão gera ChannelOverwriteCreate/Update/Delete no audit
+// log, não ChannelUpdate — buscar como ChannelUpdate sempre voltava sem
+// executor. Tenta os três tipos e usa o primeiro que achar.
+async function getOverwriteExecutor(guild: any, channelId: string) {
+  for (const type of [
+    AuditLogEvent.ChannelOverwriteUpdate,
+    AuditLogEvent.ChannelOverwriteCreate,
+    AuditLogEvent.ChannelOverwriteDelete,
+  ]) {
+    const executor = await getAuditLogExecutor(guild, type, channelId);
+    if (executor) return executor;
+  }
+  return null;
+}
+
 createEvent({
   name: "channelUpdate",
   event: "channelUpdate",
@@ -120,6 +135,7 @@ createEvent({
         changes.push(`• ${getEmojiTag("action_info")} Status de voz: \`${oldAny.status || "nenhum"}\` ➔ \`${newAny.status || "nenhum"}\``);
       }
 
+      const otherFieldsChanged = changes.length > 0;
       const overwriteDiffs = diffPermissionOverwrites(oldChannel, newChannel);
       if (overwriteDiffs > 0) {
         changes.push(`• ${getEmojiTag("lock")} Permissões: \`${overwriteDiffs}\` alvo(s) modificado(s)`);
@@ -127,11 +143,16 @@ createEvent({
 
       if (changes.length === 0) return;
 
-      const executor = await getAuditLogExecutor(
-        newChannel.guild,
-        AuditLogEvent.ChannelUpdate,
-        newChannel.id,
-      );
+      const permissionOnly = overwriteDiffs > 0 && !otherFieldsChanged;
+      const executor = permissionOnly
+        ? await getOverwriteExecutor(newChannel.guild, newChannel.id)
+        : await getAuditLogExecutor(newChannel.guild, AuditLogEvent.ChannelUpdate, newChannel.id);
+
+      // Mudança de permissão feita pelo próprio bot (adicionar/remover membro
+      // do ticket, /chat bloquear/desbloquear etc.) é rotina do sistema, não
+      // uma ação de staff pra registrar — sem isso, todo fluxo interno de
+      // ticket gerava um "Canal Atualizado" no log.
+      if (permissionOnly && executor?.id === newChannel.client.user?.id) return;
 
       const container = createContainer(
         "#eab308",

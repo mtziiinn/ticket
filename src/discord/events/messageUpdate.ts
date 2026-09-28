@@ -3,6 +3,12 @@ import { createContainer } from "@magicyan/discord";
 import { Message, PartialMessage } from "discord.js";
 import { getEmojiTag, sendBotLog } from "#functions";
 
+// Guarda simples de mensagens já logadas como enquete finalizada — sem isso,
+// qualquer outro messageUpdate na mesma mensagem depois de finalizada (ex.:
+// atualização de prévia) logaria de novo, já que não dá pra comparar contra
+// um "antes" (ver comentário abaixo).
+const loggedPollFinalizations = new Set<string>();
+
 createEvent({
   name: "messageUpdate",
   event: "messageUpdate",
@@ -14,14 +20,17 @@ createEvent({
     if (newMessage.author?.bot) return;
 
     // Enquete finalizada: o texto da mensagem não muda, só o campo
-    // poll.resultsFinalized — tratado separado do diff de conteúdo abaixo.
+    // poll.resultsFinalized. Não dá pra exigir a mensagem antiga em cache
+    // pra comparar o "antes" — o MessageManager guarda só 5 mensagens por
+    // canal, e uma enquete quase sempre finaliza depois disso ter saído do
+    // cache. Usa só o estado novo + a guarda acima pra não duplicar.
     if (
-      !oldMessage.partial &&
-      oldMessage.poll &&
-      newMessage.poll &&
-      !oldMessage.poll.resultsFinalized &&
-      newMessage.poll.resultsFinalized
+      newMessage.poll?.resultsFinalized &&
+      !loggedPollFinalizations.has(newMessage.id)
     ) {
+      loggedPollFinalizations.add(newMessage.id);
+      if (loggedPollFinalizations.size > 200) loggedPollFinalizations.clear();
+
       try {
         const container = createContainer(
           constants.colors.primary,
