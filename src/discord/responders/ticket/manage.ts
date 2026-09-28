@@ -1064,9 +1064,29 @@ function toTranscriptMessage(msg: any) {
     embeds: (msg.embeds || []).map((emb: any) => ({
       title: emb.title || undefined,
       description: emb.description || undefined,
+      url: emb.url || undefined,
       color: typeof emb.color === "number" ? emb.color : undefined,
       image: emb.image?.url || undefined,
       thumbnail: emb.thumbnail?.url || undefined,
+      timestamp: emb.timestamp || undefined,
+      author: emb.author
+        ? {
+            name: emb.author.name,
+            url: emb.author.url || undefined,
+            iconURL: emb.author.iconURL || undefined,
+          }
+        : undefined,
+      footer: emb.footer
+        ? {
+            text: emb.footer.text,
+            iconURL: emb.footer.iconURL || undefined,
+          }
+        : undefined,
+      fields: (emb.fields || []).map((f: any) => ({
+        name: f.name,
+        value: f.value,
+        inline: Boolean(f.inline),
+      })),
     })),
   };
 }

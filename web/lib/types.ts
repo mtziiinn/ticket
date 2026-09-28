@@ -15,12 +15,30 @@ export interface TranscriptMessage {
     width?: number;
     height?: number;
   }>;
-  embeds?: Array<{
-    title?: string;
-    description?: string;
-    color?: number;
-    image?: string;
-    thumbnail?: string;
+  embeds?: TranscriptEmbed[];
+}
+
+export interface TranscriptEmbed {
+  title?: string;
+  description?: string;
+  url?: string;
+  color?: number;
+  image?: string;
+  thumbnail?: string;
+  timestamp?: string;
+  author?: {
+    name: string;
+    url?: string;
+    iconURL?: string;
+  };
+  footer?: {
+    text: string;
+    iconURL?: string;
+  };
+  fields?: Array<{
+    name: string;
+    value: string;
+    inline?: boolean;
   }>;
 }
 
@@ -128,12 +146,6 @@ export interface CreateTranscriptPayload {
       width?: number;
       height?: number;
     }>;
-    embeds?: Array<{
-      title?: string;
-      description?: string;
-      color?: number;
-      image?: string;
-      thumbnail?: string;
-    }>;
+    embeds?: TranscriptEmbed[];
   }>;
 }

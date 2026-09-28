@@ -205,16 +205,83 @@ export function MessageItem({ message }: MessageItemProps) {
                   style={{ borderLeftColor: hexColor }}
                   className="border-l-4 rounded-r-xl bg-card/60 border border-border/40 p-3.5 max-w-xl space-y-2 shadow-sm"
                 >
-                  {embed.title && (
-                    <div className="font-semibold text-sm text-foreground">
-                      {embed.title}
+                  {embed.thumbnail && (
+                    <img
+                      src={embed.thumbnail}
+                      alt="Thumbnail do embed"
+                      className="max-h-20 max-w-20 object-contain rounded float-right ml-2"
+                      loading="lazy"
+                    />
+                  )}
+
+                  {embed.author?.name && (
+                    <div className="flex items-center gap-2">
+                      {embed.author.iconURL && (
+                        <img
+                          src={embed.author.iconURL}
+                          alt=""
+                          className="h-5 w-5 rounded-full object-cover"
+                          loading="lazy"
+                        />
+                      )}
+                      {embed.author.url ? (
+                        <a
+                          href={embed.author.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-foreground hover:underline"
+                        >
+                          {embed.author.name}
+                        </a>
+                      ) : (
+                        <span className="text-xs font-semibold text-foreground">
+                          {embed.author.name}
+                        </span>
+                      )}
                     </div>
                   )}
+
+                  {embed.title && (
+                    embed.url ? (
+                      <a
+                        href={embed.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block font-semibold text-sm text-primary hover:underline"
+                      >
+                        {embed.title}
+                      </a>
+                    ) : (
+                      <div className="font-semibold text-sm text-foreground">
+                        {embed.title}
+                      </div>
+                    )
+                  )}
+
                   {embed.description && (
                     <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
                       {embed.description}
                     </p>
                   )}
+
+                  {embed.fields && embed.fields.length > 0 && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pt-1">
+                      {embed.fields.map((field, fieldIndex) => (
+                        <div
+                          key={fieldIndex}
+                          className={field.inline ? "" : "sm:col-span-2"}
+                        >
+                          <div className="text-xs font-semibold text-foreground">
+                            {field.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                            {field.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {embed.image && (
                     <a
                       href={embed.image}
@@ -230,13 +297,23 @@ export function MessageItem({ message }: MessageItemProps) {
                       />
                     </a>
                   )}
-                  {embed.thumbnail && !embed.image && (
-                    <img
-                      src={embed.thumbnail}
-                      alt="Thumbnail do embed"
-                      className="max-h-20 max-w-20 object-contain rounded float-right ml-2"
-                      loading="lazy"
-                    />
+
+                  {(embed.footer?.text || embed.timestamp) && (
+                    <div className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground/80">
+                      {embed.footer?.iconURL && (
+                        <img
+                          src={embed.footer.iconURL}
+                          alt=""
+                          className="h-4 w-4 rounded-full object-cover"
+                          loading="lazy"
+                        />
+                      )}
+                      <span>
+                        {embed.footer?.text}
+                        {embed.footer?.text && embed.timestamp ? " • " : ""}
+                        {embed.timestamp ? formatTimestamp(embed.timestamp) : ""}
+                      </span>
+                    </div>
                   )}
                 </div>
               )
