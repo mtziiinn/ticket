@@ -17,6 +17,15 @@ createEvent({
   async run(client) {
     sendStartupWebhook(client).catch(() => {});
 
+    // O Discord não manda as regras de AutoMod no boot: o cache
+    // (guild.autoModerationRules.cache) só é preenchido quando uma regra é
+    // criada/editada durante a sessão. Sem esse fetch, o log de "Regra de
+    // AutoMod Atualizada/Excluída" perde o "antes" até a primeira mudança
+    // de cada regra depois de cada reinício.
+    for (const guild of client.guilds.cache.values()) {
+      guild.autoModerationRules.fetch().catch(() => {});
+    }
+
     const statuses =
       brand.presence?.length > 0
         ? brand.presence
