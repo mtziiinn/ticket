@@ -33,3 +33,23 @@ createEvent({
         }
     },
 });
+createEvent({
+    name: "messageDeleteBulk",
+    event: "messageDeleteBulk",
+    async run(messages, channel) {
+        if (!channel.guild)
+            return;
+        try {
+            const executor = await getAuditLogExecutor(channel.guild, AuditLogEvent.MessageBulkDelete, channel.id);
+            const container = createContainer("#ef4444", `## ${getEmojiTag("action_x")} Mensagens Excluídas em Massa`, [
+                `| ${getEmojiTag("folder")} <#${channel.id}>`,
+                `| ${getEmojiTag("file_remove")} \`${messages.size}\` mensagens apagadas`,
+                executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
+            ].filter(Boolean).join("\n"));
+            await sendBotLog(channel.guild, container);
+        }
+        catch (err) {
+            console.error("[messageDeleteBulk] Erro ao registrar log:", err);
+        }
+    },
+});

@@ -1,6 +1,6 @@
 import { createEvent } from "#base";
 import { createContainer } from "@magicyan/discord";
-import { AuditLogEvent, Message, PartialMessage } from "discord.js";
+import { AuditLogEvent, GuildTextBasedChannel, Message, PartialMessage } from "discord.js";
 import { getAuditLogExecutor, getEmojiTag, sendBotLog } from "#functions";
 
 createEvent({
@@ -40,6 +40,36 @@ createEvent({
       await sendBotLog(message.guild, container);
     } catch (err) {
       console.error("[messageDelete] Erro ao registrar log:", err);
+    }
+  },
+});
+
+createEvent({
+  name: "messageDeleteBulk",
+  event: "messageDeleteBulk",
+  async run(messages: any, channel: GuildTextBasedChannel) {
+    if (!channel.guild) return;
+
+    try {
+      const executor = await getAuditLogExecutor(
+        channel.guild,
+        AuditLogEvent.MessageBulkDelete,
+        channel.id,
+      );
+
+      const container = createContainer(
+        "#ef4444",
+        `## ${getEmojiTag("action_x")} Mensagens Excluídas em Massa`,
+        [
+          `| ${getEmojiTag("folder")} <#${channel.id}>`,
+          `| ${getEmojiTag("file_remove")} \`${messages.size}\` mensagens apagadas`,
+          executor ? `| ${getEmojiTag("user_remove")} <@${executor.id}>` : "",
+        ].filter(Boolean).join("\n"),
+      );
+
+      await sendBotLog(channel.guild, container);
+    } catch (err) {
+      console.error("[messageDeleteBulk] Erro ao registrar log:", err);
     }
   },
 });
