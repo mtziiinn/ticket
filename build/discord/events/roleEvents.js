@@ -54,6 +54,9 @@ createEvent({
             if (oldRole.mentionable !== newRole.mentionable) {
                 changes.push(`• ${getEmojiTag("action_info")} Mencionável: \`${oldRole.mentionable ? "Sim" : "Não"}\` ➔ \`${newRole.mentionable ? "Sim" : "Não"}\``);
             }
+            if (oldRole.icon !== newRole.icon) {
+                changes.push(`• ${getEmojiTag("file")} Ícone do cargo atualizado`);
+            }
             if (oldRole.permissions.bitfield !== newRole.permissions.bitfield) {
                 changes.push(`• ${getEmojiTag("shield")} Permissões modificadas`);
             }
