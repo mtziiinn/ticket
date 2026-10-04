@@ -392,9 +392,12 @@ async function processCloseSubmission(interaction) {
             }, "Ticket Close");
         }
         // 6. Deletar canal
-        setTimeout(() => {
-            channel.delete().catch((err) => console.error("[Admin]", err));
-        }, 5000);
+        // Sem setTimeout: o bot se reinicia sozinho a cada 6h via API da Discloud
+        // (startAutoRestart) e esse timer não sobrevive a um restart — se o
+        // processo morresse nesse intervalo de 5s, o delete nunca rodava e o
+        // canal ficava órfão pra sempre (o ticket já tinha sido marcado closed,
+        // então nenhuma varredura futura tentava de novo).
+        await channel.delete().catch((err) => console.error("[Admin]", err));
     }
     catch (err) {
         console.error("[Ticket] Erro no encerramento:", err);
