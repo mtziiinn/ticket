@@ -1,11 +1,12 @@
 import { createResponder } from "#base";
 import { ResponderType } from "@constatic/base";
 import { createContainer, createSection, createEmbed, Separator, createRow, } from "@magicyan/discord";
-import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, LabelBuilder, PermissionFlagsBits, RadioGroupBuilder, StringSelectMenuBuilder, MessageType, } from "discord.js";
+import { ButtonBuilder, ButtonStyle, TextInputBuilder, TextInputStyle, ModalBuilder, LabelBuilder, RadioGroupBuilder, StringSelectMenuBuilder, MessageType, } from "discord.js";
 import { db } from "#database";
 import { env } from "#env";
 import { formatEmoji, getCleanAvatarURL, getEmojiTag, safeSendDM, getOrCreateVaultWebhook, cleanupVaultWebhookCache, } from "#functions";
 import { sendActionLog } from "./logger.js";
+import { toTranscriptMessage } from "./transcriptMessage.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
 import { formatHexColor } from "../panel/panelView.js";
@@ -725,42 +726,6 @@ createResponder({
 });
 // Re-export das funções do cofre centralizadas em #functions
 export { cleanupVaultWebhookCache, getOrCreateVaultWebhook };
-function toTranscriptMessage(msg) {
-    const attachments = [];
-    if (msg.attachments?.size > 0) {
-        for (const att of msg.attachments.values()) {
-            attachments.push({
-                url: att.url,
-                filename: att.name,
-                contentType: att.contentType || undefined,
-                width: att.width || undefined,
-                height: att.height || undefined,
-            });
-        }
-    }
-    return {
-        createdTimestamp: msg.createdTimestamp,
-        messageId: msg.id,
-        authorId: msg.author?.id || "0",
-        authorUsername: msg.author?.username || "Desconhecido",
-        authorAvatar: msg.author?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
-            "https://cdn.discordapp.com/embed/avatars/0.png",
-        authorBot: Boolean(msg.author?.bot),
-        isStaff: Boolean(msg.member?.permissions?.has?.(PermissionFlagsBits.ManageChannels)),
-        content: msg.content || "",
-        timestamp: msg.createdAt
-            ? msg.createdAt.toISOString()
-            : new Date().toISOString(),
-        attachments,
-        embeds: (msg.embeds || []).map((emb) => ({
-            title: emb.title || undefined,
-            description: emb.description || undefined,
-            color: typeof emb.color === "number" ? emb.color : undefined,
-            image: emb.image?.url || undefined,
-            thumbnail: emb.thumbnail?.url || undefined,
-        })),
-    };
-}
 export async function generateTranscript(channel, ticket, closer) {
     try {
         // Cada lote de 100 é convertido na hora para dados simples e os objetos

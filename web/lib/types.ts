@@ -16,7 +16,47 @@ export interface TranscriptMessage {
     height?: number;
   }>;
   embeds?: TranscriptEmbed[];
+  components?: TranscriptComponent[];
+  mentions?: TranscriptMentions;
 }
+
+/** Nomes das menções encontradas no texto da mensagem: id -> nome. */
+export interface TranscriptMentions {
+  users?: Record<string, string>;
+  roles?: Record<string, string>;
+  channels?: Record<string, string>;
+}
+
+export interface TranscriptEmoji {
+  id?: string;
+  name?: string;
+  animated?: boolean;
+}
+
+/** Componentes V2 do Discord, simplificados pelo bot (transcriptMessage.ts). */
+export type TranscriptComponent =
+  | {
+      type: "container";
+      accentColor?: number;
+      spoiler?: boolean;
+      components: TranscriptComponent[];
+    }
+  | { type: "section"; components: TranscriptComponent[]; accessory?: TranscriptComponent }
+  | { type: "text"; content: string }
+  | { type: "thumbnail"; url: string; description?: string }
+  | { type: "gallery"; items: Array<{ url: string; description?: string }> }
+  | { type: "file"; url: string; name?: string }
+  | { type: "separator"; divider: boolean; spacing: "small" | "large" }
+  | { type: "row"; components: TranscriptComponent[] }
+  | {
+      type: "button";
+      style: number;
+      label?: string;
+      emoji?: TranscriptEmoji;
+      url?: string;
+      disabled?: boolean;
+    }
+  | { type: "select"; placeholder?: string; disabled?: boolean };
 
 export interface TranscriptEmbed {
   title?: string;
@@ -147,5 +187,7 @@ export interface CreateTranscriptPayload {
       height?: number;
     }>;
     embeds?: TranscriptEmbed[];
+    components?: TranscriptComponent[];
+    mentions?: TranscriptMentions;
   }>;
 }

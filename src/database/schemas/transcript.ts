@@ -24,11 +24,21 @@ const messageSchema = new Schema(
       {
         title: String,
         description: String,
+        url: String,
         color: Number,
         image: String,
         thumbnail: String,
+        timestamp: String,
+        author: { name: String, url: String, iconURL: String },
+        footer: { text: String, iconURL: String },
+        fields: [{ name: String, value: String, inline: Boolean, _id: false }],
       },
     ],
+    // Componentes V2 (container, section, galeria, botões...) — árvore
+    // recursiva, por isso Mixed. Ver transcriptMessage.ts.
+    components: { type: [Schema.Types.Mixed], default: undefined },
+    // Nomes das menções do texto: { users, roles, channels } -> id: nome
+    mentions: Schema.Types.Mixed,
   },
   { _id: false },
 );

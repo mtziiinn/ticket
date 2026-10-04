@@ -55,6 +55,8 @@ export async function POST(request: NextRequest) {
         timestamp: msg.timestamp,
         attachments: msg.attachments,
         embeds: msg.embeds,
+        components: msg.components,
+        mentions: msg.mentions,
       })),
     }
 

@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Bot, ExternalLink, FileText, Image as ImageIcon, AlertCircle } from "lucide-react"
 import type { TranscriptMessage } from "@/lib/types"
+import { DiscordComponents, DiscordMarkdown } from "./discord-components"
 
 interface MessageItemProps {
   message: TranscriptMessage
@@ -144,9 +145,16 @@ export function MessageItem({ message }: MessageItemProps) {
         </div>
 
         {message.content && (
-          <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
-            {message.content}
-          </p>
+          <DiscordMarkdown
+            text={message.content}
+            mentions={message.mentions}
+            className="space-y-1 text-foreground/90 leading-relaxed break-words"
+          />
+        )}
+
+        {/* Componentes V2 do Discord (painéis do bot) */}
+        {message.components && message.components.length > 0 && (
+          <DiscordComponents components={message.components} mentions={message.mentions} />
         )}
 
         {/* Imagens Anexadas */}
@@ -259,9 +267,11 @@ export function MessageItem({ message }: MessageItemProps) {
                   )}
 
                   {embed.description && (
-                    <p className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                      {embed.description}
-                    </p>
+                    <DiscordMarkdown
+                      text={embed.description}
+                      mentions={message.mentions}
+                      className="space-y-1 text-xs text-muted-foreground leading-relaxed break-words"
+                    />
                   )}
 
                   {embed.fields && embed.fields.length > 0 && (
@@ -274,9 +284,11 @@ export function MessageItem({ message }: MessageItemProps) {
                           <div className="text-xs font-semibold text-foreground">
                             {field.name}
                           </div>
-                          <div className="text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                            {field.value}
-                          </div>
+                          <DiscordMarkdown
+                            text={field.value}
+                            mentions={message.mentions}
+                            className="space-y-1 text-xs text-muted-foreground leading-relaxed break-words"
+                          />
                         </div>
                       ))}
                     </div>

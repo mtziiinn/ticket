@@ -15,7 +15,6 @@ import {
   ModalBuilder,
   LabelBuilder,
   TextChannel,
-  PermissionFlagsBits,
   RadioGroupBuilder,
   StringSelectMenuBuilder,
   MessageType,
@@ -31,6 +30,7 @@ import {
   cleanupVaultWebhookCache,
 } from "#functions";
 import { sendActionLog } from "./logger.js";
+import { toTranscriptMessage } from "./transcriptMessage.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
 import { formatHexColor } from "../panel/panelView.js";
@@ -1029,67 +1029,6 @@ createResponder({
 
 // Re-export das funções do cofre centralizadas em #functions
 export { cleanupVaultWebhookCache, getOrCreateVaultWebhook };
-
-function toTranscriptMessage(msg: any) {
-  const attachments = [];
-  if (msg.attachments?.size > 0) {
-    for (const att of msg.attachments.values()) {
-      attachments.push({
-        url: att.url,
-        filename: att.name,
-        contentType: att.contentType || undefined,
-        width: att.width || undefined,
-        height: att.height || undefined,
-      });
-    }
-  }
-
-  return {
-    createdTimestamp: msg.createdTimestamp as number,
-    messageId: msg.id,
-    authorId: msg.author?.id || "0",
-    authorUsername: msg.author?.username || "Desconhecido",
-    authorAvatar:
-      msg.author?.displayAvatarURL?.({ extension: "png", forceStatic: true }) ||
-      "https://cdn.discordapp.com/embed/avatars/0.png",
-    authorBot: Boolean(msg.author?.bot),
-    isStaff: Boolean(
-      msg.member?.permissions?.has?.(PermissionFlagsBits.ManageChannels),
-    ),
-    content: msg.content || "",
-    timestamp: msg.createdAt
-      ? msg.createdAt.toISOString()
-      : new Date().toISOString(),
-    attachments,
-    embeds: (msg.embeds || []).map((emb: any) => ({
-      title: emb.title || undefined,
-      description: emb.description || undefined,
-      url: emb.url || undefined,
-      color: typeof emb.color === "number" ? emb.color : undefined,
-      image: emb.image?.url || undefined,
-      thumbnail: emb.thumbnail?.url || undefined,
-      timestamp: emb.timestamp || undefined,
-      author: emb.author
-        ? {
-            name: emb.author.name,
-            url: emb.author.url || undefined,
-            iconURL: emb.author.iconURL || undefined,
-          }
-        : undefined,
-      footer: emb.footer
-        ? {
-            text: emb.footer.text,
-            iconURL: emb.footer.iconURL || undefined,
-          }
-        : undefined,
-      fields: (emb.fields || []).map((f: any) => ({
-        name: f.name,
-        value: f.value,
-        inline: Boolean(f.inline),
-      })),
-    })),
-  };
-}
 
 export async function generateTranscript(
   channel: TextChannel,
