@@ -88,6 +88,16 @@ async function processTicketSubmission(interaction, routeCategory) {
         }
         // Pega o ID da categoria baseado no assunto escolhido
         let parentId = selectedCategory?.parentId;
+        // Categoria do Discord apagada depois de configurada: criar o canal com
+        // esse parent falha (CHANNEL_PARENT_INVALID) e o ticket não abre. Abre
+        // fora de categoria e avisa no log pra staff reconfigurar no /painel.
+        if (parentId) {
+            const parent = await guild.channels.fetch(parentId).catch(() => null);
+            if (!parent || parent.type !== ChannelType.GuildCategory) {
+                console.warn(`[Ticket] Categoria ${parentId} configurada para "${category}" não existe mais — abrindo o ticket sem categoria.`);
+                parentId = undefined;
+            }
+        }
         // Emojis customizados para o tópico
         const eTicket = "<:prism:1547021658496434246>";
         const eUser = "<:user:1502789979229913268>";
