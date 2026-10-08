@@ -252,7 +252,9 @@ async function processChargeSubmission(interaction: any) {
         Separator.Default,
         `### <:device_mobile:1502789873034199060> Pagar via PIX (Aprovação Imediata)\nEscaneie o QR Code abaixo com o app do seu banco ou utilize o código Copia e Cola:`,
         createMediaGallery(qrImageUrl),
-        `\`\`\`\n${mpResult.pix.qrCode}\n\`\`\``,
+        // Sem bloco de codigo: texto cru, sem o icone de copiar do Discord
+        // (que as vezes pega espaco/linha a mais e quebra o PIX ao colar).
+        mpResult.pix.qrCode,
         Separator.Default,
         actionButtons.length > 0
           ? [

@@ -417,8 +417,10 @@ createResponder({
             });
             return;
         }
+        // Texto cru, sem bloco de codigo: o icone de copiar que o Discord poe em
+        // cima de \`\`\` as vezes capta espacos/linhas a mais e quebra o PIX ao colar.
         await interaction.reply({
-            content: `\`\`\`\n${pixPayload}\n\`\`\``,
+            content: pixPayload,
             flags: ["Ephemeral"],
         });
     },

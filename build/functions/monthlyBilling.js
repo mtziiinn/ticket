@@ -127,7 +127,9 @@ export function buildMonthlyPixContainer(user, clientName, monthYear, pix) {
         `| **Status:** ⏳ **Aguardando Pagamento...**`,
         "",
         `| **Código PIX Copia e Cola:**`,
-        `\`\`\`text\n${pix.qrCode}\n\`\`\``,
+        // Sem bloco de codigo: texto cru, sem o icone de copiar do Discord
+        // (que as vezes pega espaco/linha a mais e quebra o PIX ao colar).
+        pix.qrCode,
     ].join("\n"), Separator.Default, createMediaGallery(qrCodeUrl), Separator.Default, createRow(...buttons), Separator.Default, `*Após pagar no seu banco, clique em **Verificar Pagamento** ou aguarde alguns segundos que o bot confirma automaticamente.*`);
     return container;
 }

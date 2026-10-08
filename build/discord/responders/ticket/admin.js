@@ -195,7 +195,10 @@ async function processChargeSubmission(interaction) {
             }), Separator.Default, `**Informações do Pedido**\n` +
                 `> <:action_info:1502789798983766016> **Descrição:** \`${description}\`\n` +
                 `> <:other_wallet:1502789960355283055> **Valor Total:** \`${formattedAmount}\`\n` +
-                `> <:clock_check:1502789856881938502> **Status:** \`Aguardando Pagamento\``, Separator.Default, `### <:device_mobile:1502789873034199060> Pagar via PIX (Aprovação Imediata)\nEscaneie o QR Code abaixo com o app do seu banco ou utilize o código Copia e Cola:`, createMediaGallery(qrImageUrl), `\`\`\`\n${mpResult.pix.qrCode}\n\`\`\``, Separator.Default, actionButtons.length > 0
+                `> <:clock_check:1502789856881938502> **Status:** \`Aguardando Pagamento\``, Separator.Default, `### <:device_mobile:1502789873034199060> Pagar via PIX (Aprovação Imediata)\nEscaneie o QR Code abaixo com o app do seu banco ou utilize o código Copia e Cola:`, createMediaGallery(qrImageUrl), 
+            // Sem bloco de codigo: texto cru, sem o icone de copiar do Discord
+            // (que as vezes pega espaco/linha a mais e quebra o PIX ao colar).
+            mpResult.pix.qrCode, Separator.Default, actionButtons.length > 0
                 ? [
                     `### <:other_card:1502789952365396040> Pagar com Cartão de Crédito\nClique no botão abaixo para pagar com cartão em até 12x no checkout seguro do Mercado Pago:`,
                     createRow(...actionButtons),
