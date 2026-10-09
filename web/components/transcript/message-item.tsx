@@ -21,6 +21,18 @@ function isImageAttachment(att: { url: string; filename: string; contentType?: s
 
 function ImageCard({ url, filename }: { url: string; filename?: string }) {
   const [error, setError] = useState(false)
+  const [useProxy, setUseProxy] = useState(false)
+
+  const isDiscord = url.includes("cdn.discordapp.com") || url.includes("media.discordapp.net")
+  const currentSrc = useProxy && isDiscord ? `/api/transcripts/image-proxy?url=${encodeURIComponent(url)}` : url
+
+  const handleImgError = () => {
+    if (!useProxy && isDiscord) {
+      setUseProxy(true)
+    } else {
+      setError(true)
+    }
+  }
 
   if (error) {
     return (
@@ -40,17 +52,17 @@ function ImageCard({ url, filename }: { url: string; filename?: string }) {
   return (
     <div className="group relative overflow-hidden rounded-xl border border-border/80 bg-muted/20 hover:border-primary/50 transition-all duration-200 max-w-sm sm:max-w-md shadow-sm">
       <a
-        href={url}
+        href={currentSrc}
         target="_blank"
         rel="noopener noreferrer"
         className="block overflow-hidden bg-black/20"
         title="Clique para abrir a imagem em tamanho real"
       >
         <img
-          src={url}
+          src={currentSrc}
           alt={filename || "Imagem do ticket"}
           loading="lazy"
-          onError={() => setError(true)}
+          onError={handleImgError}
           className="max-h-80 w-auto object-contain rounded-t-xl hover:scale-[1.01] transition-transform duration-200 cursor-pointer mx-auto"
         />
       </a>

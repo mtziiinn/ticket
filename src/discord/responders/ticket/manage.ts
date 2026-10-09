@@ -1162,6 +1162,20 @@ export async function generateTranscript(
       `[Transcript] Salvo com sucesso no banco: ID ${transcriptId} (${sortedMessages.length} mensagens)`,
     );
 
+    // Dispara a migração de mídias para o Vercel Blob de forma assíncrona no Next.js
+    try {
+      fetch(`${env.WEB_URL}/api/transcripts/${transcriptId}/media`, {
+        method: "POST",
+      }).catch((err: any) => {
+        console.warn(
+          "[Transcript Media] Falha ao disparar sincronização com Vercel Blob:",
+          err?.message || err,
+        );
+      });
+    } catch {
+      /* ignore */
+    }
+
     return `${env.WEB_URL}/transcripts/${transcriptId}`;
   } catch (error) {
     console.error("[Transcript] Erro ao gerar transcript:", error);
