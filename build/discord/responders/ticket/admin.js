@@ -7,7 +7,7 @@ import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
 import { sendActionLog } from "./logger.js";
-import { createMercadoPagoCharge, generatePixPayload, getCleanAvatarURL, getEmojiId, getEmojiTag, registerPixCode, safeSendDM, } from "#functions";
+import { createMercadoPagoCharge, generatePixPayload, getCleanAvatarURL, getEmojiId, getEmojiTag, registerPixCode, sendTicketDM, } from "#functions";
 // Função compartilhada para renomear
 async function processRename(interaction) {
     const { channel, fields } = interaction;
@@ -378,21 +378,31 @@ async function processCloseSubmission(interaction) {
         if (targetUser) {
             const openTime = Math.floor(new Date(ticket.openedAt).getTime() / 1000);
             const closeTime = Math.floor(Date.now() / 1000);
-            const dmContainer = createContainer(constants.colors.danger, createSection({
-                content: `### ${getEmojiTag("prism")} Atendimento Encerrado • ${brand.brandName}\nOlá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
+            await sendTicketDM(targetUser, {
+                emoji: getEmojiTag("prism") || "⭐",
+                title: `Atendimento Encerrado • ${brand.brandName}`,
+                description: `Olá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
                 thumbnail: getCleanAvatarURL(user),
-            }), Separator.Default, `<:calendar:1502789854486986752> **Aberto em:** <t:${openTime}:f>`, `<:calendar_check:1502789850649071740> **Encerrado em:** <t:${closeTime}:f>`, Separator.Default, `<:action_check:1502789797821939752> **Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``, wantTranscript && transcriptUrl
-                ? createRow(new ButtonBuilder({
-                    label: "Acessar Transcript",
-                    style: ButtonStyle.Link,
-                    emoji: "1502789882916110407",
-                    url: transcriptUrl,
-                }))
-                : []);
-            await safeSendDM(targetUser, {
-                components: [dmContainer],
-                flags: ["IsComponentsV2"],
-            }, "Ticket Close");
+                color: constants.colors.danger,
+                fields: [
+                    `${getEmojiTag("calendar") || "📅"} **Aberto em:** <t:${openTime}:f>`,
+                    `${getEmojiTag("calendar_check") || "📅"} **Encerrado em:** <t:${closeTime}:f>`,
+                    "",
+                    `${getEmojiTag("action_check") || "✅"} **Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``,
+                ],
+                buttons: wantTranscript && transcriptUrl
+                    ? [
+                        {
+                            label: "Acessar Transcript",
+                            url: transcriptUrl,
+                            emoji: "1502789882916110407",
+                        },
+                    ]
+                    : [],
+                guildId: guild.id,
+                channelId: channel.id,
+                context: "Ticket Close",
+            });
         }
         // 6. Deletar canal
         // Sem setTimeout: o bot se reinicia sozinho a cada 6h via API da Discloud

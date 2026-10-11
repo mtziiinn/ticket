@@ -25,7 +25,8 @@ import {
   formatEmoji,
   getCleanAvatarURL,
   getEmojiTag,
-  safeSendDM,
+  TICKET_STATUS_COLORS,
+  sendTicketDM,
   getOrCreateVaultWebhook,
   cleanupVaultWebhookCache,
 } from "#functions";
@@ -217,34 +218,15 @@ createResponder({
           owner?.user;
 
         if (targetOwner) {
-          const guildData = await db.guilds.get(guild.id);
-          const color = guildData?.identity?.primaryColor
-            ? formatHexColor(guildData.identity.primaryColor)
-            : (constants.colors.azoxo as `#${string}`);
-
-          const dmContainer = createContainer(
-            color,
-            createSection({
-              content: `### Notificação de Atendimento\nOlá <@${ticket.ownerId}>, seu ticket na categoria \`${ticket.category.toUpperCase()}\` foi assumido por ${user}. Ele agora é o responsável pelo seu atendimento. Vá até o ticket para dar continuidade ao seu atendimento.`,
-              thumbnail: getCleanAvatarURL(user) as any,
-            }),
-            createRow(
-              new ButtonBuilder({
-                label: "Ir para o atendimento",
-                style: ButtonStyle.Link,
-                url: `https://discord.com/channels/${guild.id}/${channel.id}`,
-              }),
-            ),
-          );
-
-          await safeSendDM(
-            targetOwner,
-            {
-              components: [dmContainer],
-              flags: ["IsComponentsV2"],
-            },
-            "Claim DM",
-          );
+          await sendTicketDM(targetOwner, {
+            emoji: getEmojiTag("user_check") || "👤",
+            title: "Atendimento Assumido",
+            description: `Olá <@${ticket.ownerId}>, seu ticket na categoria \`${ticket.category.toUpperCase()}\` foi assumido por ${user}. Ele agora é o responsável pelo seu atendimento.`,
+            thumbnail: getCleanAvatarURL(user) as any,
+            guildId: guild.id,
+            channelId: channel.id,
+            context: "Claim DM",
+          });
         }
         break;
       }
@@ -670,32 +652,28 @@ createResponder({
                 (await guild.members.fetch(ticket.ownerId).catch(() => null))?.user
               : null;
             if (targetOwner && ticket) {
-              const dmContainer = createContainer(
-                constants.colors.primary,
-                createSection({
-                  content: `### <:file_check:1502789906122936431> Mídia Entregue!\nOlá <@${ticket.ownerId}>, o arquivo final do seu pedido foi entregue!`,
-                  thumbnail: getCleanAvatarURL(user) as any,
-                }),
-                Separator.Default,
-                `<:file_add:1502789905112105071> **Arquivo:** \`${existing.filename}\``,
-                `<:clipboard:1502789887907205293> **Descrição:** ${existing.description}`,
-                `<:cloud_check:1502789867355115690> **Link:** ${existing.url}`,
-                Separator.Default,
-                `<:action_warning:1502789801949265990> O link expira em **7 dias**.`,
-                createRow(
-                  new ButtonBuilder({
+              await sendTicketDM(targetOwner, {
+                emoji: getEmojiTag("file_check") || "📎",
+                title: "Mídia Entregue!",
+                description: `Olá <@${ticket.ownerId}>, o arquivo final do seu pedido foi entregue!`,
+                thumbnail: getCleanAvatarURL(user) as any,
+                fields: [
+                  `${getEmojiTag("file_add") || "📎"} **Arquivo:** \`${existing.filename}\``,
+                  `${getEmojiTag("clipboard") || "📋"} **Descrição:** ${existing.description}`,
+                  `${getEmojiTag("cloud_check") || "☁️"} **Link:** ${existing.url}`,
+                ],
+                footerNote: `${getEmojiTag("action_warning") || "⚠️"} O link expira em **7 dias**.`,
+                buttons: [
+                  {
                     label: "Baixar Arquivo",
-                    style: ButtonStyle.Link,
-                    emoji: "1502789906122936431",
                     url: existing.url,
-                  }),
-                ),
-              );
-              await safeSendDM(
-                targetOwner,
-                { components: [dmContainer], flags: ["IsComponentsV2"] },
-                "Media Delivery DM",
-              );
+                    emoji: "1502789906122936431",
+                  },
+                ],
+                guildId: guild.id,
+                channelId: channel.id,
+                context: "Media Delivery DM",
+              });
             }
 
             await db.pendingDeliveries.deleteOne({ _id: existing._id });
@@ -860,6 +838,20 @@ createResponder({
         await interaction.editReply({
           content: "<:unlock_check:1502789940612698192> Ticket reaberto com sucesso!",
         });
+
+        const reopenedOwner = await interaction.client.users
+          .fetch(ticket.ownerId)
+          .catch(() => null);
+        if (reopenedOwner) {
+          await sendTicketDM(reopenedOwner, {
+            emoji: getEmojiTag("unlock_check") || "🔓",
+            title: "Ticket Reaberto",
+            description: `Olá <@${ticket.ownerId}>, seu ticket foi **reaberto** e você já pode voltar a enviar mensagens no canal.`,
+            guildId: guild.id,
+            channelId: channel.id,
+            context: "Reopen DM",
+          });
+        }
         break;
       }
 
@@ -981,32 +973,18 @@ createResponder({
 
       // Notificação Automática por DM ao Cliente
       if (owner) {
-        const dmContainer = createContainer(
-          constants.colors.azoxo,
-          createSection({
-            content: `### <:arrow_right:1502789809142239243> Transferência de Categoria\nOlá ${owner}, seu ticket foi transferido para a nova categoria: **${newCategory.toUpperCase()}**.\n\nA equipe responsável por esta categoria dará continuidade ao seu atendimento.`,
-            thumbnail: getCleanAvatarURL(
-              guild.iconURL({ extension: "png", forceStatic: true }) ||
-                interaction.client.user,
-            ) as any,
-          }),
-          createRow(
-            new ButtonBuilder({
-              label: "Ir para o atendimento",
-              style: ButtonStyle.Link,
-              url: `https://discord.com/channels/${guild.id}/${channel.id}`,
-            }),
-          ),
-        );
-
-        await safeSendDM(
-          owner,
-          {
-            components: [dmContainer],
-            flags: ["IsComponentsV2"],
-          },
-          "Transfer DM",
-        );
+        await sendTicketDM(owner, {
+          emoji: getEmojiTag("arrow_right") || "➡️",
+          title: "Transferência de Categoria",
+          description: `Olá ${owner}, seu ticket foi transferido para a nova categoria: **${newCategory.toUpperCase()}**.\n\nA equipe responsável por esta categoria dará continuidade ao seu atendimento.`,
+          thumbnail: getCleanAvatarURL(
+            guild.iconURL({ extension: "png", forceStatic: true }) ||
+              interaction.client.user,
+          ) as any,
+          guildId: guild.id,
+          channelId: channel.id,
+          context: "Transfer DM",
+        });
       }
 
       // Enviar Log de Ação
@@ -1286,32 +1264,28 @@ createResponder({
 
     // Notificação Automática por DM ao Cliente
     if (owner) {
-      const dmContainer = createContainer(
-        constants.colors.azoxo,
-        createSection({
-          content: `### <:bell:1502789830155702333> Atualização no Pedido\nOlá ${owner}, o status do seu pedido na categoria \`${ticket.category.toUpperCase()}\` foi atualizado para **${statusData.label.toUpperCase()}**.\n\n> ${statusData.description}`,
-          thumbnail: getCleanAvatarURL(
-            guild.iconURL({ extension: "png", forceStatic: true }) ||
-              interaction.client.user,
-          ) as any,
-        }),
-        createRow(
-          new ButtonBuilder({
-            label: "Ir para o atendimento",
-            style: ButtonStyle.Link,
-            url: `https://discord.com/channels/${guild.id}/${channel.id}`,
-          }),
-        ),
-      );
-
-      await safeSendDM(
-        owner,
-        {
-          components: [dmContainer],
-          flags: ["IsComponentsV2"],
-        },
-        "Status DM",
-      );
+      const updatedAt = Math.floor(Date.now() / 1000);
+      await sendTicketDM(owner, {
+        emoji: statusData.emojiTag,
+        title: "Status Atualizado",
+        description: `Olá ${owner}, o status do seu pedido na categoria \`${ticket.category.toUpperCase()}\` foi atualizado.`,
+        thumbnail: getCleanAvatarURL(
+          guild.iconURL({ extension: "png", forceStatic: true }) ||
+            interaction.client.user,
+        ) as any,
+        color: TICKET_STATUS_COLORS[newStatus],
+        fields: [
+          `${statusData.emojiTag} **${statusData.label.toUpperCase()}**`,
+          `> ${statusData.description}`,
+          "",
+          `${getEmojiTag("user") || "👤"} **Pedido:** \`#${ticket.ticketId}\``,
+          `${getEmojiTag("user_check") || "👤"} **Responsável:** ${ticket.claimedBy ? `<@${ticket.claimedBy}>` : "Ninguém"}`,
+          `${getEmojiTag("clock") || "🕐"} **Atualizado:** <t:${updatedAt}:R>`,
+        ],
+        guildId: guild.id,
+        channelId: channel.id,
+        context: "Status DM",
+      });
     }
 
     // Enviar Log de Ação

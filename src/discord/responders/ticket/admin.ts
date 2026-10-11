@@ -21,7 +21,7 @@ import {
   getEmojiId,
   getEmojiTag,
   registerPixCode,
-  safeSendDM,
+  sendTicketDM,
 } from "#functions";
 
 // Função compartilhada para renomear
@@ -498,37 +498,32 @@ async function processCloseSubmission(interaction: any) {
       const openTime = Math.floor(new Date(ticket.openedAt).getTime() / 1000);
       const closeTime = Math.floor(Date.now() / 1000);
 
-      const dmContainer = createContainer(
-        constants.colors.danger,
-        createSection({
-          content: `### ${getEmojiTag("prism")} Atendimento Encerrado • ${brand.brandName}\nOlá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
-          thumbnail: getCleanAvatarURL(user) as any,
-        }),
-        Separator.Default,
-        `<:calendar:1502789854486986752> **Aberto em:** <t:${openTime}:f>`,
-        `<:calendar_check:1502789850649071740> **Encerrado em:** <t:${closeTime}:f>`,
-        Separator.Default,
-        `<:action_check:1502789797821939752> **Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``,
-        wantTranscript && transcriptUrl
-          ? createRow(
-              new ButtonBuilder({
-                label: "Acessar Transcript",
-                style: ButtonStyle.Link,
-                emoji: "1502789882916110407",
-                url: transcriptUrl,
-              }),
-            )
-          : [],
-      );
-
-      await safeSendDM(
-        targetUser,
-        {
-          components: [dmContainer],
-          flags: ["IsComponentsV2"],
-        },
-        "Ticket Close",
-      );
+      await sendTicketDM(targetUser, {
+        emoji: getEmojiTag("prism") || "⭐",
+        title: `Atendimento Encerrado • ${brand.brandName}`,
+        description: `Olá ${targetUser}, seu atendimento na categoria \`${ticket.category.toUpperCase()}\` foi encerrado por ${user}. Abaixo você pode ver as considerações finais do seu atendimento.`,
+        thumbnail: getCleanAvatarURL(user) as any,
+        color: constants.colors.danger as string,
+        fields: [
+          `${getEmojiTag("calendar") || "📅"} **Aberto em:** <t:${openTime}:f>`,
+          `${getEmojiTag("calendar_check") || "📅"} **Encerrado em:** <t:${closeTime}:f>`,
+          "",
+          `${getEmojiTag("action_check") || "✅"} **Considerações Finais:**\n\`\`\`\n${considerations}\n\`\`\``,
+        ],
+        buttons:
+          wantTranscript && transcriptUrl
+            ? [
+                {
+                  label: "Acessar Transcript",
+                  url: transcriptUrl,
+                  emoji: "1502789882916110407",
+                },
+              ]
+            : [],
+        guildId: guild.id,
+        channelId: channel.id,
+        context: "Ticket Close",
+      });
     }
 
     // 6. Deletar canal
