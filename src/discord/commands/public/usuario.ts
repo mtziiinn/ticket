@@ -151,6 +151,14 @@ createCommand({
       const headerLine = `${getEmojiTag("user")} **Nome**\u3000\u3000\u3000\u3000${getEmojiTag("action_info")} **Identidade**\u3000\u3000\u3000\u3000${getEmojiTag("user_users")} **Menção**`;
       const valuesLine = `\`${targetUser.username}\`\u3000\`${targetUser.id}\`\u3000<@${targetUser.id}>`;
 
+      const row = createRow(
+        new ButtonBuilder({
+          customId: `usuario/permissoes/${targetUser.id}`,
+          label: "Permissões do Membro",
+          style: ButtonStyle.Secondary,
+        }),
+      );
+
       const container = createContainer(
         accentColor,
         createSection({
@@ -168,18 +176,12 @@ createCommand({
             ? `<t:${joinedTimestamp}:f> ( <t:${joinedTimestamp}:R> )`
             : "*Não está no servidor*"
         }`,
-      );
-
-      const row = createRow(
-        new ButtonBuilder({
-          customId: `usuario/permissoes/${targetUser.id}`,
-          label: "Permissões do Membro",
-          style: ButtonStyle.Secondary,
-        }),
+        Separator.Default,
+        row,
       );
 
       await interaction.reply({
-        components: [container, row],
+        components: [container],
         flags: ["Ephemeral", "IsComponentsV2"] as any,
       });
       return;
@@ -190,12 +192,6 @@ createCommand({
         targetMember?.displayAvatarURL({ size: 4096 }) ||
         targetUser.displayAvatarURL({ size: 4096 });
 
-      const container = createContainer(
-        accentColor,
-        `### **Avatar de ${displayName}**`,
-        createMediaGallery(avatarUrl),
-      );
-
       const row = createRow(
         new ButtonBuilder({
           label: "Abrir no navegador",
@@ -204,8 +200,16 @@ createCommand({
         }),
       );
 
+      const container = createContainer(
+        accentColor,
+        `### **Avatar de ${displayName}**`,
+        createMediaGallery(avatarUrl),
+        Separator.Default,
+        row,
+      );
+
       await interaction.reply({
-        components: [container, row],
+        components: [container],
         flags: ["IsComponentsV2"] as any,
       });
       return;
@@ -225,12 +229,6 @@ createCommand({
       }
 
       if (bannerUrl) {
-        const container = createContainer(
-          accentColor,
-          `### **Banner de ${displayName}**`,
-          createMediaGallery(bannerUrl),
-        );
-
         const row = createRow(
           new ButtonBuilder({
             label: "Abrir no navegador",
@@ -239,8 +237,16 @@ createCommand({
           }),
         );
 
+        const container = createContainer(
+          accentColor,
+          `### **Banner de ${displayName}**`,
+          createMediaGallery(bannerUrl),
+          Separator.Default,
+          row,
+        );
+
         await interaction.reply({
-          components: [container, row],
+          components: [container],
           flags: ["IsComponentsV2"] as any,
         });
         return;
