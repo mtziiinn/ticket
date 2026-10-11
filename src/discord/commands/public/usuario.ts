@@ -13,6 +13,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
 } from "discord.js";
+import { getEmojiTag } from "#functions";
 
 const PERMISSION_NAMES: Record<string, string> = {
   AddReactions: "Adicionar reações",
@@ -147,7 +148,7 @@ createCommand({
         ? Math.floor(targetMember.joinedTimestamp / 1000)
         : null;
 
-      const headerLine = `👤 **Nome**\u3000\u3000\u3000\u3000🪪 **Identidade**\u3000\u3000\u3000\u3000@ **Menção**`;
+      const headerLine = `${getEmojiTag("user")} **Nome**\u3000\u3000\u3000\u3000${getEmojiTag("action_info")} **Identidade**\u3000\u3000\u3000\u3000${getEmojiTag("user_users")} **Menção**`;
       const valuesLine = `\`${targetUser.username}\`\u3000\`${targetUser.id}\`\u3000<@${targetUser.id}>`;
 
       const container = createContainer(
@@ -160,9 +161,9 @@ createCommand({
           thumbnail: avatarUrl,
         }),
         Separator.Default,
-        `📅 **Conta Criada**\n<t:${createdTimestamp}:f> ( <t:${createdTimestamp}:R> )`,
+        `${getEmojiTag("calendar")} **Conta Criada**\n<t:${createdTimestamp}:f> ( <t:${createdTimestamp}:R> )`,
         Separator.Default,
-        `📅 **Entrou em**\n${
+        `${getEmojiTag("user_add")} **Entrou em**\n${
           joinedTimestamp
             ? `<t:${joinedTimestamp}:f> ( <t:${joinedTimestamp}:R> )`
             : "*Não está no servidor*"
@@ -179,7 +180,7 @@ createCommand({
 
       await interaction.reply({
         components: [container, row],
-        flags: ["IsComponentsV2"] as any,
+        flags: ["Ephemeral", "IsComponentsV2"] as any,
       });
       return;
     }
@@ -299,9 +300,9 @@ createResponder({
 
     const permContainer = createContainer(
       accentColor,
-      `👩🏽‍🦱 **Maior Cargo**\n${highestRole}`,
+      `${getEmojiTag("shield")} **Maior Cargo**\n${highestRole}`,
       Separator.Default,
-      `⚙️ **Permissões de ${displayName}**\n${permissionsList || "*Nenhuma permissão específica.*"}`,
+      `${getEmojiTag("lock")} **Permissões de ${displayName}**\n${permissionsList || "*Nenhuma permissão específica.*"}`,
     );
 
     await interaction.reply({
