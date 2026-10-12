@@ -14,6 +14,7 @@ export const ticketSchema = new Schema({
     closedBy: String,
     openedAt: { type: Date, default: Date.now },
     closedAt: Date,
+    queuedAt: Date,
     deliveries: [
         {
             url: { type: String, required: true },

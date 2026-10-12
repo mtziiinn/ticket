@@ -878,15 +878,23 @@ const priorityOrder = {
     queue: 3,
     completed: 4,
 };
-async function repositionTicketByStatus(channel, newStatus) {
+// Dentro do mesmo status, a fila fica em ordem de chegada: quem entrou antes
+// fica acima. Na fila ("queue") vale o momento em que entrou na fila; nos
+// demais status, a abertura do ticket.
+function queuedBefore(a, b) {
+    const key = (t) => t.queuedAt ? new Date(t.queuedAt).getTime() : new Date(t.openedAt || 0).getTime();
+    return key(a) < key(b);
+}
+async function repositionTicketByStatus(channel, ticket) {
     try {
         const category = channel.parent;
         if (!category)
             return;
+        const newStatus = ticket.status || "open";
         const allChannelIds = [...category.children.cache.keys()];
         const tickets = await db.tickets
             .find({ channelId: { $in: allChannelIds } })
-            .select("channelId status")
+            .select("channelId status queuedAt openedAt")
             .lean()
             .catch(() => []);
         const currentPriority = priorityOrder[newStatus] ?? 99;
@@ -896,6 +904,8 @@ async function repositionTicketByStatus(channel, newStatus) {
                 continue;
             const p = priorityOrder[t.status] ?? 99;
             if (p < currentPriority)
+                higherCount++;
+            else if (p === currentPriority && queuedBefore(t, ticket))
                 higherCount++;
         }
         await channel.setPosition(higherCount).catch((err) => {
@@ -921,7 +931,14 @@ createResponder({
             return;
         const newStatus = values[0];
         const statusData = statusMap[newStatus];
+        const wasQueued = ticket.status === "queue";
         ticket.status = newStatus;
+        // Entrar em "Fila" coloca o ticket no fim da fila; re-selecionar "Fila"
+        // não perde o lugar; sair limpa a posição.
+        if (newStatus !== "queue")
+            ticket.queuedAt = undefined;
+        else if (!wasQueued || !ticket.queuedAt)
+            ticket.queuedAt = new Date();
         await ticket.save();
         // Atualizar Nome do Canal com o novo Emoji (mantendo o slug)
         const nameParts = channel.name.split("・");
@@ -931,7 +948,7 @@ createResponder({
             console.error("[Status] Erro ao renomear canal:", err);
         });
         // Reposicionar o canal na categoria conforme prioridade (não bloqueia a resposta)
-        repositionTicketByStatus(channel, newStatus).catch((err) => {
+        repositionTicketByStatus(channel, ticket).catch((err) => {
             console.error("[Status] Erro assíncrono ao reposicionar:", err);
         });
         // Atualizar Painel Principal

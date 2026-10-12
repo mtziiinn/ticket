@@ -1180,15 +1180,25 @@ const priorityOrder: Record<string, number> = {
   completed: 4,
 };
 
-async function repositionTicketByStatus(channel: any, newStatus: string) {
+// Dentro do mesmo status, a fila fica em ordem de chegada: quem entrou antes
+// fica acima. Na fila ("queue") vale o momento em que entrou na fila; nos
+// demais status, a abertura do ticket.
+function queuedBefore(a: any, b: any) {
+  const key = (t: any) =>
+    t.queuedAt ? new Date(t.queuedAt).getTime() : new Date(t.openedAt || 0).getTime();
+  return key(a) < key(b);
+}
+
+async function repositionTicketByStatus(channel: any, ticket: any) {
   try {
     const category = channel.parent;
     if (!category) return;
 
+    const newStatus = ticket.status || "open";
     const allChannelIds = [...category.children.cache.keys()];
     const tickets = await db.tickets
       .find({ channelId: { $in: allChannelIds } })
-      .select("channelId status")
+      .select("channelId status queuedAt openedAt")
       .lean()
       .catch(() => []);
 
@@ -1199,6 +1209,7 @@ async function repositionTicketByStatus(channel: any, newStatus: string) {
       if (t.channelId === channel.id) continue;
       const p = priorityOrder[t.status] ?? 99;
       if (p < currentPriority) higherCount++;
+      else if (p === currentPriority && queuedBefore(t, ticket)) higherCount++;
     }
 
     await channel.setPosition(higherCount).catch((err: any) => {
@@ -1226,7 +1237,12 @@ createResponder({
     const newStatus = values[0];
     const statusData = statusMap[newStatus];
 
+    const wasQueued = ticket.status === "queue";
     ticket.status = newStatus;
+    // Entrar em "Fila" coloca o ticket no fim da fila; re-selecionar "Fila"
+    // não perde o lugar; sair limpa a posição.
+    if (newStatus !== "queue") (ticket as any).queuedAt = undefined;
+    else if (!wasQueued || !(ticket as any).queuedAt) (ticket as any).queuedAt = new Date();
     await (ticket as any).save();
 
     // Atualizar Nome do Canal com o novo Emoji (mantendo o slug)
@@ -1238,7 +1254,7 @@ createResponder({
     });
 
     // Reposicionar o canal na categoria conforme prioridade (não bloqueia a resposta)
-    repositionTicketByStatus(channel, newStatus).catch((err) => {
+    repositionTicketByStatus(channel, ticket).catch((err) => {
       console.error("[Status] Erro assíncrono ao reposicionar:", err);
     });
 
