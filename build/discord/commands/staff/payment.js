@@ -177,7 +177,7 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
             return;
         }
         const qrSections = [];
-        const pixPayload = generatePixPayload(pixKey);
+        const pixPayload = generatePixPayload(pixKey, amount);
         const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
         const pixCodeId = registerPixCode(pixPayload);
         qrSections.push(createMediaGallery(qrCodeUrl), Separator.Default, createRow(new ButtonBuilder()

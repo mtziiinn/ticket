@@ -115,7 +115,7 @@ export function normalizePixKey(rawKey) {
     }
     return digits || compact;
 }
-export function generatePixPayload(key, name = "TICKETS", city = "SAO PAULO", amount) {
+export function generatePixPayload(key, amount, name = "TICKETS", city = "SAO PAULO") {
     const cleanKey = normalizePixKey(key);
     // Merchant Account Information - Pix
     const gui = "br.gov.bcb.pix";

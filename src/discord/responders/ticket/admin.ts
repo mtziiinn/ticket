@@ -300,7 +300,7 @@ async function processChargeSubmission(interaction: any) {
         return;
       }
 
-      const pixPayload = generatePixPayload(pixKey);
+      const pixPayload = generatePixPayload(pixKey, amount);
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
       const pixCodeId = registerPixCode(pixPayload);
 

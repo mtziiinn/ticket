@@ -131,9 +131,9 @@ export function normalizePixKey(rawKey: string): string {
 
 export function generatePixPayload(
   key: string,
+  amount?: number,
   name: string = "TICKETS",
   city: string = "SAO PAULO",
-  amount?: number,
 ) {
   const cleanKey = normalizePixKey(key);
 
