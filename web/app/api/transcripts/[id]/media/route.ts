@@ -4,6 +4,9 @@ import { resolveTenant } from "@/lib/tenant";
 import { syncTranscriptMedia } from "@/lib/blob-media";
 import type { Transcript } from "@/lib/types";
 
+// Migrar todas as mídias do Discord pode passar do limite padrão de 10s.
+export const maxDuration = 60;
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveTenant } from "@/lib/tenant";
-import { isDiscordAttachmentUrl, refreshDiscordUrls, uploadUrlToVercelBlob } from "@/lib/blob-media";
+import { isDiscordAttachmentUrl, refreshDiscordUrls, uploadUrlToVercelBlob, fetchWithRetry } from "@/lib/blob-media";
 import { getDatabase } from "@/lib/mongodb";
 import type { Transcript } from "@/lib/types";
+
+// A renovação da URL no Discord pode ser lenta (retry); damos folga.
+export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -25,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Baixar a imagem do Discord
-    const discordRes = await fetch(fetchUrl, {
+    const discordRes = await fetchWithRetry(fetchUrl, {
       headers: {
         "User-Agent": "Ticket-Transcript-Proxy/1.0",
       },

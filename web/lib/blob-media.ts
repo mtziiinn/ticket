@@ -2,6 +2,34 @@ import { put } from "@vercel/blob";
 import { getDatabase } from "@/lib/mongodb";
 import type { Transcript, TranscriptComponent, TranscriptEmbed, TranscriptMessage } from "@/lib/types";
 
+// A conexão com discord.com é instável a partir de serverless: uma fração das
+// requisições trava no connect e só falha depois do timeout padrão do undici
+// (~10s), o que sozinho já estoura o limite da função. Aqui usamos um timeout
+// curto por tentativa e retentamos — na prática a 2ª tentativa responde em ~0.2s.
+const DISCORD_FETCH_TIMEOUT_MS = 8000;
+const DISCORD_FETCH_ATTEMPTS = 3;
+
+export async function fetchWithRetry(
+  input: string,
+  init: RequestInit = {},
+  attempts: number = DISCORD_FETCH_ATTEMPTS,
+  timeoutMs: number = DISCORD_FETCH_TIMEOUT_MS,
+): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(input, { ...init, signal: controller.signal });
+    } catch (err) {
+      lastError = err;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("fetch failed");
+}
+
 /**
  * Verifica se a URL é um anexo do Discord que expira após 24h.
  * Emojis e avatares não caem aqui (não expiram).
@@ -31,7 +59,7 @@ export async function refreshDiscordUrls(
   for (let i = 0; i < unique.length; i += batchSize) {
     const batch = unique.slice(i, i + batchSize);
     try {
-      const res = await fetch("https://discord.com/api/v10/attachments/refresh-urls", {
+      const res = await fetchWithRetry("https://discord.com/api/v10/attachments/refresh-urls", {
         method: "POST",
         headers: {
           Authorization: `Bot ${botToken}`,
@@ -79,7 +107,7 @@ export async function uploadUrlToVercelBlob(
   }
 
   try {
-    const res = await fetch(sourceUrl, {
+    const res = await fetchWithRetry(sourceUrl, {
       headers: {
         "User-Agent": "Ticket-Transcript-Storage/1.0",
       },
