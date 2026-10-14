@@ -37,6 +37,19 @@ export const ticketSchema = new Schema({
         qrCodeBase64: String,
         ticketUrl: String,
     },
+    // Mapeia cada anexo original (do canal do ticket, que é apagado) pra URL
+    // permanente da cópia no cofre. Preenchido em tempo real no messageCreate;
+    // usado no generateTranscript pra montar o transcript com links que
+    // sobrevivem à exclusão do canal.
+    mediaBackups: [
+        {
+            sourceUrl: String,
+            vaultUrl: String,
+            filename: String,
+            messageId: String,
+            createdAt: { type: Date, default: Date.now },
+        },
+    ],
 }, {
     statics: {
         async getByChannel(channelId) {

@@ -249,3 +249,52 @@ export function toTranscriptMessage(msg: any) {
     mentions: resolveMentions(msg, texts),
   };
 }
+
+// Monta o mapa "URL original (sem query) -> URL do cofre" a partir dos backups
+// gravados no ticket. A comparação ignora a query string porque o Discord
+// assina as URLs e a assinatura muda a cada refresh — só o caminho do arquivo
+// é estável.
+export function buildVaultMediaMap(
+  backups: Array<{ sourceUrl?: string; vaultUrl?: string }> | undefined,
+): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const b of backups || []) {
+    if (b?.sourceUrl && b?.vaultUrl) {
+      map.set(urlKey(b.sourceUrl), b.vaultUrl);
+    }
+  }
+  return map;
+}
+
+// Troca, num message já serializado, todo link de mídia que tenha backup no
+// cofre pela URL permanente. Isso inclui anexos, imagens de embeds e as mídias
+// dentro dos componentes V2 (thumbnail, galeria, arquivo).
+export function remapMessageMediaUrls(
+  message: any,
+  map: Map<string, string>,
+) {
+  if (!map || map.size === 0) return;
+  const replace = (u?: string) => {
+    if (!u) return u;
+    return map.get(urlKey(u)) || u;
+  };
+
+  for (const att of message.attachments || []) att.url = replace(att.url);
+  for (const emb of message.embeds || []) {
+    emb.image = replace(emb.image);
+    emb.thumbnail = replace(emb.thumbnail);
+  }
+
+  const walk = (comps: any[]) => {
+    for (const c of comps || []) {
+      if (!c) continue;
+      if (c.type === "thumbnail" || c.type === "file") c.url = replace(c.url);
+      if (c.type === "gallery") {
+        for (const item of c.items || []) item.url = replace(item.url);
+      }
+      if (c.components) walk(c.components);
+      if (c.accessory) walk([c.accessory]);
+    }
+  };
+  walk(message.components || []);
+}

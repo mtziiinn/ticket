@@ -62,7 +62,7 @@ createEvent({
                 }),
               );
 
-              await sendMediaToVault({
+              const backupUrls = await sendMediaToVault({
                 vaultChannel,
                 clientUser: message.client.user,
                 author: {
@@ -78,6 +78,25 @@ createEvent({
                 channelId: message.channelId,
                 attachments: atts,
               });
+
+              // Guarda o mapeamento "link original -> cópia no cofre" pra que o
+              // generateTranscript monte o transcript com links que sobrevivem
+              // à exclusão do canal do ticket.
+              const mediaEntries = atts
+                .map((a, i) => ({
+                  sourceUrl: a.url,
+                  vaultUrl: backupUrls[i],
+                  filename: a.name,
+                  messageId: message.id,
+                }))
+                .filter((e) => e.vaultUrl && e.vaultUrl !== e.sourceUrl);
+
+              if (mediaEntries.length > 0) {
+                await db.tickets.updateOne(
+                  { channelId: message.channelId },
+                  { $push: { mediaBackups: { $each: mediaEntries } } },
+                );
+              }
             }
           }
         }

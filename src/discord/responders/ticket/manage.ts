@@ -31,7 +31,11 @@ import {
   cleanupVaultWebhookCache,
 } from "#functions";
 import { sendActionLog } from "./logger.js";
-import { toTranscriptMessage } from "./transcriptMessage.js";
+import {
+  toTranscriptMessage,
+  buildVaultMediaMap,
+  remapMessageMediaUrls,
+} from "./transcriptMessage.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
 import { formatHexColor } from "../panel/panelView.js";
@@ -1040,6 +1044,11 @@ export async function generateTranscript(
       // Limite de segurança de 2000 mensagens para evitar gargalo
       if (plainMessages.length >= 2000) break;
     }
+
+    // Troca os links originais (que morrem junto com o canal do ticket) pelas
+    // cópias permanentes salvas no cofre em tempo real (ticket.mediaBackups).
+    const vaultMediaMap = buildVaultMediaMap(ticket.mediaBackups);
+    for (const m of plainMessages) remapMessageMediaUrls(m, vaultMediaMap);
 
     const sortedMessages = plainMessages.sort(
       (a, b) => a.createdTimestamp - b.createdTimestamp,

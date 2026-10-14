@@ -6,7 +6,7 @@ import { db } from "#database";
 import { env } from "#env";
 import { formatEmoji, getCleanAvatarURL, getEmojiTag, TICKET_STATUS_COLORS, sendTicketDM, getOrCreateVaultWebhook, cleanupVaultWebhookCache, } from "#functions";
 import { sendActionLog } from "./logger.js";
-import { toTranscriptMessage } from "./transcriptMessage.js";
+import { toTranscriptMessage, buildVaultMediaMap, remapMessageMediaUrls, } from "./transcriptMessage.js";
 import { renderMembersPanel } from "./members.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
 import { formatHexColor } from "../panel/panelView.js";
@@ -767,6 +767,11 @@ export async function generateTranscript(channel, ticket, closer) {
             if (plainMessages.length >= 2000)
                 break;
         }
+        // Troca os links originais (que morrem junto com o canal do ticket) pelas
+        // cópias permanentes salvas no cofre em tempo real (ticket.mediaBackups).
+        const vaultMediaMap = buildVaultMediaMap(ticket.mediaBackups);
+        for (const m of plainMessages)
+            remapMessageMediaUrls(m, vaultMediaMap);
         const sortedMessages = plainMessages.sort((a, b) => a.createdTimestamp - b.createdTimestamp);
         // O backup de mídia no cofre é feito em tempo real (messageCreate) — aqui só
         // montamos o transcript, sem reenviar os anexos (evita duplicar no cofre).
