@@ -38,6 +38,39 @@ export function cleanupCooldowns(force = false): number {
   return count;
 }
 
+// Ticket "aberto" cujo canal foi apagado manualmente (fora do fluxo de
+// finalizar) fica órfão com closed:false e impede o usuário de abrir um novo.
+// Se o canal não existir mais, fecha o registro e libera a abertura.
+async function findExistingOpenTicket(guild: any, ownerId: string) {
+  const existingTicket = await db.tickets.findOne({
+    guildId: guild.id,
+    ownerId,
+    closed: false,
+  });
+  if (!existingTicket) return null;
+
+  let channel: any = null;
+  try {
+    channel = await guild.channels.fetch(existingTicket.channelId);
+  } catch (err: any) {
+    if (err?.code !== 10003 && err?.status !== 404) {
+      // Erro transitório da API: mantém o bloqueio atual em vez de fechar
+      // um ticket que ainda existe.
+      return existingTicket;
+    }
+  }
+  if (channel) return existingTicket;
+
+  console.warn(
+    `[Ticket] Canal ${existingTicket.channelId} (ticket ${existingTicket.ticketId}, dono ${ownerId}) não existe mais — fechando registro órfão.`,
+  );
+  existingTicket.closed = true;
+  existingTicket.closedBy = "system";
+  existingTicket.closedAt = new Date();
+  await (existingTicket as any).save();
+  return null;
+}
+
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(
   interaction: any,
@@ -82,11 +115,7 @@ async function processTicketSubmission(
 
   try {
     // 0. Verificar se o usuário já possui um ticket aberto
-    const existingTicket = await db.tickets.findOne({
-      guildId: guild.id,
-      ownerId: user.id,
-      closed: false,
-    });
+    const existingTicket = await findExistingOpenTicket(guild, user.id);
 
     if (existingTicket) {
       await interaction.editReply({
@@ -449,11 +478,10 @@ createResponder({
     }
 
     // Verificar se o usuário já possui um ticket aberto
-    const existingTicket = await db.tickets.findOne({
-      guildId: guild.id,
-      ownerId: interaction.user.id,
-      closed: false,
-    });
+    const existingTicket = await findExistingOpenTicket(
+      guild,
+      interaction.user.id,
+    );
 
     if (existingTicket) {
       await interaction.reply({
