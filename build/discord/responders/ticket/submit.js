@@ -18,35 +18,40 @@ export function cleanupCooldowns(force = false) {
     return count;
 }
 // Ticket "aberto" cujo canal foi apagado manualmente (fora do fluxo de
-// finalizar) fica órfão com closed:false e impede o usuário de abrir um novo.
-// Se o canal não existir mais, fecha o registro e libera a abertura.
-async function findExistingOpenTicket(guild, ownerId) {
-    const existingTicket = await db.tickets.findOne({
+// finalizar) fica órfão com closed:false e ainda conta como ticket aberto.
+// Nesta função esses registros são fechados e sai da conta; o usuário só é
+// bloqueado quando atinge o limite de tickets realmente abertos.
+const MAX_OPEN_TICKETS = 2;
+async function findOpenTicketsOverLimit(guild, ownerId) {
+    const openTickets = await db.tickets.find({
         guildId: guild.id,
         ownerId,
         closed: false,
     });
-    if (!existingTicket)
-        return null;
-    let channel = null;
-    try {
-        channel = await guild.channels.fetch(existingTicket.channelId);
-    }
-    catch (err) {
-        if (err?.code !== 10003 && err?.status !== 404) {
-            // Erro transitório da API: mantém o bloqueio atual em vez de fechar
-            // um ticket que ainda existe.
-            return existingTicket;
+    const validTickets = [];
+    for (const ticket of openTickets) {
+        let channel = null;
+        try {
+            channel = await guild.channels.fetch(ticket.channelId);
         }
+        catch (err) {
+            if (err?.code !== 10003 && err?.status !== 404) {
+                // Erro transitório da API: conta o ticket em vez de fechar à toa.
+                validTickets.push(ticket);
+                continue;
+            }
+        }
+        if (channel) {
+            validTickets.push(ticket);
+            continue;
+        }
+        console.warn(`[Ticket] Canal ${ticket.channelId} (ticket ${ticket.ticketId}, dono ${ownerId}) não existe mais — fechando registro órfão.`);
+        ticket.closed = true;
+        ticket.closedBy = "system";
+        ticket.closedAt = new Date();
+        await ticket.save().catch(() => { });
     }
-    if (channel)
-        return existingTicket;
-    console.warn(`[Ticket] Canal ${existingTicket.channelId} (ticket ${existingTicket.ticketId}, dono ${ownerId}) não existe mais — fechando registro órfão.`);
-    existingTicket.closed = true;
-    existingTicket.closedBy = "system";
-    existingTicket.closedAt = new Date();
-    await existingTicket.save();
-    return null;
+    return validTickets.length >= MAX_OPEN_TICKETS ? validTickets : null;
 }
 // Função compartilhada para criar o ticket
 async function processTicketSubmission(interaction, routeCategory) {
@@ -84,11 +89,14 @@ async function processTicketSubmission(interaction, routeCategory) {
         .deferReply({ flags: ["Ephemeral"] })
         .catch((err) => console.error("[Submit]", err));
     try {
-        // 0. Verificar se o usuário já possui um ticket aberto
-        const existingTicket = await findExistingOpenTicket(guild, user.id);
-        if (existingTicket) {
+        // 0. Limite de tickets abertos por usuário (máx. 2)
+        const blockedTickets = await findOpenTicketsOverLimit(guild, user.id);
+        if (blockedTickets) {
+            const links = blockedTickets
+                .map((t) => `<#${t.channelId}>`)
+                .join(" e ");
             await interaction.editReply({
-                content: `<:action_x:1502789802918150206> Você já possui um ticket aberto em <#${existingTicket.channelId}>! Finalize-o antes de abrir um novo.`,
+                content: `<:action_x:1502789802918150206> Você já possui **${blockedTickets.length}** tickets abertos (${links})! Finalize um deles antes de abrir um novo.`,
             });
             return;
         }
@@ -373,11 +381,14 @@ createResponder({
             });
             return;
         }
-        // Verificar se o usuário já possui um ticket aberto
-        const existingTicket = await findExistingOpenTicket(guild, interaction.user.id);
-        if (existingTicket) {
+        // Limite de tickets abertos por usuário (máx. 2)
+        const blockedTickets = await findOpenTicketsOverLimit(guild, interaction.user.id);
+        if (blockedTickets) {
+            const links = blockedTickets
+                .map((t) => `<#${t.channelId}>`)
+                .join(" e ");
             await interaction.reply({
-                content: `<:action_x:1502789802918150206> Você já possui um ticket aberto em <#${existingTicket.channelId}>! Finalize-o antes de abrir um novo.`,
+                content: `<:action_x:1502789802918150206> Você já possui **${blockedTickets.length}** tickets abertos (${links})! Finalize um deles antes de abrir um novo.`,
                 flags: ["Ephemeral"],
             });
             return;
