@@ -156,7 +156,7 @@ createCommand({
             })
                 .join("\n\n");
             const container = createContainer(constants.colors.azoxo, createSection({
-                content: `## ${getEmojiTag("prism")} Estatísticas de Tickets • ${brand.brandName}\nConfira abaixo o resumo completo dos atendimentos do servidor.`,
+                content: `## ${getEmojiTag("prism")} Estatísticas de Tickets • ${interaction.guild?.name || brand.brandName}\nConfira abaixo o resumo completo dos atendimentos do servidor.`,
                 thumbnail: emojis.static.prism || emojis.static.other_ticket,
             }), Separator.Default, `### ${getEmojiTag("clock")} Períodos`, [
                 `${getEmojiTag("clock_add")} **Hoje:** \`${totalToday}\` tickets`,
