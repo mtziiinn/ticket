@@ -9,6 +9,29 @@ createEvent({
     once: true,
     async run(client) {
         sendStartupWebhook(client).catch(() => { });
+        // Remove comandos órfãos registrados no Discord que não existem mais no
+        // código. O Deploy da Discloud faz merge de arquivos (não substitui o
+        // diretório), então arquivos removidos do repo continuam no servidor e o
+        // loadModules os carrega — registrando comandos que já foram deletados.
+        try {
+            const expected = new Set([
+                "ticket", "criar-sorteio", "painel", "gerar-pagamento", "chat",
+                "anunciar", "meu-pagamento", "help", "mensalidade",
+                "pagar-mensalidade", "usuario",
+            ]);
+            const registered = await client.application?.commands.fetch();
+            if (registered) {
+                for (const [, cmd] of registered) {
+                    if (!expected.has(cmd.name)) {
+                        await cmd.delete().catch(() => { });
+                        console.log(`[Cleanup] Comando órfão removido do Discord: /${cmd.name}`);
+                    }
+                }
+            }
+        }
+        catch (err) {
+            console.error("[Cleanup] Erro ao remover comandos órfãos:", err);
+        }
         // O Discord não manda as regras de AutoMod no boot: o cache
         // (guild.autoModerationRules.cache) só é preenchido quando uma regra é
         // criada/editada durante a sessão. Sem esse fetch, o log de "Regra de
