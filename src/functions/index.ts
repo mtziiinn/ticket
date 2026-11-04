@@ -129,28 +129,84 @@ export function normalizePixKey(rawKey: string): string {
   return digits || compact;
 }
 
+export interface PixPayloadOptions {
+  description?: string;
+  name?: string;
+  city?: string;
+}
+
 export function generatePixPayload(
   key: string,
   amount?: number,
+  descriptionOrOptions?: string | PixPayloadOptions,
   name: string = "TICKETS",
   city: string = "SAO PAULO",
 ) {
+  let description: string | undefined;
+  let merchantName = name;
+  let merchantCity = city;
+
+  if (typeof descriptionOrOptions === "object" && descriptionOrOptions !== null) {
+    description = descriptionOrOptions.description;
+    merchantName = descriptionOrOptions.name || merchantName;
+    merchantCity = descriptionOrOptions.city || merchantCity;
+  } else if (typeof descriptionOrOptions === "string") {
+    description = descriptionOrOptions;
+  }
+
   const cleanKey = normalizePixKey(key);
 
   // Merchant Account Information - Pix
   const gui = "br.gov.bcb.pix";
   const keyField = `01${cleanKey.length.toString().padStart(2, "0")}${cleanKey}`;
-  const merchantAccount = `00${gui.length.toString().padStart(2, "0")}${gui}${keyField}`;
+
+  // Subcampo 02: Informações Adicionais / Descrição da cobrança exibida no banco do cliente
+  // No padrão EMV/BCB do BR Code, o template 26 tem limite máximo de 99 caracteres no total:
+  // - 0014br.gov.bcb.pix consome 18 caracteres
+  // - 01 + len + cleanKey consome 4 + cleanKey.length caracteres
+  // - 02 + len + cleanDesc consome 4 + cleanDesc.length caracteres
+  // Logo, o tamanho máximo disponível para cleanDesc é: 73 - cleanKey.length (máx normativo 72)
+  let descField = "";
+  if (description) {
+    const maxDescLen = Math.min(72, Math.max(0, 73 - cleanKey.length));
+    if (maxDescLen > 0) {
+      const sanitizedDesc = description
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // remove acentos para compatibilidade com leitores bancários
+        .replace(/[^a-zA-Z0-9 \.,\-_/]/g, " ") // apenas caracteres válidos no padrão EMV
+        .replace(/\s+/g, " ")
+        .trim()
+        .substring(0, maxDescLen);
+
+      if (sanitizedDesc.length > 0) {
+        descField = `02${sanitizedDesc.length.toString().padStart(2, "0")}${sanitizedDesc}`;
+      }
+    }
+  }
+
+  const merchantAccount = `00${gui.length.toString().padStart(2, "0")}${gui}${keyField}${descField}`;
 
   // Additional Data Field Template (TXID) - Obrigatório em muitos bancos
   const txid = "***"; // TXID padrão
   const additionalData = `05${txid.length.toString().padStart(2, "0")}${txid}`;
 
-  const sanitizedName = name
+  const sanitizedName = (merchantName || "TICKETS")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
     .toUpperCase()
-    .substring(0, 25);
+    .trim()
+    .substring(0, 25) || "TICKETS";
+
+  const sanitizedCity = (merchantCity || "SAO PAULO")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .toUpperCase()
+    .trim()
+    .substring(0, 15) || "SAO PAULO";
 
   let payload = "000201"; // Payload Format Indicator
   payload += `26${merchantAccount.length.toString().padStart(2, "0")}${merchantAccount}`;
@@ -162,7 +218,7 @@ export function generatePixPayload(
   }
   payload += "5802BR"; // Country Code
   payload += `59${sanitizedName.length.toString().padStart(2, "0")}${sanitizedName}`; // Merchant Name
-  payload += `60${city.length.toString().padStart(2, "0")}${city}`; // Merchant City
+  payload += `60${sanitizedCity.length.toString().padStart(2, "0")}${sanitizedCity}`; // Merchant City
   payload += `62${additionalData.length.toString().padStart(2, "0")}${additionalData}`; // Additional Data
   payload += "6304"; // CRC16
 

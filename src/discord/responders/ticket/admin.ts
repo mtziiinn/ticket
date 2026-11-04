@@ -300,7 +300,15 @@ async function processChargeSubmission(interaction: any) {
         return;
       }
 
-      const pixPayload = generatePixPayload(pixKey, amount);
+      const pixName =
+        (guildData as any).payments?.pixName ||
+        (guildData.channels as any)?.pixName;
+      const pixPayload = generatePixPayload(
+        pixKey,
+        amount,
+        description,
+        pixName || undefined,
+      );
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
       const pixCodeId = registerPixCode(pixPayload);
 

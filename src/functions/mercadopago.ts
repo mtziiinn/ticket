@@ -52,6 +52,11 @@ export async function createMercadoPagoCharge(
   const webhookUrl = `${env.WEB_URL}/api/mercadopago/webhook`;
   const sanitizedDescription =
     params.description.trim().substring(0, 200) || "Serviço / Atendimento";
+  const ticketSuffix =
+    params.ticketId && !params.ticketId.startsWith("charge_")
+      ? ` (Ticket #${params.ticketId})`
+      : "";
+  const chargeDescription = `${sanitizedDescription}${ticketSuffix}`.substring(0, 200);
 
   try {
     // 1. Criar PIX Dinâmico com a API de Pagamentos (/v1/payments)
@@ -65,7 +70,7 @@ export async function createMercadoPagoCharge(
       },
       body: JSON.stringify({
         transaction_amount: roundedAmount,
-        description: `${sanitizedDescription} (Ticket #${params.ticketId})`,
+        description: chargeDescription,
         payment_method_id: "pix",
         payer: {
           email: params.customerEmail || "cliente.discord@tickets.com",
@@ -116,7 +121,7 @@ export async function createMercadoPagoCharge(
             items: [
               {
                 id: params.ticketId,
-                title: `${sanitizedDescription} - Ticket #${params.ticketId}`,
+                title: chargeDescription,
                 quantity: 1,
                 unit_price: roundedAmount,
                 currency_id: "BRL",

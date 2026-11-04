@@ -229,7 +229,9 @@ async function processChargeSubmission(interaction) {
                 });
                 return;
             }
-            const pixPayload = generatePixPayload(pixKey, amount);
+            const pixName = guildData.payments?.pixName ||
+                guildData.channels?.pixName;
+            const pixPayload = generatePixPayload(pixKey, amount, description, pixName || undefined);
             const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
             const pixCodeId = registerPixCode(pixPayload);
             const fallbackContainer = createContainer(constants.colors.success, createSection({

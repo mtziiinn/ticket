@@ -249,7 +249,12 @@ async function handlePaymentModalSubmit(
       }
 
       const qrSections: any[] = [];
-      const pixPayload = generatePixPayload(pixKey, amount);
+      const pixPayload = generatePixPayload(
+        pixKey,
+        amount,
+        description,
+        pixName || undefined,
+      );
       const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(pixPayload)}`;
       const pixCodeId = registerPixCode(pixPayload);
       qrSections.push(
