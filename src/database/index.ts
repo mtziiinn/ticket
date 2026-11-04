@@ -46,6 +46,15 @@ const dmQueueSchema = new Schema({
 
 dmQueueSchema.index({ createdAt: 1 });
 
+const pixCodeSchema = new Schema({
+  codeId: { type: String, required: true, unique: true },
+  payload: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+pixCodeSchema.index({ codeId: 1 }, { unique: true });
+pixCodeSchema.index({ createdAt: 1 }, { expireAfterSeconds: 86400 * 3 });
+
 export const db = {
   guilds: model<IGuild, GuildModel>("guild", guildSchema, "guilds"),
   members: model<IMember, MemberModel>("member", memberSchema, "members"),
@@ -63,10 +72,12 @@ export const db = {
     monthlyBillingSchema,
     "monthly_billings",
   ),
+  pixCodes: model("pixCode", pixCodeSchema, "pix_codes"),
 };
 
 await db.pendingDeliveries.createIndexes();
 await db.monthlyBillings.createIndexes().catch(() => {});
+await db.pixCodes.createIndexes().catch(() => {});
 
 export type MonthlyBillingSchema = InferSchemaType<typeof monthlyBillingSchema>;
 

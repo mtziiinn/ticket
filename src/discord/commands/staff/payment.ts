@@ -310,6 +310,7 @@ async function handlePaymentModalSubmit(
           currency,
           description,
           status: "pending",
+          qrCode: pixPayload,
         } as any;
         await (ticket as any).save();
 
@@ -590,7 +591,11 @@ createResponder({
   types: [ResponderType.Button],
   cache: "cached",
   async run(interaction, { id }) {
-    const pixPayload = getPixCode(id);
+    const pixPayload =
+      (await getPixCode(id, interaction.message)) ||
+      (await db.tickets.getByChannel(interaction.channelId || ""))?.payment
+        ?.qrCode;
+
     if (!pixPayload) {
       await interaction.reply({
         content: `${getEmojiTag("action_x")} Esse código expirou. Gere a cobrança novamente.`,

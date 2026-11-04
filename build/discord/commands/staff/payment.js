@@ -212,6 +212,7 @@ async function handlePaymentModalSubmit(interaction, rawTargetUserId) {
                 currency,
                 description,
                 status: "pending",
+                qrCode: pixPayload,
             };
             await ticket.save();
             await sendActionLog(interaction.guild, ticket, interaction.user, "Gerar Cobrança", `Gerou cobrança no valor de **${formattedAmount}** via PIX Manual (${isIndividual ? "Chave Pessoal" : "Loja"}).`);
@@ -409,7 +410,9 @@ createResponder({
     types: [ResponderType.Button],
     cache: "cached",
     async run(interaction, { id }) {
-        const pixPayload = getPixCode(id);
+        const pixPayload = (await getPixCode(id, interaction.message)) ||
+            (await db.tickets.getByChannel(interaction.channelId || ""))?.payment
+                ?.qrCode;
         if (!pixPayload) {
             await interaction.reply({
                 content: `${getEmojiTag("action_x")} Esse código expirou. Gere a cobrança novamente.`,
