@@ -49,11 +49,11 @@ export const MONTHLY_BILLING_CONFIG = {
 };
 
 /**
- * Retorna a data atual no fuso horário de Brasília (America/Sao_Paulo).
+ * Retorna a data atual (ou a data informada) no fuso horário de Brasília (America/Sao_Paulo).
  */
-export function getBrasiliaDate(): Date {
-  const now = new Date();
-  const utcOffset = now.getTime() + now.getTimezoneOffset() * 60000;
+export function getBrasiliaDate(date: Date = new Date()): Date {
+  const target = date instanceof Date ? date : new Date(date);
+  const utcOffset = target.getTime() + target.getTimezoneOffset() * 60000;
   // Brasília é UTC-3
   return new Date(utcOffset - 3 * 3600000);
 }
@@ -722,23 +722,50 @@ export async function checkPendingMonthlyPayments(client: Client) {
 export async function checkAndSendPaymentReminders(client: Client) {
   try {
     const brasiliaDate = getBrasiliaDate();
-    if (brasiliaDate.getDate() < MONTHLY_BILLING_CONFIG.reminderDay) return;
-
+    const currentDay = brasiliaDate.getDate();
     const currentMonthYear = getCurrentMonthYear(brasiliaDate);
+
+    // Regra padrão: lembrete a partir do dia 8.
+    // Exceção exclusiva para 2026-11 ("somente este mes"):
+    // Lembrete dia 8 e cobra novamente dia 9 para quem ainda não pagou.
+    const isSpecialMonth = currentMonthYear === "2026-11";
+    const minReminderDay = MONTHLY_BILLING_CONFIG.reminderDay; // 8
+
+    if (currentDay < minReminderDay) return;
+
+    // Em 2026-11, os lembretes são enviados nos dias 8 e 9
+    if (isSpecialMonth && currentDay > 9) return;
+
     const pendingBillings = await db.monthlyBillings.find({
       monthYear: currentMonthYear,
       status: { $in: ["sent", "pending"] },
     });
 
     for (const billing of pendingBillings) {
-      // Ja lembrado esse mes? (compara o mes do ultimo lembrete, nao so a
-      // data exata — assim nao manda de novo toda vez que a checagem roda
-      // entre o dia 08 e o fim do mes).
-      if (
-        billing.lastReminderAt &&
-        getCurrentMonthYear(billing.lastReminderAt) === currentMonthYear
-      ) {
-        continue;
+      if (isSpecialMonth) {
+        // No mês especial (2026-11):
+        // Permite cobrar no dia 8 e cobrar DE NOVO no dia 9 para quem ainda não pagou.
+        // Evita disparos repetidos no mesmo dia (interval roda a cada 6h).
+        if (billing.lastReminderAt) {
+          const lastReminderBrasilia = getBrasiliaDate(new Date(billing.lastReminderAt));
+          const wasSentThisMonth =
+            getCurrentMonthYear(lastReminderBrasilia) === currentMonthYear;
+          const wasSentToday =
+            wasSentThisMonth && lastReminderBrasilia.getDate() === currentDay;
+
+          if (wasSentToday) {
+            continue;
+          }
+        }
+      } else {
+        // Regra padrão para todos os outros meses:
+        // Apenas UM lembrete por cliente no mês inteiro.
+        if (
+          billing.lastReminderAt &&
+          getCurrentMonthYear(getBrasiliaDate(new Date(billing.lastReminderAt))) === currentMonthYear
+        ) {
+          continue;
+        }
       }
 
       // Se a cobrança está pendente com PIX gerado, confere antes no Mercado Pago para não cobrar quem já pagou
@@ -801,9 +828,16 @@ export async function checkAndEnforceShutdown(client: Client) {
     if (MONTHLY_BILLING_CONFIG.clients.length === 0) return;
 
     const brasiliaDate = getBrasiliaDate();
-    if (brasiliaDate.getDate() < MONTHLY_BILLING_CONFIG.shutdownDay) return;
-
     const currentMonthYear = getCurrentMonthYear(brasiliaDate);
+
+    // Regra padrão: desligamento no dia 10 (MONTHLY_BILLING_CONFIG.shutdownDay).
+    // Exceção exclusiva para 2026-11 ("somente este mes"): estendido em +1 dia (dia 11).
+    const effectiveShutdownDay =
+      currentMonthYear === "2026-11"
+        ? MONTHLY_BILLING_CONFIG.shutdownDay + 1 // 11
+        : MONTHLY_BILLING_CONFIG.shutdownDay;    // 10
+
+    if (brasiliaDate.getDate() < effectiveShutdownDay) return;
 
     for (const clientConfig of MONTHLY_BILLING_CONFIG.clients) {
       const billing = await db.monthlyBillings.findOne({
@@ -832,7 +866,7 @@ export async function checkAndEnforceShutdown(client: Client) {
 
     // Chegou aqui: todo mundo inadimplente no dia do desligamento.
     console.error(
-      `[Monthly Billing] Nenhum cliente pagou ate o dia ${MONTHLY_BILLING_CONFIG.shutdownDay} — desligando o bot.`,
+      `[Monthly Billing] Nenhum cliente pagou ate o dia ${effectiveShutdownDay} — desligando o bot.`,
     );
 
     try {
@@ -848,7 +882,7 @@ export async function checkAndEnforceShutdown(client: Client) {
           `## ${getEmojiTag("action_x") || "🔴"} Bot desligado por falta de pagamento`,
           Separator.Default,
           [
-            `Nenhum cliente pagou a mensalidade de **${currentMonthYear}** até o dia ${MONTHLY_BILLING_CONFIG.shutdownDay}.`,
+            `Nenhum cliente pagou a mensalidade de **${currentMonthYear}** até o dia ${effectiveShutdownDay}.`,
             "",
             `| **Clientes:** ${clientList}`,
             `| **Ação:** o bot foi desligado automaticamente.`,
