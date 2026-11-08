@@ -408,11 +408,17 @@ createResponder({
 createResponder({
     customId: "payment/pix_copy/:id",
     types: [ResponderType.Button],
-    cache: "cached",
     async run(interaction, { id }) {
         const pixPayload = (await getPixCode(id, interaction.message)) ||
-            (await db.tickets.getByChannel(interaction.channelId || ""))?.payment
-                ?.qrCode;
+            (interaction.channelId
+                ? (await db.tickets.getByChannel(interaction.channelId))?.payment?.qrCode
+                : undefined) ||
+            (interaction.user
+                ? (await db.monthlyBillings.findOne({
+                    userId: interaction.user.id,
+                    status: "pending",
+                }))?.qrCode
+                : undefined);
         if (!pixPayload) {
             await interaction.reply({
                 content: `${getEmojiTag("action_x")} Esse código expirou. Gere a cobrança novamente.`,

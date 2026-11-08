@@ -1,7 +1,7 @@
 import { ButtonBuilder, ButtonStyle, } from "discord.js";
 import { createContainer, createMediaGallery, createRow, Separator, } from "@magicyan/discord";
 import { db } from "#database";
-import { getEmojiId, getEmojiTag, safeSendDM } from "./index.js";
+import { getEmojiId, getEmojiTag, registerPixCode, safeSendDM, } from "./index.js";
 export const MONTHLY_BILLING_CONFIG = {
     beneficiaryName: "Matheus Gonçalves",
     pixKey: "matheusgoncalves1502@gmail.com",
@@ -106,7 +106,14 @@ export function buildMonthlyPixContainer(user, clientName, monthYear, pix) {
     const brandColor = typeof brand !== "undefined" && brand.primaryColor
         ? brand.primaryColor
         : "#38bdf8";
+    // Registra o código PIX para o botão Copiar Código PIX (persistido e seguro contra restarts)
+    const pixCodeId = registerPixCode(pix.qrCode);
     const buttons = [
+        new ButtonBuilder()
+            .setCustomId(`payment/pix_copy/${pixCodeId}`)
+            .setLabel("Copiar Código PIX")
+            .setStyle(ButtonStyle.Secondary)
+            .setEmoji(getEmojiId("clipboard") || "📋"),
         new ButtonBuilder()
             .setCustomId(`monthly_billing/check/${pix.paymentId}`)
             .setLabel("Verificar Pagamento")
@@ -125,12 +132,7 @@ export function buildMonthlyPixContainer(user, clientName, monthYear, pix) {
         `| **Valor:** \`R$ ${pix.amount.toFixed(2).replace(".", ",")}\``,
         `| **Beneficiário:** ${MONTHLY_BILLING_CONFIG.beneficiaryName}`,
         `| **Status:** ⏳ **Aguardando Pagamento...**`,
-        "",
-        `| **Código PIX Copia e Cola:**`,
-        // Sem bloco de codigo: texto cru, sem o icone de copiar do Discord
-        // (que as vezes pega espaco/linha a mais e quebra o PIX ao colar).
-        pix.qrCode,
-    ].join("\n"), Separator.Default, createMediaGallery(qrCodeUrl), Separator.Default, createRow(...buttons), Separator.Default, `*Após pagar no seu banco, clique em **Verificar Pagamento** ou aguarde alguns segundos que o bot confirma automaticamente.*`);
+    ].join("\n"), Separator.Default, createMediaGallery(qrCodeUrl), Separator.Default, createRow(...buttons), Separator.Default, `*Clique em **Copiar Código PIX** para copiar o código ou escaneie o QR Code acima no app do seu banco. Após pagar, clique em **Verificar Pagamento** ou aguarde alguns segundos que o bot confirma automaticamente.*`);
     return container;
 }
 /**
@@ -272,9 +274,23 @@ export async function verifyMonthlyPayment(paymentId, client) {
         const data = (await res.json());
         const mpStatus = data.status;
         if (mpStatus === "approved") {
-            const billing = await db.monthlyBillings.findOne({
-                mpPaymentId: paymentId,
+            let billing = await db.monthlyBillings.findOne({
+                $or: [
+                    { mpPaymentId: String(paymentId) },
+                    { mpPaymentId: Number(paymentId) },
+                ],
             });
+            if (!billing && data.external_reference) {
+                const parts = String(data.external_reference).split("_");
+                if (parts.length >= 3 && parts[0] === "monthly") {
+                    const uId = parts[1];
+                    const mYear = parts.slice(2).join("_");
+                    billing = await db.monthlyBillings.findOne({
+                        userId: uId,
+                        monthYear: mYear,
+                    });
+                }
+            }
             if (billing && billing.status !== "paid") {
                 const paidAt = new Date();
                 billing.status = "paid";
@@ -286,12 +302,14 @@ export async function verifyMonthlyPayment(paymentId, client) {
                     if (user) {
                         const paidContainer = buildMonthlyPaidContainer(user, billing.clientName, billing.monthYear, billing.amount, paidAt);
                         let updated = false;
-                        if (billing.dmChannelId && billing.dmMessageId) {
-                            const channel = await client.channels
-                                .fetch(billing.dmChannelId)
-                                .catch(() => null);
-                            if (channel && channel.isTextBased()) {
-                                const message = await channel.messages
+                        if (billing.dmMessageId) {
+                            const dmChannel = (billing.dmChannelId
+                                ? await client.channels.fetch(billing.dmChannelId).catch(() => null)
+                                : null) ||
+                                user.dmChannel ||
+                                (await user.createDM().catch(() => null));
+                            if (dmChannel && "messages" in dmChannel) {
+                                const message = await dmChannel.messages
                                     .fetch(billing.dmMessageId)
                                     .catch(() => null);
                                 if (message) {
@@ -344,6 +362,11 @@ export async function verifyMonthlyPayment(paymentId, client) {
                 return { paid: true, status: "approved", billing };
             }
             return { paid: true, status: "approved", billing };
+        }
+        if (mpStatus === "cancelled" || mpStatus === "rejected") {
+            // Se a cobrança expirou ou foi cancelada no Mercado Pago, reseta para "sent"
+            // para permitir gerar uma nova cobrança sem travar como pendente bugada
+            await db.monthlyBillings.updateOne({ mpPaymentId: paymentId, status: "pending" }, { $set: { status: "sent", mpPaymentId: undefined, qrCode: undefined } });
         }
         return { paid: false, status: mpStatus };
     }
@@ -491,6 +514,13 @@ export async function checkAndSendPaymentReminders(client) {
                 getCurrentMonthYear(billing.lastReminderAt) === currentMonthYear) {
                 continue;
             }
+            // Se a cobrança está pendente com PIX gerado, confere antes no Mercado Pago para não cobrar quem já pagou
+            if (billing.status === "pending" && billing.mpPaymentId) {
+                const verifyRes = await verifyMonthlyPayment(billing.mpPaymentId, client);
+                if (verifyRes.paid) {
+                    continue; // Já foi pago! Não envia lembrete de cobrança indevida
+                }
+            }
             const user = await client.users.fetch(billing.userId).catch(() => null);
             if (!user)
                 continue;
@@ -535,6 +565,13 @@ export async function checkAndEnforceShutdown(client) {
                 userId: clientConfig.id,
                 monthYear: currentMonthYear,
             });
+            // Se estiver pendente, faz uma verificação imediata no Mercado Pago antes de desligar
+            if (billing?.status === "pending" && billing.mpPaymentId) {
+                const verifyRes = await verifyMonthlyPayment(billing.mpPaymentId, client);
+                if (verifyRes.paid) {
+                    return; // Pagamento identificado! Cancela o desligamento.
+                }
+            }
             // Sem cobranca, pago, ou mes pulado de proposito: alguem esta em dia
             // (ou nem foi cobrado ainda) — cancela o desligamento.
             if (!billing ||

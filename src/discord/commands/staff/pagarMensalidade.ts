@@ -55,6 +55,48 @@ createCommand({
       return;
     }
 
+    if (existing?.status === "pending" && existing.mpPaymentId) {
+      // Confere se já foi pago no Mercado Pago
+      const checkRes = await verifyMonthlyPayment(existing.mpPaymentId, interaction.client);
+      if (checkRes.paid) {
+        const paidContainer = buildMonthlyPaidContainer(
+          interaction.user,
+          existing.clientName,
+          monthYear,
+          existing.amount,
+          checkRes.billing?.paidAt || new Date(),
+        );
+        await interaction.reply({
+          components: [paidContainer],
+          flags: ["IsComponentsV2"] as any,
+        });
+        return;
+      }
+
+      // Se ainda pendente e temos o qrCode salvo, reutiliza para não duplicar cobrança
+      if (existing.qrCode) {
+        const container = buildMonthlyPixContainer(
+          interaction.user,
+          existing.clientName,
+          monthYear,
+          {
+            paymentId: existing.mpPaymentId,
+            qrCode: existing.qrCode,
+            ticketUrl: existing.ticketUrl,
+            amount: existing.amount,
+          },
+        );
+
+        await interaction.reply({
+          components: [container],
+          flags: (interaction.inGuild() ? ["Ephemeral", "IsComponentsV2"] : ["IsComponentsV2"]) as any,
+        });
+
+        startPaymentPolling(existing.mpPaymentId, interaction.client);
+        return;
+      }
+    }
+
     await interaction.deferReply({
       flags: interaction.inGuild() ? ["Ephemeral"] : [],
     });
@@ -136,6 +178,58 @@ createResponder({
         flags: ["IsComponentsV2"] as any,
       });
       return;
+    }
+
+    if (existing?.status === "pending" && existing.mpPaymentId) {
+      // Confere se já foi pago no Mercado Pago
+      const checkRes = await verifyMonthlyPayment(existing.mpPaymentId, interaction.client);
+      if (checkRes.paid) {
+        const paidContainer = buildMonthlyPaidContainer(
+          interaction.user,
+          existing.clientName,
+          monthYear,
+          existing.amount,
+          checkRes.billing?.paidAt || new Date(),
+        );
+        await interaction.editReply({
+          components: [paidContainer],
+          flags: ["IsComponentsV2"] as any,
+        });
+        return;
+      }
+
+      // Se ainda pendente e temos o qrCode salvo, reutiliza para não duplicar cobrança
+      if (existing.qrCode) {
+        const container = buildMonthlyPixContainer(
+          interaction.user,
+          existing.clientName,
+          monthYear,
+          {
+            paymentId: existing.mpPaymentId,
+            qrCode: existing.qrCode,
+            ticketUrl: existing.ticketUrl,
+            amount: existing.amount,
+          },
+        );
+
+        await interaction.editReply({
+          components: [container],
+          flags: ["IsComponentsV2"] as any,
+        });
+
+        await db.monthlyBillings.updateOne(
+          { mpPaymentId: existing.mpPaymentId },
+          {
+            $set: {
+              dmMessageId: interaction.message.id,
+              dmChannelId: interaction.channelId,
+            },
+          },
+        );
+
+        startPaymentPolling(existing.mpPaymentId, interaction.client);
+        return;
+      }
     }
 
     const res = await generateMonthlyPixPayment(interaction.user.id, monthYear);

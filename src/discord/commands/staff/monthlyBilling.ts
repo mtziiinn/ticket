@@ -68,14 +68,16 @@ createCommand({
           monthYear: currentMonthYear,
         });
 
-        let statusTag = `${getEmojiTag("clock") || "⏳"} Pendente para ${nextDateFormatted}`;
+        let statusTag = `${getEmojiTag("clock") || "⏳"} Não faturado (Envio em ${nextDateFormatted})`;
         if (billed) {
           if (billed.status === "paid") {
             statusTag = `${getEmojiTag("action_check") || "✅"} **Pago** em ${billed.paidAt ? billed.paidAt.toLocaleDateString("pt-BR") : "confirmado"}`;
           } else if (billed.status === "pending") {
             statusTag = `${getEmojiTag("other_card") || "💳"} **PIX Gerado** (Aguardando Pagamento)`;
+          } else if (billed.status === "skipped") {
+            statusTag = `⏭️ **Mês Isento / Pulado**`;
           } else {
-            statusTag = `${getEmojiTag("clock") || "📨"} **Fatura Enviada** em ${billed.sentAt.toLocaleDateString("pt-BR")}`;
+            statusTag = `${getEmojiTag("clock") || "📨"} **Fatura Enviada** em ${billed.sentAt ? billed.sentAt.toLocaleDateString("pt-BR") : "recente"}`;
           }
         }
 
