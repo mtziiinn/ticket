@@ -45,6 +45,10 @@ export const MONTHLY_BILLING_CONFIG = {
       id: "403271714437595137",
       name: "Luiza",
     },
+    {
+      id: "447127448027529227",
+      name: "Foguinho",
+    },
   ] as MonthlyClientConfig[],
 };
 
