@@ -8,6 +8,7 @@ import { formatEmoji, getCleanAvatarURL, getEmojiTag, TICKET_STATUS_COLORS, send
 import { sendActionLog } from "./logger.js";
 import { toTranscriptMessage, buildVaultMediaMap, remapMessageMediaUrls, } from "./transcriptMessage.js";
 import { renderMembersPanel } from "./members.js";
+import { withStatusEmoji } from "./ticketName.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
 import { formatHexColor } from "../panel/panelView.js";
 // Mapeamento de Status de Encomenda
@@ -945,10 +946,9 @@ createResponder({
         else if (!wasQueued || !ticket.queuedAt)
             ticket.queuedAt = new Date();
         await ticket.save();
-        // Atualizar Nome do Canal com o novo Emoji (mantendo o slug)
-        const nameParts = channel.name.split("・");
-        const slug = nameParts[1] || "";
-        const newName = `${statusData.channelEmoji}・${slug}`;
+        // Atualizar Nome do Canal com o novo Emoji. Troca SÓ a bolinha: o resto do
+        // nome (slug, número da fila, nome renomeado na mão...) fica intacto.
+        const newName = withStatusEmoji(channel.name, statusData.channelEmoji);
         await channel.setName(newName).catch((err) => {
             console.error("[Status] Erro ao renomear canal:", err);
         });

@@ -7,6 +7,7 @@ import { db } from "#database";
 import { env } from "#env";
 import { generateTranscript } from "./manage.js";
 import { sendActionLog } from "./logger.js";
+import { buildTicketChannelName, parseTicketChannelName } from "./ticketName.js";
 import { createMercadoPagoCharge, generatePixPayload, getCleanAvatarURL, getEmojiId, getEmojiTag, registerPixCode, sendTicketDM, } from "#functions";
 // Função compartilhada para renomear
 async function processRename(interaction) {
@@ -26,9 +27,10 @@ async function processRename(interaction) {
                 .catch((err) => console.error("[Admin]", err));
             return;
         }
-        // Buscar o emoji atual do nome do canal
-        const currentEmoji = channel.name.split("・")[0] || "🎫";
-        const formattedName = `${currentEmoji}・${newName.replace(/\s+/g, "-").toLowerCase()}`;
+        // Mantém o emoji atual e os segmentos do meio (ex.: número da fila) do
+        // nome do canal e troca só o slug, que é o que o staff digitou.
+        const { emoji, extras } = parseTicketChannelName(channel.name);
+        const formattedName = buildTicketChannelName(emoji, extras, newName.replace(/\s+/g, "-").toLowerCase());
         await channel.setName(formattedName).catch((err) => {
             console.error("Erro ao renomear canal:", err);
         });

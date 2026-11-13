@@ -49,10 +49,13 @@ async function updateDiscordChannelName(
     if (!getRes.ok) return null;
     const channelData = await getRes.json();
 
+    // Troca SÓ a bolinha do status. O resto do nome (slug, número da fila
+    // "🟣・4・sebastian", nome renomeado na mão...) fica intacto.
     const currentName = channelData.name || "";
-    const nameParts = currentName.split("・");
-    const slug = nameParts[1] || currentName;
-    const updatedName = `${newStatusEmoji}・${slug}`;
+    const separatorIndex = currentName.indexOf("・");
+    const rest =
+      separatorIndex >= 0 ? currentName.slice(separatorIndex + 1) : currentName;
+    const updatedName = rest ? `${newStatusEmoji}・${rest}` : newStatusEmoji;
 
     await fetch(`${DISCORD_API}/channels/${channelId}`, {
       method: "PATCH",
