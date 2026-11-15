@@ -1,5 +1,6 @@
 import mongoose, {
   InferSchemaType,
+  Model,
   model,
   Schema,
 } from "mongoose";
@@ -75,9 +76,27 @@ export const db = {
   pixCodes: model("pixCode", pixCodeSchema, "pix_codes"),
 };
 
-await db.pendingDeliveries.createIndexes();
-await db.monthlyBillings.createIndexes().catch(() => {});
-await db.pixCodes.createIndexes().catch(() => {});
+// autoIndex: false desativa a criação automática; garante os índices
+// dos schemas explicitamente. Antes só três models eram cobertos — o resto
+// (tickets, transcripts, giveaways, guilds, members, dm_queue) dependia de
+// índices criados por fora, e no banco do Dusk eles simplesmente não
+// existiam: todo getByChannel() virava collection scan.
+Promise.all(
+  (Object.values(db) as Model<any>[]).map((m) =>
+    m
+      .createIndexes()
+      .then(() =>
+        console.log(chalk.green(`[MongoDB] Índices de ${m.modelName} garantidos.`)),
+      )
+      .catch((err: any) =>
+        console.warn(
+          chalk.yellow(
+            `[MongoDB] Falha ao criar índices em ${m.modelName}: ${err?.message || err}`,
+          ),
+        ),
+      ),
+  ),
+);
 
 export type MonthlyBillingSchema = InferSchemaType<typeof monthlyBillingSchema>;
 

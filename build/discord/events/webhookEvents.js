@@ -21,25 +21,26 @@ createEvent({
             return;
         try {
             const now = Date.now();
-            let best = null;
-            for (const t of WEBHOOK_LOG_TYPES) {
+            // As três consultas (create/delete/update) são independentes: em
+            // paralelo o handler espera um round-trip em vez de três em série.
+            // Sem filtrar por canal, um webhook criado/editado em OUTRO canal ao
+            // mesmo tempo podia ser escolhido aqui por engano. O target nem
+            // sempre traz o channelId (ex.: às vezes falta no delete) — nesse
+            // caso não filtra, só quando o dado está presente e diverge.
+            const findEntry = async (t) => {
                 const logs = await guild.fetchAuditLogs({ type: t.type, limit: 5 }).catch(() => null);
-                // Sem filtrar por canal, um webhook criado/editado em OUTRO canal ao
-                // mesmo tempo podia ser escolhido aqui por engano. O target nem
-                // sempre traz o channelId (ex.: às vezes falta no delete) — nesse
-                // caso não filtra, só quando o dado está presente e diverge.
                 const entry = logs?.entries.find((e) => {
                     if (now - e.createdTimestamp > 10_000)
                         return false;
                     const targetChannelId = e.target?.channelId ?? e.target?.channel_id;
                     return !targetChannelId || targetChannelId === channel.id;
                 });
-                if (!entry)
-                    continue;
-                if (!best || entry.createdTimestamp > best.entry.createdTimestamp) {
-                    best = { entry, label: t.label, emoji: t.emoji, color: t.color };
-                }
-            }
+                return entry ? { entry, label: t.label, emoji: t.emoji, color: t.color } : null;
+            };
+            const found = (await Promise.all(WEBHOOK_LOG_TYPES.map(findEntry))).filter((c) => c !== null);
+            // Fica com a entrada mais recente: é a que corresponde ao evento que
+            // acabou de disparar (as outras são de mudanças anteriores na janela).
+            const best = found.reduce((acc, c) => (!acc || c.entry.createdTimestamp > acc.entry.createdTimestamp ? c : acc), null);
             if (!best)
                 return;
             if (loggedWebhookEntries.has(best.entry.id))

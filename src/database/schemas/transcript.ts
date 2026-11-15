@@ -89,3 +89,7 @@ export const transcriptSchema = new Schema(
 
 transcriptSchema.index({ guildId: 1, createdAt: -1 });
 transcriptSchema.index({ channelId: 1 });
+// A limpeza periódica apaga por data pura (sem guildId), então o índice
+// composto acima não serve: sem este, o deleteMany varria a coleção inteira
+// (que guarda o HTML das conversas) a cada 6h.
+transcriptSchema.index({ createdAt: 1 });

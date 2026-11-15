@@ -103,6 +103,8 @@ async function cleanupOldTranscripts() {
     try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // createdAt dos transcripts é String ISO (não Date) — comparação lexicográfica
+        // de ISO-8601 ordena igual à data, então o $lt funciona e usa o índice.
         const result = await db.transcripts.deleteMany({
             createdAt: { $lt: thirtyDaysAgo.toISOString() },
         });
@@ -118,7 +120,10 @@ async function cleanupOldDeliveries() {
     try {
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-        const result = await db.tickets.updateMany({}, { $pull: { deliveries: { deliveredAt: { $lt: thirtyDaysAgo } } } });
+        // O filtro no documento é o que evita a varredura completa: sem ele, o
+        // $pull rodava contra TODOS os tickets a cada 6h (a maioria sem nenhuma
+        // entrega) só para não alterar quase nada.
+        const result = await db.tickets.updateMany({ "deliveries.deliveredAt": { $lt: thirtyDaysAgo } }, { $pull: { deliveries: { deliveredAt: { $lt: thirtyDaysAgo } } } });
         if (result.modifiedCount > 0) {
             console.log(`[Cleanup] ${result.modifiedCount} tickets tiveram entregas antigas removidas`);
         }

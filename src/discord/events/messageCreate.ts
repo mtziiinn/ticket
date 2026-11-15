@@ -35,17 +35,27 @@ createEvent({
     const guild = message.guild;
     const member = message.member;
 
+    // Lookup do ticket do canal, memoizado: o cofre de mídia e o anti-flood
+    // (menção ao atendente) precisam do mesmo documento — antes cada um fazia
+    // a sua própria query na mesma mensagem.
+    let ticketLookup: ReturnType<typeof db.tickets.getByChannel> | null = null;
+    const getTicket = () =>
+      (ticketLookup ??= db.tickets.getByChannel(message.channelId));
+
     // ==========================================
     // 1. COFRE DE MÍDIA (VAULT) EM TEMPO REAL
     // ==========================================
     if (message.attachments.size > 0) {
       try {
-        const ticket = await db.tickets.getByChannel(message.channelId);
-        if (ticket && !ticket.closed) {
-          const guildData = await db.guilds.get(guild.id);
-          const vaultChannelId =
-            guildData?.channels?.vault || guildData?.channels?.logs;
-          if (vaultChannelId) {
+        const guildData = await db.guilds.get(guild.id);
+        const vaultChannelId =
+          guildData?.channels?.vault || guildData?.channels?.logs;
+
+        // O cofre é a única razão de consultar o ticket aqui: sem cofre
+        // configurado, nem chega a consultar o banco.
+        if (vaultChannelId) {
+          const ticket = await getTicket();
+          if (ticket && !ticket.closed) {
             const vaultChannel =
               guild.channels.cache.get(vaultChannelId) ||
               (await guild.channels
@@ -143,7 +153,7 @@ createEvent({
       // 3. Verificar se houve menção ao atendente que assumiu o ticket
       let mentionedClaimer = false;
       if (message.mentions.users.size > 0) {
-        const ticket = await db.tickets.getByChannel(message.channelId);
+        const ticket = await getTicket();
         if (
           ticket?.claimedBy &&
           ticket.claimedBy !== message.author.id &&

@@ -26,17 +26,18 @@ function diffPermissionOverwrites(oldChannel, newChannel) {
 // Mudança só de permissão gera ChannelOverwriteCreate/Update/Delete no audit
 // log, não ChannelUpdate — buscar como ChannelUpdate sempre voltava sem
 // executor. Tenta os três tipos e usa o primeiro que achar.
+// O Discord não aceita mais de um action_type por consulta, então são três
+// buscas possíveis. Antes elas eram sequenciais (até 3 round-trips em série,
+// ~1s no pior caso travando o handler); em paralelo o custo de latência é o
+// de uma só. A ordem de preferência continua a mesma do retorno.
+const OVERWRITE_ACTIONS = [
+    AuditLogEvent.ChannelOverwriteUpdate,
+    AuditLogEvent.ChannelOverwriteCreate,
+    AuditLogEvent.ChannelOverwriteDelete,
+];
 async function getOverwriteExecutor(guild, channelId) {
-    for (const type of [
-        AuditLogEvent.ChannelOverwriteUpdate,
-        AuditLogEvent.ChannelOverwriteCreate,
-        AuditLogEvent.ChannelOverwriteDelete,
-    ]) {
-        const executor = await getAuditLogExecutor(guild, type, channelId);
-        if (executor)
-            return executor;
-    }
-    return null;
+    const executors = await Promise.all(OVERWRITE_ACTIONS.map((type) => getAuditLogExecutor(guild, type, channelId)));
+    return executors.find((executor) => executor) ?? null;
 }
 createEvent({
     name: "channelUpdate",
