@@ -34,6 +34,10 @@ async function closeTicketForDeletedChannel(
   channel: NonThreadGuildBasedChannel,
   executor: User | PartialUser | null,
 ): Promise<void> {
+  // Só canal de texto pode ser ticket. Categoria, voz, palco e fórum — que
+  // são a maioria dos canais apagados — nem chegam ao banco.
+  if (channel.type !== ChannelType.GuildText) return;
+
   try {
     const ticket = await db.tickets.findOneAndUpdate(
       { channelId: channel.id, closed: false },
@@ -44,7 +48,9 @@ async function closeTicketForDeletedChannel(
           closedAt: new Date(),
         },
       },
-      { new: true },
+      // lean + projection: sem hidratar documento e trazendo só o que o log
+      // usa (o resto do ticket não interessa aqui).
+      { new: true, lean: true, projection: { ticketId: 1 } },
     );
 
     if (ticket) {
