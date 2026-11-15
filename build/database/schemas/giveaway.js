@@ -17,6 +17,8 @@ export const giveawaySchema = new Schema({
         },
     },
 });
-giveawaySchema.index({ messageId: 1 });
+// messageId já tem índice único pelo `unique: true` no campo; redeclarar aqui
+// criava um segundo spec com o mesmo nome (messageId_1) e o createIndexes()
+// falhava por conflito — derrubando junto os índices de guildId/endsAt.
 giveawaySchema.index({ guildId: 1, ended: 1 });
 giveawaySchema.index({ endsAt: 1, ended: 1 });
