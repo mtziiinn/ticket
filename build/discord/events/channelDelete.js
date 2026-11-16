@@ -3,6 +3,7 @@ import { createContainer } from "@magicyan/discord";
 import { AuditLogEvent, ChannelType, } from "discord.js";
 import { db } from "#database";
 import { getAuditLogExecutor, getEmojiTag, sendBotLog } from "#functions";
+import { refreshCategoryQueue } from "../responders/ticket/queue.js";
 const channelTypeMap = {
     [ChannelType.GuildText]: "Texto",
     [ChannelType.GuildVoice]: "Voz",
@@ -55,6 +56,10 @@ createEvent({
         const executor = await getAuditLogExecutor(channel.guild, AuditLogEvent.ChannelDelete, channel.id);
         // Antes do log: o banco não pode depender do envio da mensagem.
         await closeTicketForDeletedChannel(channel, executor);
+        // Se o canal apagado estava na fila de uma categoria, os que ficaram
+        // precisam descer um número (o canal já saiu do cache, então ele mesmo
+        // fica de fora da renumeração).
+        refreshCategoryQueue(channel.guild, channel.parentId);
         try {
             const typeName = channelTypeMap[channel.type] || `Tipo ${channel.type}`;
             const container = createContainer("#ef4444", `## ${getEmojiTag("action_x")} Canal Excluído`, [

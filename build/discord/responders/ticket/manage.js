@@ -9,6 +9,7 @@ import { sendActionLog } from "./logger.js";
 import { toTranscriptMessage, buildVaultMediaMap, remapMessageMediaUrls, } from "./transcriptMessage.js";
 import { renderMembersPanel } from "./members.js";
 import { withStatusEmoji } from "./ticketName.js";
+import { getTicketChannelName, refreshCategoryQueue } from "./queue.js";
 import { createPaymentModal } from "../../commands/staff/payment.js";
 import { formatHexColor } from "../panel/panelView.js";
 // Mapeamento de Status de Encomenda
@@ -615,6 +616,11 @@ createResponder({
                 ticket.closedBy = undefined;
                 ticket.closedAt = undefined;
                 await ticket.save();
+                // Reaberto: se o status dele é "Fila", ele volta pro fim da fila da
+                // categoria e os outros são renumerados.
+                if (ticket.status === "queue") {
+                    refreshCategoryQueue(guild, channel.parentId);
+                }
                 await interaction.editReply({
                     content: "<:unlock_check:1502789940612698192> Ticket reaberto com sucesso!",
                 });
@@ -687,6 +693,7 @@ createResponder({
             return;
         }
         try {
+            const oldParentId = channel.parentId;
             // 1. Atualizar categoria (parent) no Discord
             await channel
                 .edit({
@@ -699,6 +706,12 @@ createResponder({
             // 2. Atualizar banco de dados
             ticket.category = newCategory;
             await ticket.save();
+            // Mudou de categoria: se está na fila, sai da fila da antiga e entra na
+            // da nova — renumera as duas (a da nova já devolve o número pra ele).
+            if (ticket.status === "queue" && !ticket.closed) {
+                refreshCategoryQueue(guild, oldParentId);
+                refreshCategoryQueue(guild, parentId);
+            }
             // Atualizar Painel Principal no canal do ticket
             const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
             const container = await createMainPanel(ticket, owner);
@@ -946,9 +959,14 @@ createResponder({
         else if (!wasQueued || !ticket.queuedAt)
             ticket.queuedAt = new Date();
         await ticket.save();
-        // Atualizar Nome do Canal com o novo Emoji. Troca SÓ a bolinha: o resto do
-        // nome (slug, número da fila, nome renomeado na mão...) fica intacto.
-        const newName = withStatusEmoji(channel.name, statusData.channelEmoji);
+        // Atualizar Nome do Canal com o novo Emoji e, se o ticket está (ou entrou)
+        // na fila, com a posição 1, 2, 3... da categoria — num único setName.
+        // Troca SÓ a bolinha e o número: o resto do nome (slug, nome renomeado na
+        // mão...) fica intacto.
+        const categoryId = channel.parentId;
+        const newName = categoryId
+            ? await getTicketChannelName(guild, ticket, channel.name, categoryId, statusData.channelEmoji)
+            : withStatusEmoji(channel.name, statusData.channelEmoji);
         await channel.setName(newName).catch((err) => {
             console.error("[Status] Erro ao renomear canal:", err);
         });
@@ -956,6 +974,10 @@ createResponder({
         repositionTicketByStatus(channel, ticket).catch((err) => {
             console.error("[Status] Erro assíncrono ao reposicionar:", err);
         });
+        // Entrou ou saiu da fila: renumera os outros tickets da mesma categoria.
+        if (categoryId && (wasQueued || newStatus === "queue")) {
+            refreshCategoryQueue(guild, categoryId);
+        }
         // Atualizar Painel Principal
         const owner = await guild.members.fetch(ticket.ownerId).catch(() => null);
         const container = await createMainPanel(ticket, owner);
